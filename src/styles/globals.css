@@ -1,0 +1,26 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+ /* If the user has no preferred theme, we default to dark mode */
+:root {
+  --background: 16, 16, 16;
+  --text: 255, 255, 255;
+  --accent: 0, 194, 103;
+  --primary: 49, 216, 138;
+  --secondary: 0, 36, 19;
+
+}
+
+/* If the user prefers light mode, we override the default values */
+@media (prefers-color-scheme: light) {
+  :root {
+    --background: 255, 255, 255;
+    --text: 0, 0, 0;
+  }
+}
+
+body {
+  color: rgba(var(--text));
+  background: rgba(var(--background));
+}
