@@ -2,13 +2,16 @@
 @tailwind components;
 @tailwind utilities;
 
- /* If the user has no preferred theme, we default to dark mode */
+/* If the user has no preferred theme, we default to dark mode */
 :root {
   --background: 16, 16, 16;
+  --background-gray: 23, 23, 23;
+  --background-gray-light: 38, 38, 38;
   --text: 255, 255, 255;
   --accent: 0, 194, 103;
   --primary: 49, 216, 138;
   --secondary: 0, 36, 19;
+  --background-green: 6, 19, 13;
 
 }
 

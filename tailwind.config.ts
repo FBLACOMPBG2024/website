@@ -19,6 +19,9 @@ const config: Config = {
       },
       colors: {
         background: "rgba(var(--background))",
+        backgroundGray: "rgba(var(--background-gray))",
+        backgroundGrayLight: "rgba(var(--background-gray-light))",
+        backgroundGreen: "rgba(var(--background-green))",
         backgroundSecondary: "rgba(var(--background-secondary))",
         text: "rgba(var(--text))",
         primary: "rgba(var(--primary))",
