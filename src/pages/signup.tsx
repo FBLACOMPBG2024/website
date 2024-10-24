@@ -1,7 +1,6 @@
 import Topbar from "@/components/topbar";
 import Card from "@/components/card";
 import TextInput from "@/components/textinput";
-import Button from "@/components/button";
 import { IconBrandGoogleFilled } from "@tabler/icons-react";
 export default function SignUp() {
   return (

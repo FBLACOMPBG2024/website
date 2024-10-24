@@ -6,9 +6,9 @@ export default function Home() {
       {/* Topbar */}
       <Topbar />
       {/* Gradient background that fills the remaining screen space */}
-      <div className="flex-1 bg-gradient-to-bl from-background via-background to-green-950">
+      <div className="flex-1 bg-gradient-to-bl from-background via-background to-backgroundGreen">
         <div className="h-full w-full flex justify-center items-center">
-          <div className="flex justify-center items-center w-full space-x-8">
+          <div className="flex flex-col md:flex-row justify-center items-center w-full space-y-8 md:space-y-0 md:space-x-8">
             {/* Text container */}
             <div className="w-11/12 md:w-8/12 lg:w-6/12 p-8">
               <div className="text-lg sm:text-l md:text-xl lg:text-2xl font-medium">
