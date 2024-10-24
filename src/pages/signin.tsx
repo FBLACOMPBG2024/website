@@ -2,7 +2,15 @@ import Topbar from "@/components/topbar";
 import Card from "@/components/card";
 import TextInput from "@/components/textinput";
 import { IconBrandGoogleFilled } from "@tabler/icons-react";
+import { useSession, signIn, signOut } from "next-auth/react"
+
 export default function SignIn() {
+  const { data: session } = useSession();
+
+  if (session) {
+    return <div>Signed in as {session.user?.email}</div>
+  }
+
   return (
     <div className="flex flex-col h-screen w-screen">
       {/* Topbar */}
