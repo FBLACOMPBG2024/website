@@ -1,6 +1,7 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import SignupSchema from "@/schemas/signupSchema";
 import client from "@/lib/mongodb";
+import argon2 from "argon2";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     if (req.method === 'POST') {
@@ -26,7 +27,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             email: email,
             firstName: firstName,
             lastName: lastName,
-            password: password,
+            password: await argon2.hash(password),
         });
 
         res.status(200).json({ message: 'Sign up successful' });

@@ -4,8 +4,11 @@ import TextInput from "@/components/text-input";
 import { IconBrandGoogleFilled } from "@tabler/icons-react";
 import { useState } from "react";
 import SignupSchema from "@/schemas/signupSchema";
+import { useRouter } from 'next/router';
 
 export default function SignUp() {
+  const router = useRouter();
+
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
@@ -72,7 +75,7 @@ export default function SignUp() {
     console.log(data);
 
     if (response.ok) {
-      setMessage("Sign up successful");
+      router.push("/emailverification");
     } else {
       setMessage(data.message);
       setIsBad(true);
