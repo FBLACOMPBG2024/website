@@ -9,24 +9,30 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@auth/core": "^0.37.2",
+    "@auth/mongodb-adapter": "^3.7.2",
     "@tabler/icons-react": "^3.20.0",
     "clsx": "^2.1.1",
     "dotenv": "^16.4.5",
     "mongodb": "^6.10.0",
     "next": "15.0.0",
-    "next-auth": "^4.24.10",
+    "next-auth": "^5.0.0-beta.25",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "resend": "^4.0.0",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
-    "@types/mongodb": "^4.0.7",
+    "@eslint/js": "^9.13.0",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
-    "eslint": "^8",
+    "eslint": "^8.57.1",
     "eslint-config-next": "15.0.0",
+    "globals": "^15.11.0",
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
-    "typescript": "^5"
+    "typescript": "^5",
+    "typescript-eslint": "^8.11.0"
   }
 }
