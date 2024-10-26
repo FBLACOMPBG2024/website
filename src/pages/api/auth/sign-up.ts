@@ -1,17 +1,16 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import SignupSchema from "@/schemas/signupSchema";
+import SignUpSchema from "@/schemas/signupSchema";
 import client from "@/lib/mongodb";
 import argon2 from "argon2";
 import { generateEmailLink } from "@/utils/generateEmailLink";
 import { sendEmail } from "@/utils/sendEmail";
-
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     if (req.method === 'POST') {
         // Get information from the request
         const { firstName, lastName, email, password } = req.body;
 
         // Validate the input data
-        const result = SignupSchema.safeParse(req.body);
+        const result = SignUpSchema.safeParse(req.body);
         if (!result.success) {
             res.status(400).json({ message: 'Invalid input data', error: result.error });
             return;
@@ -31,6 +30,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             firstName: firstName,
             lastName: lastName,
             emailVerified: false,
+            createdAt: new Date(),
         });
 
         // Make sure all other links are older than 3 minutes

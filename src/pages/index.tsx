@@ -1,4 +1,4 @@
-import Topbar from "@/components/topbar";
+import Topbar from "@/components/ui/Topbar";
 
 export default function Home() {
   return (

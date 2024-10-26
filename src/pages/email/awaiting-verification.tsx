@@ -1,8 +1,9 @@
-import Topbar from "@/components/topbar";
-import Card from "@/components/card";
+import Topbar from "@/components/ui/Topbar";
+import Card from "@/components/ui/Card";
 import { IconMail } from "@tabler/icons-react";
 import { useRouter } from "next/router";
 import { useState } from "react";
+import api from "@/utils/api";
 
 export default function Dashboard() {
     const router = useRouter();
@@ -13,18 +14,16 @@ export default function Dashboard() {
     const [isBad, setIsBad] = useState(false);
 
     const handleResendEmail = async () => {
-        const response = await fetch("/api/auth/resend-email", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ email: email }),
+        const response = await api.post("/api/auth/resend-email", {
+            email: email,
         });
-        if (response.ok) {
+
+
+        if (response.status === 200) {
             setMessage("Email sent");
             setIsBad(false);
         } else {
-            const res = await response.json();
+            const res = await response.data;
             setMessage(res.message);
             setIsBad(true);
         }

@@ -19,9 +19,9 @@ export default function Topbar() {
         <div className="flex space-x-4">
           <button
             className="px-4 text-lg sm:text-xl font-semibold whitespace-nowrap"
-            onClick={() => router.push('/sign-in')}
+            onClick={() => router.push('/login')}
           >
-            Sign In
+            Login
           </button>
           <button
             className="px-4 py-1 text-lg sm:text-xl font-semibold rounded-md border-neutral-600 border-2 whitespace-nowrap"

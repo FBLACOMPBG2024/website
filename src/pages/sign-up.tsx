@@ -1,10 +1,11 @@
-import Topbar from "@/components/topbar";
-import Card from "@/components/card";
-import TextInput from "@/components/text-input";
+import Topbar from "@/components/ui/Topbar";
+import Card from "@/components/ui/Card";
+import TextInput from "@/components/ui/TextInput";
 import { IconBrandGoogleFilled } from "@tabler/icons-react";
 import { useState } from "react";
-import SignupSchema from "@/schemas/signupSchema";
 import { useRouter } from 'next/router';
+import api from "@/utils/api";
+import SignUpSchema from "@/schemas/signupSchema";
 
 export default function SignUp() {
   const router = useRouter();
@@ -29,7 +30,7 @@ export default function SignUp() {
       password,
     };
 
-    const result = SignupSchema.safeParse(inputData);
+    const result = SignUpSchema.safeParse(inputData);
 
     if (!result.success) {
       const error = result.error.errors[0];
@@ -59,22 +60,16 @@ export default function SignUp() {
     setMessage("");
 
 
-    const response = await fetch("/api/auth/sign-up", {
-      method: "POST",
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        email,
-        firstName,
-        lastName,
-        password,
-      })
+    const response = await api.post("/api/auth/sign-up", {
+      email,
+      firstName,
+      lastName,
+      password,
     });
-    const data = await response.json();
-    console.log(data);
 
-    if (response.ok) {
+    const data = await response.data;
+
+    if (response.status === 200) {
       router.push("/email/awaiting-verification?email=" + email);
     } else {
       setMessage(data.message);

@@ -1,8 +1,8 @@
-import { Sidebar, SidebarBody, SidebarLink } from "@/components/sidebar";
-import Topbar from "@/components/topbar";
+import { Sidebar, SidebarBody, SidebarLink } from "@/components/ui/Sidebar";
+import Topbar from "@/components/ui/Topbar";
 import { IconArrowLeft, IconBrandTabler, IconSettings, IconUser } from "@tabler/icons-react";
 import { useState } from "react";
-import Card from "@/components/card";
+import Card from "@/components/ui/Card";
 import { AnimatePresence, motion } from "framer-motion";
 
 export default function Dashboard() {
@@ -134,7 +134,7 @@ export default function Dashboard() {
                                     <SidebarLink
                                         key={idx}
                                         link={link}
-                                        onClick={() => setSelectedLink(link.label)}
+                                        onClick={() => { setSelectedLink(link.label); }}
                                     />
                                 ))}
                             </div>

@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/router";
-import Topbar from "@/components/topbar";
-import Card from "@/components/card";
+import Topbar from "@/components/ui/Topbar";
+import Card from "@/components/ui/Card";
 import { IconMail } from "@tabler/icons-react";
 
 export default function Dashboard() {
@@ -9,7 +9,7 @@ export default function Dashboard() {
 
     useEffect(() => {
         const timer = setTimeout(() => {
-            router.push("/sign-in");
+            router.push("/login");
         }, 3000);
 
         return () => clearTimeout(timer);
@@ -33,7 +33,7 @@ export default function Dashboard() {
                                     Your email has been verified.
                                 </p>
                                 <p className="text-sm text-gray-500 text-center p-1">
-                                    Redirecting to sign in...
+                                    Redirecting to login...
                                 </p>
                             </div>
                         </Card>
