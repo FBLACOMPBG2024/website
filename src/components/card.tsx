@@ -1,9 +1,9 @@
 import React, { ReactNode } from "react";
-import clsx from "clsx"; // Optional, for better class name handling
+import clsx from "clsx";
 
 interface CardProps {
-    children: ReactNode;
-    className?: string; // Optional className prop for custom styles
+    children?: ReactNode;
+    className?: string;
 }
 
 export default function Card({ children, className }: CardProps) {

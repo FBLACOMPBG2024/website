@@ -9,7 +9,7 @@ export const EmailTemplate: React.FC<Readonly<EmailTemplateProps>> = ({
     name,
     link
 }) => (
-    <div>
+    <div className=''>
         <h1>Welcome, {name}!</h1>
         <p>Please click the link below to verify your email:</p>
         <a href={link}>Verify Email</a>
