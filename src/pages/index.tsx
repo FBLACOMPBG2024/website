@@ -1,6 +1,4 @@
 import Topbar from "@/components/topbar";
-import client from "@/lib/mongodb";
-
 
 export default function Home() {
   return (

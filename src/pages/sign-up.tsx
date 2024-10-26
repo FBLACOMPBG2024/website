@@ -59,7 +59,7 @@ export default function SignUp() {
     setMessage("");
 
 
-    const response = await fetch("/api/auth/signup", {
+    const response = await fetch("/api/auth/sign-up", {
       method: "POST",
       headers: {
         'Content-Type': 'application/json'
@@ -75,7 +75,7 @@ export default function SignUp() {
     console.log(data);
 
     if (response.ok) {
-      router.push("/emailverification");
+      router.push("/email/awaiting-verification?email=" + email);
     } else {
       setMessage(data.message);
       setIsBad(true);
@@ -83,7 +83,7 @@ export default function SignUp() {
 
   };
 
-  const handleKeyDown = (e: any) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       handleSignUp();
     }
