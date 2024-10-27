@@ -7,11 +7,12 @@ export interface IUser {
     email: string;
     createdAt: Date;
     emailVerified: boolean;
+    balance: number;
 }
 
 interface IUserContext {
     user: IUser,
-    setUser(user: IUser): void;
+    setUser(user: any): void;
 }
 
 const defaultvalues: IUserContext = {
@@ -22,8 +23,9 @@ const defaultvalues: IUserContext = {
         email: "",
         createdAt: new Date(),
         emailVerified: false,
+        balance: 1337,
     },
-    setUser(user: IUser): void { },
+    setUser(user: any): void { },
 };
 
 const UserContext = createContext(defaultvalues);

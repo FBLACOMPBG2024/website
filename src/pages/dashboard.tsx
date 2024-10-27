@@ -4,15 +4,20 @@ import { IconArrowLeft, IconBrandTabler, IconSettings, IconUser } from "@tabler/
 import { useState } from "react";
 import Card from "@/components/ui/Card";
 import { AnimatePresence, motion } from "framer-motion";
+import { useUser } from "@/components/context/UserContext";
+import api from "@/utils/api";
 
 export default function Dashboard() {
     const [open, setOpen] = useState(false);
     const [selectedLink, setSelectedLink] = useState("Dashboard");
-    const [balance, setBalance] = useState(10000);
+    const { user, setUser } = useUser();
+
+    console.log(user);
+
     const links = [
         {
             label: "Dashboard",
-            href: "#",
+            href: "",
             icon: (
                 <IconBrandTabler className="text-text h-5 w-5 flex-shrink-0" />
             ),
@@ -41,8 +46,6 @@ export default function Dashboard() {
     ];
 
     const changeBalance = () => {
-        const randomAmount = Math.floor(Math.random() * 2000) - 1000; // Random amount between -1000 and 1000
-        setBalance(balance + randomAmount);
     };
 
     const renderDashboard = () => {
@@ -51,12 +54,12 @@ export default function Dashboard() {
                 <h1 className="text-2xl font-bold text-text">Dashboard</h1>
 
                 <motion.h1
-                    key={balance}
+                    key={user.balance}
                     initial={{ y: 0 }}
                     animate={{ y: 0 }}
                     transition={{ duration: 0.5 }}
                 >
-                    {balance.toLocaleString("en-US", { style: "currency", currency: "USD" }).split("").map((char, index) => (
+                    {user.balance.toLocaleString("en-US", { style: "currency", currency: "USD" }).split("").map((char, index) => (
                         <motion.span
                             key={index}
                             initial={{ opacity: 0, rotateX: 45 }}
@@ -82,6 +85,8 @@ export default function Dashboard() {
         return <>
             <Card className="h-full w-full" >
                 <h1 className="text-2xl font-bold text-text">Profile</h1>
+                <p>{user.email}</p>
+                <p>{user.firstName} {user.lastName}</p>
 
             </Card>
         </>;
@@ -134,7 +139,18 @@ export default function Dashboard() {
                                     <SidebarLink
                                         key={idx}
                                         link={link}
-                                        onClick={() => { setSelectedLink(link.label); }}
+                                        onClick={async () => {
+                                            setSelectedLink(link.label);
+
+                                            try {
+                                                const response = await api.get("api/auth/refresh");
+                                                if (response.status == 200) {
+                                                    setUser(response.data.user);
+                                                }
+                                            } catch (error) {
+                                                console.error(error);
+                                            }
+                                        }}
                                     />
                                 ))}
                             </div>

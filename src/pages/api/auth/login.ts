@@ -2,7 +2,7 @@ import { NextApiRequest, NextApiResponse } from "next";
 import client from "@/lib/mongodb";
 import LoginSchema from "@/schemas/loginSchema";
 import argon2 from "argon2";
-
+import cookie from "cookie";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'POST') {
@@ -23,6 +23,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       res.status(401).json({ message: 'Invalid email or password' });
       return;
     }
+
+    res.setHeader(
+      'Set-Cookie',
+      cookie.serialize('token', user._id.toString(), {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 60 * 60 * 24 * 7, // 1 week
+        sameSite: 'strict',
+        path: '/',
+      })
+    );
 
     res.status(200).json({ message: 'Login successful', user: user });
 

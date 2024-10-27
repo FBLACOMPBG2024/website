@@ -1,8 +1,9 @@
 import React from "react";
 import { useRouter } from "next/router";
-
+import { useUser } from "@/components/context/UserContext";
 export default function Topbar() {
   const router = useRouter();
+  const { user } = useUser();
 
   return (
     <header className="transition-colors duration-500 bg-background shadow-md shadow-primary border-b border-primary w-full">
@@ -17,18 +18,26 @@ export default function Topbar() {
 
         {/* Buttons */}
         <div className="flex space-x-4">
-          <button
-            className="px-4 text-lg sm:text-xl font-semibold whitespace-nowrap"
-            onClick={() => router.push('/login')}
-          >
-            Login
-          </button>
-          <button
-            className="px-4 py-1 text-lg sm:text-xl font-semibold rounded-md border-neutral-600 border-2 whitespace-nowrap"
-            onClick={() => router.push('/sign-up')}
-          >
-            Sign Up
-          </button>
+
+          {user ? (
+            <>
+            </>
+          ) : (
+            <>
+              <button
+                className="px-4 text-lg sm:text-xl font-semibold whitespace-nowrap"
+                onClick={() => router.push('/login')}
+              >
+                Login
+              </button>
+              <button
+                className="px-4 py-1 text-lg sm:text-xl font-semibold rounded-md border-neutral-600 border-2 whitespace-nowrap"
+                onClick={() => router.push('/sign-up')}
+              >
+                Sign Up
+              </button>
+            </>
+          )}
         </div>
       </div>
     </header>

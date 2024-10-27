@@ -19,6 +19,8 @@ export default function Login() {
   // Couldn't think of a better name but it is used to check if the user has entered something wrong 
   const [isBad, setIsBad] = useState(false);
 
+
+
   const handleLogin = async () => {
     const inputData = {
       email,
@@ -40,17 +42,22 @@ export default function Login() {
       return;
     }
 
-    const response = await api.post("/api/auth/login", {
-      email,
-      password,
-    });
+    try {
+      const response = await api.post("/api/auth/login", {
+        email,
+        password,
+      });
 
-    if (response.status === 200) {
-      setUser(response.data.user);
-      router.push("/dashboard");
-    } else {
-      const res = await response.data;
-      setMessage(res.message);
+      if (response.status === 200) {
+        setUser(response.data.user);
+        router.push("/dashboard");
+      } else {
+        const res = await response.data;
+        setMessage(res.message);
+        setIsBad(true);
+      }
+    } catch (error) {
+      setMessage("An error occurred during login. Please try again.");
       setIsBad(true);
     }
   }
