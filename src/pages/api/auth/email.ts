@@ -22,7 +22,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             return;
         }
 
-        await client.db().collection("links").updateOne({ token: req.query.token }, { $set: { used: true, usedAt: Date.now() } });
+        await client.db().collection("links").updateOne({ token: req.query.token }, { $set: { used: true, usedAt: new Date(Date.now()) } });
 
         res.status(200).redirect(process.env.URL + '/email/verified');
     } else {

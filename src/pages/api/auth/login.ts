@@ -24,6 +24,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return;
     }
 
+    if (!user.emailVerified) {
+      res.status(401).json({ message: 'Awaiting email verification' });
+      return;
+    }
+
     res.setHeader(
       'Set-Cookie',
       cookie.serialize('token', user._id.toString(), {
