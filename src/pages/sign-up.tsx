@@ -65,11 +65,13 @@ export default function SignUp() {
       firstName,
       lastName,
       password,
+    }).catch((error) => {
+      console.error(error);
     });
 
-    const data = await response.data;
+    const data = await response?.data;
 
-    if (response.status === 200) {
+    if (response?.status === 200) {
       router.push("/email/awaiting-verification?email=" + email);
     } else {
       setMessage(data.message);
@@ -162,7 +164,7 @@ export default function SignUp() {
                 {message}
               </p>
               <button
-                className="transition-colors duration-500 hover:bg-primary/80 text-lg bg-primary p-2 rounded-md shadow-md w-full my-1"
+                className="transition-all duration-300 hover:bg-primary/80 bg-primary text-lg p-2 rounded-md shadow-md w-full my-1"
                 onClick={handleSignUp}
               >
                 Sign Up

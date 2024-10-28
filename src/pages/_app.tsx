@@ -3,7 +3,6 @@ import type { AppProps } from "next/app";
 import { Inter } from 'next/font/google';
 import { useEffect, useState } from "react";
 import { IUser, UserProvider } from "@/components/context/UserContext";
-import { useRouter } from "next/router";
 import api from "@/utils/api";
 
 // Load the Inter font with the Latin subset (The only one our site will require)
@@ -19,7 +18,7 @@ export default function App({ Component, pageProps: { ...pageProps } }: AppProps
     const refreshResponse = async () => {
       try {
         const response = await api.get("api/auth/refresh");
-        if (response.status == 200) {
+        if (response?.status == 200) {
           setUser(response.data.user);
         }
       } catch (error) {

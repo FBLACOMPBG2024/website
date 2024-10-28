@@ -42,23 +42,24 @@ export default function Login() {
       return;
     }
 
-    try {
-      const response = await api.post("/api/auth/login", {
-        email,
-        password,
-      });
 
-      if (response.status === 200) {
-        setUser(response.data.user);
-        router.push("/dashboard");
-      } else {
-        const res = await response.data;
-        setMessage(res.message);
+    const response = await api.post("/api/auth/login", {
+      email,
+      password,
+    }).catch((error) => {
+      if (error.response?.data) {
+        setMessage(error.response.data.message);
         setIsBad(true);
       }
-    } catch (error) {
-      setMessage("An error occurred during login. Please try again.");
-      setIsBad(true);
+      else {
+        setMessage("An error occurred");
+        setIsBad(true);
+      }
+    });
+
+    if (response?.status === 200) {
+      setUser(response.data.user);
+      router.push("/dashboard");
     }
   }
 
@@ -85,7 +86,7 @@ export default function Login() {
               <p className={`text-sm ${isBad ? 'text-red-500' : 'text-text'}`}  >
                 {message}
               </p>
-              <button className="text-lg bg-primary p-2 rounded-md shadow-md w-full my-1" onClick={handleLogin}>
+              <button className="text-lg hover:bg-primary/80 bg-primary p-2 rounded-md shadow-md w-full my-1" onClick={handleLogin}>
                 Login
               </button>
               <p className="text-center text-lg">

@@ -2,17 +2,18 @@ import { Sidebar, SidebarBody, SidebarLink } from "@/components/ui/Sidebar";
 import Topbar from "@/components/ui/Topbar";
 import { IconArrowLeft, IconBrandTabler, IconSettings, IconUser } from "@tabler/icons-react";
 import { useState } from "react";
-import Card from "@/components/ui/Card";
 import { AnimatePresence, motion } from "framer-motion";
 import { useUser } from "@/components/context/UserContext";
 import api from "@/utils/api";
+import DashboardView from "@/components/ui/dashboard/DashboardView";
+import ProfileView from "@/components/ui/dashboard/ProfileView";
+import SettingsView from "@/components/ui/dashboard/SettingsView";
+import LogoutView from "@/components/ui/dashboard/LogoutView";
 
 export default function Dashboard() {
     const [open, setOpen] = useState(false);
     const [selectedLink, setSelectedLink] = useState("Dashboard");
     const { user, setUser } = useUser();
-
-    console.log(user);
 
     const links = [
         {
@@ -45,83 +46,18 @@ export default function Dashboard() {
         },
     ];
 
-    const changeBalance = () => {
-    };
-
-    const renderDashboard = () => {
-        return <>
-            <Card className="h-full w-full" >
-                <h1 className="text-2xl font-bold text-text">Dashboard</h1>
-
-                <motion.h1
-                    key={user.balance}
-                    initial={{ y: 0 }}
-                    animate={{ y: 0 }}
-                    transition={{ duration: 0.5 }}
-                >
-                    {user.balance.toLocaleString("en-US", { style: "currency", currency: "USD" }).split("").map((char, index) => (
-                        <motion.span
-                            key={index}
-                            initial={{ opacity: 0, rotateX: 45 }}
-                            animate={{ opacity: 1, rotateX: 0 }}
-                            exit={{ opacity: 0, rotateX: -45 }}
-                            transition={{ duration: 0.2, delay: index * 0.1 }}
-                        >
-                            {char}
-                        </motion.span>
-                    ))}
-                </motion.h1>
-                <button
-                    onClick={changeBalance}
-                    className="mt-4 px-4 py-2 bg-blue-500 text-white rounded"
-                >
-                    Change Balance
-                </button>
-            </Card >
-        </>;
-    };
-
-    const renderProfile = () => {
-        return <>
-            <Card className="h-full w-full" >
-                <h1 className="text-2xl font-bold text-text">Profile</h1>
-                <p>{user.email}</p>
-                <p>{user.firstName} {user.lastName}</p>
-
-            </Card>
-        </>;
-    };
-
-    const renderSettings = () => {
-        return <>
-            <Card className="h-full w-full" >
-                <h1 className="text-2xl font-bold text-text">Settings</h1>
-
-            </Card>
-        </>;
-    };
-
-    const renderLogout = () => {
-        return <>
-            <Card className="h-full w-full" >
-                <h1 className="text-2xl font-bold text-text">Log out</h1>
-
-            </Card>
-        </>;
-    };
-
     const renderContent = () => {
         switch (selectedLink) {
             case "Dashboard":
-                return renderDashboard();
+                return <DashboardView user={user} />;
             case "Profile":
-                return renderProfile();
+                return <ProfileView user={user} />;
             case "Settings":
-                return renderSettings();
+                return <SettingsView />;
             case "Logout":
-                return renderLogout();
+                return <LogoutView />;
             default:
-                return renderDashboard();
+                return <DashboardView user={user} />;
         }
     };
 
@@ -159,7 +95,7 @@ export default function Dashboard() {
                 </Sidebar>
 
                 <div className="h-full w-full p-4">
-                    <AnimatePresence mode='wait'>
+                    <AnimatePresence mode='popLayout'>
                         <motion.div
                             key={selectedLink}
                             initial={{ opacity: 0, y: -20 }}

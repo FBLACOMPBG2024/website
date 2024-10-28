@@ -93,7 +93,7 @@ export const DesktopSidebar = ({
                     className
                 )}
                 animate={{
-                    width: animate ? (open ? "300px" : "60px") : "300px",
+                    width: animate ? (open ? "200px" : "60px") : "200px",
                 }}
                 onMouseEnter={() => setOpen(true)}
                 onMouseLeave={() => setOpen(false)}
@@ -166,7 +166,7 @@ export const SidebarLink = ({
     props?: LinkProps;
     onClick?: () => void;
 }) => {
-    const { open, animate } = useSidebar();
+    const { open, setOpen, animate } = useSidebar();
     return (
         <Link
             href={link.href}
@@ -175,7 +175,10 @@ export const SidebarLink = ({
                 className
             )}
             {...props}
-            onClick={onClick}
+            onClick={() => {
+                if (onClick) onClick();
+                setOpen(false);
+            }}
         >
             {link.icon}
 

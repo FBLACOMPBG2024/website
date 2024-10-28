@@ -12,7 +12,7 @@ export interface IUser {
 
 interface IUserContext {
     user: IUser,
-    setUser(user: any): void;
+    setUser(user: IUser): void;
 }
 
 const defaultvalues: IUserContext = {
@@ -25,7 +25,8 @@ const defaultvalues: IUserContext = {
         emailVerified: false,
         balance: 1337,
     },
-    setUser(user: any): void { },
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    setUser(user: IUser): void { },
 };
 
 const UserContext = createContext(defaultvalues);

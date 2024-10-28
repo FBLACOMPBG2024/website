@@ -10,8 +10,10 @@ export default function SignOut() {
 
     setUser({} as IUser);
 
-    api.post("/api/auth/sign-out").then(() => {
+    api.post("/api/auth/log-out").then(() => {
         router.push("/");
+    }).catch((error) => {
+        console.error(error);
     });
 
     useEffect(() => {

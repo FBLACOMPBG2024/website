@@ -14,18 +14,29 @@ export default function Dashboard() {
     const [isBad, setIsBad] = useState(false);
 
     const handleResendEmail = async () => {
+        if (!email) {
+            setMessage("Email is required");
+            setIsBad(true);
+            return;
+        }
+
         const response = await api.post("/api/auth/resend-email", {
             email: email,
+        }).catch((error) => {
+            if (error.response?.data) {
+                setMessage(error.response.data.message);
+                setIsBad(true);
+            }
+            else {
+                setMessage("An error occurred");
+                setIsBad(true);
+            }
         });
 
 
-        if (response.status === 200) {
+        if (response?.status === 200) {
             setMessage("Email sent");
             setIsBad(false);
-        } else {
-            const res = await response.data;
-            setMessage(res.message);
-            setIsBad(true);
         }
     }
 
@@ -37,7 +48,7 @@ export default function Dashboard() {
             <div className="flex-1 bg-gradient-to-bl from-background via-background to-backgroundGreen">
                 <div className="h-full w-full flex justify-center items-center">
                     <div className="w-full h-full flex justify-center items-center">
-                        <Card className="min-w-0.5 w-1/4 flex-col justify-center items-center m-10">
+                        <Card className="min-w-96 w-1/4 flex-col justify-center items-center m-10">
                             <h1 className="text-4xl font-bold p-2">
                                 Email Verification
                             </h1>
@@ -50,10 +61,10 @@ export default function Dashboard() {
                                     If you did not receive an email (Be sure to check your spam folder), you can request another one.
                                 </p>
 
-                                <p className={`text-sm ${isBad ? 'text-red-500' : 'text-text'}`}  >
+                                <p className={`text-sm text-center ${isBad ? 'text-red-500' : 'text-text'}`}  >
                                     {message}
                                 </p>
-                                <button className="text-lg bg-primary p-2 rounded-md shadow-md w-full my-1" onClick={handleResendEmail}>
+                                <button className="text-lg transition-all duration-300 hover:bg-primary/80 bg-primary p-2 rounded-md shadow-md w-full my-1" onClick={handleResendEmail}>
                                     Request another email
                                 </button>
                             </div>

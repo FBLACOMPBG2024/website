@@ -21,6 +21,18 @@ export default function Topbar() {
 
           {user ? (
             <>
+              <button
+                className="px-4 text-lg sm:text-xl font-semibold whitespace-nowrap"
+                onClick={() => router.push('/dashboard')}
+              >
+                Dashboard
+              </button>
+              <button
+                className="px-4 py-1 text-lg sm:text-xl font-semibold rounded-md border-neutral-600 border-2 whitespace-nowrap"
+                onClick={() => router.push('/logout')}
+              >
+                Logout
+              </button>
             </>
           ) : (
             <>
