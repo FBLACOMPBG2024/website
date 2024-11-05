@@ -5,6 +5,8 @@ export default function Topbar() {
   const router = useRouter();
   const { user } = useUser();
 
+  console.log("hello");
+
   return (
     <header className="transition-colors duration-500 bg-background shadow-md shadow-primary border-b border-primary w-full">
       <div className="flex justify-between items-center p-3 bg-background">

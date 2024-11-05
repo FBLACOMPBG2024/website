@@ -7,6 +7,7 @@ import LoginSchema from "@/schemas/loginSchema";
 import api from "@/utils/api";
 import { useUser } from "@/components/context/UserContext";
 import { useRouter } from "next/router";
+import { useGoogleLogin } from '@react-oauth/google';
 
 export default function Login() {
   const router = useRouter();
@@ -19,7 +20,20 @@ export default function Login() {
   // Couldn't think of a better name but it is used to check if the user has entered something wrong 
   const [isBad, setIsBad] = useState(false);
 
+  const login = useGoogleLogin({
+    onSuccess: async ({ code }) => {
+      const tokens = await api.post("/api/auth/google", {
+        code,
+      });
 
+      await api.get("/api/auth/google/info?access_token=" + tokens.data.access_token).then(function (response) {
+        console.log(response);
+      });
+
+
+    },
+    flow: 'auth-code',
+  });
 
   const handleLogin = async () => {
     const inputData = {
@@ -92,7 +106,7 @@ export default function Login() {
               <p className="text-center text-lg">
                 Or
               </p>
-              <button className="text-lg bg-backgroundGrayLight p-2 rounded-md shadow-md w-full my-1">
+              <button onClick={() => login()} className="text-lg bg-backgroundGrayLight p-2 rounded-md shadow-md w-full my-1">
                 <div className="flex justify-center items-center ">
                   <IconBrandGoogleFilled className="mr-2" />
                   Login with Google
@@ -103,5 +117,5 @@ export default function Login() {
         </div>
       </div>
     </div >
-  );
+  )
 }

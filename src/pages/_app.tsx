@@ -4,6 +4,7 @@ import { Inter } from 'next/font/google';
 import { useEffect, useState } from "react";
 import { IUser, UserProvider } from "@/components/context/UserContext";
 import api from "@/utils/api";
+import { GoogleOAuthProvider } from '@react-oauth/google';
 
 // Load the Inter font with the Latin subset (The only one our site will require)
 const inter = Inter({ subsets: ['latin'] });
@@ -37,10 +38,12 @@ export default function App({ Component, pageProps: { ...pageProps } }: AppProps
           <h1>Loading...</h1>
         </main>
       </> :
-      <UserProvider value={{ user, setUser }}>
-        <main className={inter.className}>
-          <Component {...pageProps} />
-        </main>
-      </UserProvider>
+      <GoogleOAuthProvider clientId="50088023361-h8voq3f3kv7941obpmvjsckjcuqt2der.apps.googleusercontent.com">
+        <UserProvider value={{ user, setUser }}>
+          <main className={inter.className}>
+            <Component {...pageProps} />
+          </main>
+        </UserProvider>
+      </GoogleOAuthProvider>
   )
 }
