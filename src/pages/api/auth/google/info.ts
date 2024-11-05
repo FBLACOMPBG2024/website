@@ -41,6 +41,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             })
             .then(res => res.data);
 
+        console.log(userInfo);
+
         res.json(userInfo);
     } else {
         res.setHeader('Allow', ['GET']);
