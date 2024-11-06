@@ -29,15 +29,13 @@ export default function Login() {
       let response = await api.post("/api/auth/google/login", {
         access_token: tokens.data.access_token,
       }).catch((error) => {
-        console.error(error);
+        setMessage(error.response.data.message);
+        setIsBad(true);
       });
 
       if (response?.status === 200) {
         setUser(response.data.user);
         router.push("/dashboard");
-      } else {
-        setMessage(response?.data.message);
-        setIsBad(true);
       }
     },
     flow: 'auth-code',
