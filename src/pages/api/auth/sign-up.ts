@@ -9,6 +9,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         // Get information from the request
         const { firstName, lastName, email, password } = req.body;
 
+
         // Validate the input data
         const result = SignUpSchema.safeParse(req.body);
         if (!result.success) {
@@ -17,7 +18,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
 
         // Check if the email is already in use
-        const user = await client.db().collection("users").findOne({ email: email });
+        const user = await client.db().collection("users").findOne({ email: email.toLower() });
         if (user) {
             res.status(400).json({ message: 'Email already in use' });
             return;
@@ -25,7 +26,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
         // Create the user in the database
         await client.db().collection("users").insertOne({
-            email: email,
+            email: email.toLower(),
             password: await argon2.hash(password),
             firstName: firstName,
             lastName: lastName,
@@ -33,6 +34,35 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             createdAt: new Date(),
             balance: 0,
         });
+
+        // Make sure all other links are older than 3 minutes
+        // This is to prevent users from spamming the email verification link
+
+        // If there are any links that are less than 3 minutes old, do not generate a new link
+        const threeMinutesAgo = new Date(Date.now() - 1000 * 60 * 3);
+        const links = await client.db().collection("links").find({ targetEmail: email, createdAt: { $gt: threeMinutesAgo } }).toArray();
+        if (links.length > 0) {
+            res.status(400).json({ message: 'Too many links generated recently, Try again later.' });
+            return;
+        }
+
+        const link = await generateEmailLink(email);
+        const emailResponse = await sendEmail(firstName, link, email);
+
+        if (!emailResponse) {
+            res.status(500).json({ message: 'Failed to send email' });
+            return;
+        }
+
+        if (emailResponse.error) {
+            console.error(emailResponse.error);
+            res.status(500).json({ message: 'Failed to send email' });
+
+            // Delete the user from the database
+            await client.db().collection("users").deleteOne({ email: email });
+
+            return;
+        }
 
         res.status(200).json({ message: 'Sign up successful, awaiting email verification' });
 
