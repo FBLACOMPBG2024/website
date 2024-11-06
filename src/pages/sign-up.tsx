@@ -6,6 +6,7 @@ import { useState } from "react";
 import { useRouter } from 'next/router';
 import api from "@/utils/api";
 import SignUpSchema from "@/schemas/signupSchema";
+import { useGoogleLogin } from '@react-oauth/google';
 
 export default function SignUp() {
   const router = useRouter();
@@ -79,6 +80,38 @@ export default function SignUp() {
     }
 
   };
+
+  const handleGoogleSignUp = useGoogleLogin({
+    onSuccess: async ({ code }) => {
+      const tokens = await api.post("/api/auth/google", {
+        code,
+      });
+
+      if (!tokens.data.access_token) {
+        setMessage("Failed to get access token");
+        setIsBad(true);
+        return;
+      }
+
+      const response = await api.post("/api/auth/google/sign-up", {
+        access_token: tokens.data.access_token,
+      }).catch((error) => {
+        console.error(error);
+      });
+
+      const data = await response?.data;
+
+      if (response?.status === 200) {
+        router.push("/email/awaiting-verification?email=" + email);
+      } else {
+        setMessage(data.message);
+        setIsBad(true);
+      }
+
+
+    },
+    flow: 'auth-code',
+  });
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
@@ -172,7 +205,7 @@ export default function SignUp() {
               <p className="text-center text-lg">
                 Or
               </p>
-              <button className="text-lg bg-backgroundGrayLight p-2 rounded-md shadow-md w-full my-1">
+              <button onClick={handleGoogleSignUp} className="text-lg bg-backgroundGrayLight p-2 rounded-md shadow-md w-full my-1">
                 <div className="flex justify-center items-center ">
                   <IconBrandGoogleFilled className="mr-2" />
                   Sign Up with Google

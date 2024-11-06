@@ -9,11 +9,17 @@ import DashboardView from "@/components/ui/dashboard/DashboardView";
 import ProfileView from "@/components/ui/dashboard/ProfileView";
 import SettingsView from "@/components/ui/dashboard/SettingsView";
 import LogoutView from "@/components/ui/dashboard/LogoutView";
+import router from "next/router";
 
 export default function Dashboard() {
     const [open, setOpen] = useState(false);
     const [selectedLink, setSelectedLink] = useState("Dashboard");
     const { user, setUser } = useUser();
+
+    if (!user) {
+        router.push("/login");
+        return;
+    }
 
     const links = [
         {

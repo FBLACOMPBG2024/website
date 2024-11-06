@@ -1,13 +1,20 @@
-import { useRouter } from "next/router";
+import router, { useRouter } from "next/router";
 import api from "@/utils/api";
 import { useEffect } from "react";
 import { IUser, useUser } from "@/components/context/UserContext";
 
-export default async function SignOut() {
+export default function SignOut() {
+    const router = useRouter();
+    const { setUser } = useUser();
 
     useEffect(() => {
-
-    }, [api]);
+        const logout = async () => {
+            await api.post("/api/auth/logout");
+            setUser(null);
+            router.push("/login");
+        };
+        logout();
+    }, []);
 
     return (
         <>

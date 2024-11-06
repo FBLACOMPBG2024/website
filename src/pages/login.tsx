@@ -26,11 +26,19 @@ export default function Login() {
         code,
       });
 
-      await api.get("/api/auth/google/info?access_token=" + tokens.data.access_token).then(function (response) {
-        console.log(response);
+      let response = await api.post("/api/auth/google/login", {
+        access_token: tokens.data.access_token,
+      }).catch((error) => {
+        console.error(error);
       });
 
-
+      if (response?.status === 200) {
+        setUser(response.data.user);
+        router.push("/dashboard");
+      } else {
+        setMessage(response?.data.message);
+        setIsBad(true);
+      }
     },
     flow: 'auth-code',
   });
