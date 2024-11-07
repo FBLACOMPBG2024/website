@@ -27,14 +27,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             return;
         }
 
-        // Check if the users old links are less than 3 minutes old,
-        // If they are, do not generate a new link
-        const threeMinutesAgo = new Date(Date.now() - 1000 * 60 * 3);
-        const links = await client.db().collection("links").find({ targetEmail: email, createdAt: { $gt: threeMinutesAgo } }).toArray();
-        if (links.length > 0) {
-            res.status(400).json({ message: 'Too many emails sent recently, Try again later.' });
-            return;
+        if (process.env.NODE_ENV !== 'development') {
+            // Check if the users old links are less than 3 minutes old,
+            // If they are, do not generate a new link
+            const threeMinutesAgo = new Date(Date.now() - 1000 * 60 * 3);
+            const links = await client.db().collection("links").find({ targetEmail: email, createdAt: { $gt: threeMinutesAgo } }).toArray();
+            if (links.length > 0) {
+                res.status(400).json({ message: 'Too many emails sent recently, Try again later.' });
+                return;
+            }
         }
+
 
         // Generate a new link
         const link = await generateEmailLink(email);

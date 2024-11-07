@@ -90,6 +90,7 @@ export default function Dashboard() {
                                                     setUser(response.data.user);
                                                 }
                                             } catch (error) {
+                                                // It's fine if this fails
                                                 console.error(error);
                                             }
                                         }}

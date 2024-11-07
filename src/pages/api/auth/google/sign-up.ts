@@ -34,7 +34,11 @@ export default async function handler(
             // Check if the email is already in use
             const user = await client.db().collection("users").findOne({ email: email });
             if (user) {
-                res.status(400).json({ message: 'Email already in use' });
+                if (!user.emailVerified) {
+                    res.status(400).json({ message: 'Awaiting email verification' });
+                } else {
+                    res.status(400).json({ message: 'Email already in use' });
+                }
                 return;
             }
 
@@ -79,7 +83,7 @@ export default async function handler(
                 return;
             }
 
-            res.status(200).json({ message: 'Sign up successful, awaiting email verification' });
+            res.status(200).json({ message: 'Sign up successful, awaiting email verification', email: email });
 
         } catch (error) {
             console.error('Google sign-up error:', error);

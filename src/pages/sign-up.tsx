@@ -67,18 +67,15 @@ export default function SignUp() {
       lastName,
       password,
     }).catch((error) => {
-      console.error(error);
+      const errorMessage = error.response?.data?.message || "Failed to sign up";
+      setMessage(errorMessage);
+      setIsBad(true);
+      return;
     });
-
-    const data = await response?.data;
 
     if (response?.status === 200) {
       router.push("/email/awaiting-verification?email=" + email);
-    } else {
-      setMessage(data.message);
-      setIsBad(true);
     }
-
   };
 
   const handleGoogleSignUp = useGoogleLogin({
@@ -96,16 +93,16 @@ export default function SignUp() {
       const response = await api.post("/api/auth/google/sign-up", {
         access_token: tokens.data.access_token,
       }).catch((error) => {
-        console.error(error);
+        const errorMessage = error.response?.data?.message || "Failed to get data";
+        setMessage(errorMessage);
+        setIsBad(true);
+        return;
       });
 
-      const data = await response?.data;
+
 
       if (response?.status === 200) {
-        router.push("/email/awaiting-verification?email=" + email);
-      } else {
-        setMessage(data.message);
-        setIsBad(true);
+        router.push("/email/awaiting-verification?email=" + response.data.email);
       }
 
 
