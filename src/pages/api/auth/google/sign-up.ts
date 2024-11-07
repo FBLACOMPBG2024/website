@@ -27,18 +27,14 @@ export default async function handler(
                 res.status(400).json({ message: "No email" });
             }
 
-            const email = userInfo.email;
+            const email = userInfo.email.toLower();
             const firstName = userInfo.given_name;
             const lastName = userInfo.family_name;
 
             // Check if the email is already in use
             const user = await client.db().collection("users").findOne({ email: email });
             if (user) {
-                if (!user.emailVerified) {
-                    res.status(400).json({ message: 'Awaiting email verification' });
-                } else {
-                    res.status(400).json({ message: 'Email already in use' });
-                }
+                res.status(400).json({ message: 'Email already in use' });
                 return;
             }
 
@@ -52,6 +48,7 @@ export default async function handler(
                 createdAt: new Date(),
                 balance: 0,
                 googleId: userInfo.sub,
+                transactions: [],
             });
 
             // Make sure all other links are older than 3 minutes
@@ -83,7 +80,7 @@ export default async function handler(
                 return;
             }
 
-            res.status(200).json({ message: 'Sign up successful, awaiting email verification', email: email });
+            res.status(200).json({ message: 'Sign up successful, awaiting email verification' });
 
         } catch (error) {
             console.error('Google sign-up error:', error);

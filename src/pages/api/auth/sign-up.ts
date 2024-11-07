@@ -33,6 +33,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             emailVerified: false,
             createdAt: new Date(),
             balance: 0,
+            transactions: [],
         });
 
         // Make sure all other links are older than 3 minutes
