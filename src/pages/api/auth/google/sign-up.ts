@@ -48,7 +48,6 @@ export default async function handler(
                 createdAt: new Date(),
                 balance: 0,
                 googleId: userInfo.sub,
-                transactions: [],
             });
 
             // Make sure all other links are older than 3 minutes
