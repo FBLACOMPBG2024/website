@@ -1,6 +1,6 @@
 import { Sidebar, SidebarBody, SidebarLink } from "@/components/ui/Sidebar";
 import Topbar from "@/components/ui/Topbar";
-import { IconArrowLeft, IconBrandTabler, IconSettings, IconUser } from "@tabler/icons-react";
+import { IconArrowLeft, IconArrowsRightLeft, IconBrandTabler, IconSettings, IconUser } from "@tabler/icons-react";
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useUser } from "@/components/context/UserContext";
@@ -10,6 +10,7 @@ import ProfileView from "@/components/ui/dashboard/ProfileView";
 import SettingsView from "@/components/ui/dashboard/SettingsView";
 import LogoutView from "@/components/ui/dashboard/LogoutView";
 import router from "next/router";
+import TransactionsView from "@/components/ui/dashboard/TransactionsView";
 
 export default function Dashboard() {
     const [open, setOpen] = useState(false);
@@ -27,6 +28,13 @@ export default function Dashboard() {
             href: "",
             icon: (
                 <IconBrandTabler className="text-text h-5 w-5 flex-shrink-0" />
+            ),
+        },
+        {
+            label: "Transactions",
+            href: "#transactions",
+            icon: (
+                <IconArrowsRightLeft className="text-text h-5 w-5 flex-shrink-0" />
             ),
         },
         {
@@ -56,6 +64,8 @@ export default function Dashboard() {
         switch (selectedLink) {
             case "Dashboard":
                 return <DashboardView user={user} />;
+            case "Transactions":
+                return <TransactionsView user={user} />;
             case "Profile":
                 return <ProfileView user={user} />;
             case "Settings":
