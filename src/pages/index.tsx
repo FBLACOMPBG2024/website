@@ -1,4 +1,5 @@
 import Topbar from "@/components/ui/Topbar";
+import Image from "next/image";
 
 export default function Home() {
   return (
@@ -20,12 +21,12 @@ export default function Home() {
                 </span>
                 <p className="text-xl font-bold mt-4">
                   Smart Spend allows users to manage their expenses with ease.
-                  Check out our features below.
                 </p>
               </div>
             </div>
-            {/* Bordered div */}
-            <div className="w-[35vh] h-[70vh] border border-lime-100" />
+            <div className="w-[50vh] h-[70vh] relative">
+              <Image src="/phone.png" alt="Phone" layout="fill" objectFit="contain" />
+            </div>
           </div>
         </div>
       </div>

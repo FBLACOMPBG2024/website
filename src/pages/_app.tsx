@@ -6,6 +6,7 @@ import { IUser, UserProvider } from "@/components/context/UserContext";
 import api from "@/utils/api";
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import PropagateLoader from "react-spinners/PropagateLoader";
+import Head from "next/head";
 // Load the Inter font with the Latin subset (The only one our site will require)
 const inter = Inter({ subsets: ['latin'] });
 
@@ -34,6 +35,9 @@ export default function App({ Component, pageProps: { ...pageProps } }: AppProps
   return (
     loading ?
       <>
+        <Head>
+          <title>Loading...</title>
+        </Head>
         <main className={inter.className}>
           <div className="w-full h-screen flex items-center justify-center">
             <PropagateLoader
@@ -43,12 +47,17 @@ export default function App({ Component, pageProps: { ...pageProps } }: AppProps
           </div>
         </main>
       </> :
-      <GoogleOAuthProvider clientId="50088023361-h8voq3f3kv7941obpmvjsckjcuqt2der.apps.googleusercontent.com">
-        <UserProvider value={{ user, setUser }}>
-          <main className={inter.className}>
-            <Component {...pageProps} />
-          </main>
-        </UserProvider>
-      </GoogleOAuthProvider>
+      <>
+        <Head>
+          <title>Smart Spend</title>
+        </Head>
+        <GoogleOAuthProvider clientId="50088023361-h8voq3f3kv7941obpmvjsckjcuqt2der.apps.googleusercontent.com">
+          <UserProvider value={{ user, setUser }}>
+            <main className={inter.className}>
+              <Component {...pageProps} />
+            </main>
+          </UserProvider>
+        </GoogleOAuthProvider>
+      </>
   )
 }

@@ -1,7 +1,7 @@
 import { Sidebar, SidebarBody, SidebarLink } from "@/components/ui/Sidebar";
 import Topbar from "@/components/ui/Topbar";
 import { IconArrowLeft, IconArrowsRightLeft, IconBrandTabler, IconSettings, IconUser } from "@tabler/icons-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useUser } from "@/components/context/UserContext";
 import api from "@/utils/api";
@@ -16,6 +16,14 @@ export default function Dashboard() {
     const [open, setOpen] = useState(false);
     const [selectedLink, setSelectedLink] = useState("Dashboard");
     const { user, setUser } = useUser();
+
+    useEffect(() => {
+        const hash = window.location.hash;
+        const link = links.find(link => link.href === hash);
+        if (link) {
+            setSelectedLink(link.label);
+        }
+    }, []);
 
     if (!user) {
         router.push("/login");
