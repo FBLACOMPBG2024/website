@@ -4,7 +4,7 @@ import Modal from "@/components/ui/Modal";
 import api from "@/utils/api";
 import { IUser } from "@/components/context/UserContext";
 import TextInput from "@/components/ui/TextInput";
-import { IconPencil } from "@tabler/icons-react";
+import { IconPencil, IconTrash } from "@tabler/icons-react";
 import { IconPlus } from "@tabler/icons-react";
 
 interface TransactionsViewProps {
@@ -24,7 +24,9 @@ interface Transaction {
 export default function TransactionsView({ user }: TransactionsViewProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [editTransaction, setEditTransaction] = useState<Transaction | null>(null);
+  const [editTransaction, setEditTransaction] = useState<Transaction | null>(
+    null
+  );
 
   // Individual state variables for each input
   const [value, setValue] = useState("0.0");
@@ -48,11 +50,12 @@ export default function TransactionsView({ user }: TransactionsViewProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const flagsArray = tags.split(",");
+    const tagsArray = tags.split(" ").map((tag) => tag.trim());
     // Prepare payload from individual states
     const payload = {
+      _id: editTransaction?._id,
       value: parseFloat(value) || 0,
-      flags: flagsArray,
+      tags: tagsArray,
       name,
       description,
     };
@@ -60,7 +63,7 @@ export default function TransactionsView({ user }: TransactionsViewProps) {
     try {
       if (editTransaction) {
         // Edit existing transaction
-        const response = await api.put(`/api/transaction/edit/${editTransaction._id}`, payload);
+        const response = await api.put(`/api/transaction/edit`, payload);
         if (response.status === 200) {
           setIsModalOpen(false);
           setEditTransaction(null);
@@ -90,10 +93,25 @@ export default function TransactionsView({ user }: TransactionsViewProps) {
   const handleEdit = (transaction: Transaction) => {
     setEditTransaction(transaction);
     setValue(transaction.value.toString());
-    setTags(transaction.tags.join(","));
+    setTags(transaction.tags.join(" "));
     setName(transaction.name);
     setDescription(transaction.description);
     setIsModalOpen(true);
+  };
+
+  const handleDelete = async (transactionId: string) => {
+    try {
+      const response = await api.delete(`/api/transaction/delete`, {
+        data: { transactionId },
+      });
+      if (response.status === 200) {
+        // Fetch the updated transactions
+        const updatedTransactions = await api.get("/api/transaction/get");
+        setTransactions(updatedTransactions.data);
+      }
+    } catch (error) {
+      console.error("Failed to delete transaction", error);
+    }
   };
 
   return (
@@ -122,12 +140,32 @@ export default function TransactionsView({ user }: TransactionsViewProps) {
               <tr key={transaction._id}>
                 <td className="border px-4 py-2">{transaction.name}</td>
                 <td className="border px-4 py-2">{transaction.value}</td>
-                <td className="border px-4 py-2">{transaction.tags ? transaction.tags.join(", ") : ""}</td>
-                <td className="border px-4 py-2">{transaction.description}</td>
-                <td className="border px-4 py-2">{new Date(transaction.createdAt).toLocaleString()}</td>
                 <td className="border px-4 py-2">
+                  {transaction.tags ? (
+                    <div className="flex flex-wrap gap-1">
+                      {transaction.tags.map((tag, index) => (
+                        <span
+                          key={index}
+                          className="bg-primary text-white px-2 py-1 rounded text-xs"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    ""
+                  )}
+                </td>
+                <td className="border px-4 py-2">{transaction.description}</td>
+                <td className="border px-4 py-2">
+                  {new Date(transaction.createdAt).toLocaleString()}
+                </td>
+                <td className="border px-4 py-2 gap-2">
                   <button onClick={() => handleEdit(transaction)}>
                     <IconPencil />
+                  </button>
+                  <button onClick={() => handleDelete(transaction._id)}>
+                    <IconTrash />
                   </button>
                 </td>
               </tr>
@@ -138,7 +176,9 @@ export default function TransactionsView({ user }: TransactionsViewProps) {
 
       <Modal open={isModalOpen} onClose={() => setIsModalOpen(false)}>
         <form onSubmit={handleSubmit}>
-          <h1 className="text-2xl font-bold text-text">{editTransaction ? "Edit Transaction" : "Create Transaction"}</h1>
+          <h1 className="text-2xl font-bold text-text">
+            {editTransaction ? "Edit Transaction" : "Create Transaction"}
+          </h1>
           <div>
             <label>
               Value:
