@@ -4,8 +4,7 @@ import Modal from "@/components/ui/Modal";
 import api from "@/utils/api";
 import { IUser } from "@/components/context/UserContext";
 import TextInput from "@/components/ui/TextInput";
-import { IconPencil, IconTrash } from "@tabler/icons-react";
-import { IconPlus } from "@tabler/icons-react";
+import { IconPencil, IconTrash, IconPlus } from "@tabler/icons-react";
 
 interface TransactionsViewProps {
   user: IUser;
@@ -24,9 +23,7 @@ interface Transaction {
 export default function TransactionsView({ user }: TransactionsViewProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [editTransaction, setEditTransaction] = useState<Transaction | null>(
-    null
-  );
+  const [editTransaction, setEditTransaction] = useState<Transaction | null>(null);
 
   // Individual state variables for each input
   const [value, setValue] = useState("0.0");
@@ -119,59 +116,69 @@ export default function TransactionsView({ user }: TransactionsViewProps) {
       <Card className="relative">
         <h1 className="text-2xl font-bold text-text">Transactions</h1>
         <button
-          className="absolute top-0 right-0 mt-4 mr-4 px-4 py-2 bg-primary text-white rounded flex items-center"
+          className="transition-all sm:text-lg text-sm absolute top-0 right-0 mt-4 mr-4 sm:px-2 sm:py-1 px-1 py-1 bg-primary text-white rounded flex items-center"
           onClick={() => setIsModalOpen(true)}
         >
-          <IconPlus className="mr-2" /> Add Transaction
+          <IconPlus className="" />
         </button>
-        <table className="min-w-full mt-8 bg-backgroundGray">
-          <thead>
-            <tr className="text-left">
-              <th className="px-4 py-2">Name</th>
-              <th className="px-4 py-2">Value</th>
-              <th className="px-4 py-2">Tags</th>
-              <th className="px-4 py-2">Description</th>
-              <th className="px-4 py-2">Created At</th>
-              <th className="px-4 py-2">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {transactions.map((transaction: Transaction) => (
-              <tr key={transaction._id}>
-                <td className="border px-4 py-2">{transaction.name}</td>
-                <td className="border px-4 py-2">{transaction.value}</td>
-                <td className="border px-4 py-2">
-                  {transaction.tags ? (
-                    <div className="flex flex-wrap gap-1">
-                      {transaction.tags.map((tag, index) => (
-                        <span
-                          key={index}
-                          className="bg-primary text-white px-2 py-1 rounded text-xs"
-                        >
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  ) : (
-                    ""
-                  )}
-                </td>
-                <td className="border px-4 py-2">{transaction.description}</td>
-                <td className="border px-4 py-2">
-                  {new Date(transaction.createdAt).toLocaleString()}
-                </td>
-                <td className="border px-4 py-2 gap-2">
-                  <button onClick={() => handleEdit(transaction)}>
-                    <IconPencil />
-                  </button>
-                  <button onClick={() => handleDelete(transaction._id)}>
-                    <IconTrash />
-                  </button>
-                </td>
+
+        {/* Table Wrapper for Responsiveness */}
+        <div className="overflow-x-auto">
+          <table className="min-w-full bg-backgroundGray">
+            <thead>
+              <tr className="text-left">
+                <th className="transition-all sm:text-lg text-sm px-4 py-2">Name</th>
+                <th className="transition-all sm:text-lg text-sm px-4 py-2">Value</th>
+                <th className="transition-all sm:text-lg text-sm px-4 py-2">Tags</th>
+                <th className="transition-all sm:text-lg text-sm px-4 py-2">Description</th>
+                <th className="transition-all sm:text-lg text-sm px-4 py-2">Created</th>
+                <th className="transition-all sm:text-lg text-sm px-4 py-2">Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {transactions.map((transaction: Transaction, index: number) => (
+                <tr
+                  key={transaction._id}
+                  className={index < transactions.length - 1 ? "border-b border-backgroundGrayLight" : ""}
+                >
+                  <td className="px-4 py-2">{transaction.name}</td>
+                  <td className="px-4 py-2">{transaction.value}</td>
+                  <td className="px-4 py-2">
+                    {transaction.tags ? (
+                      <div className="flex flex-wrap gap-1">
+                        {transaction.tags.map((tag, index) => (
+                          <span
+                            key={index}
+                            className="bg-primary text-white px-2 py-1 rounded text-xs"
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      ""
+                    )}
+                  </td>
+                  <td className="px-4 py-2">{transaction.description}</td>
+                  <td className="px-4 py-2 text-sm md:text-base">
+                    {new Date(transaction.createdAt).toLocaleString().length > 20
+                      ? new Date(transaction.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })
+                      : new Date(transaction.createdAt).toLocaleString()}
+                  </td>
+
+                  <td className="px-4 py-2 gap-2">
+                    <button onClick={() => handleEdit(transaction)}>
+                      <IconPencil />
+                    </button>
+                    <button onClick={() => handleDelete(transaction._id)}>
+                      <IconTrash />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </Card>
 
       <Modal open={isModalOpen} onClose={() => setIsModalOpen(false)}>

@@ -86,7 +86,7 @@ export default function Dashboard() {
     };
 
     return (
-        <div className="flex flex-col h-screen w-screen">
+        <div className="flex flex-col h-screen w-screen overflow-x-auto">
             {/* Topbar */}
             <Topbar />
             {/* Gradient background that fills the remaining screen space */}
