@@ -24,15 +24,14 @@ export default function() {
                 <div className="h-full w-full flex justify-center items-center">
                     <div className="w-full h-full flex justify-center items-center">
                         <Card className="min-w-0.5 w-1/4 flex-col justify-center items-center m-10">
-                            <h1 className="text-4xl font-bold p-2">
+                            <h1 className="text-4xl font-bold">
                                 Email Verified
                             </h1>
-                            <div className="flex-col justify-center items-center">
-                                <IconMail className="w-full h-full" />
-                                <p className="text-lg text-center">
+                            <div className="flex-col justify-center">
+                                <p className="text-lg">
                                     Your email has been verified.
                                 </p>
-                                <p className="text-sm text-gray-500 text-center p-1">
+                                <p className="text-sm text-gray-500">
                                     Redirecting to login...
                                 </p>
                             </div>

@@ -42,13 +42,7 @@ let pieOption = {
       labelLine: {
         show: false,
       },
-      data: [
-        { value: 10, name: "Entertainment" },
-        { value: 25, name: "Grocery" },
-        { value: 50, name: "Bills" },
-        { value: 10, name: "Gifts" },
-        { value: 5, name: "Misc" },
-      ],
+      data: [],
     },
   ],
 };
@@ -57,6 +51,7 @@ export default function DashboardView({ user }: DashboardViewProps) {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
+  const [pieData, setPieData] = useState<any[]>([]);
 
   useEffect(() => {
     // Fetch all transactions for the user
@@ -80,8 +75,34 @@ export default function DashboardView({ user }: DashboardViewProps) {
       }
     }
 
-    fetchTransactions();
+    async function fetchSummary() {
+      setLoading(true);
+      setError(null); // Reset error state on each request
+
+      try {
+        const response = await api.get("api/transaction/summary").catch((error) => {
+          console.error(error);
+          setError("Failed to fetch summary.");
+        });
+
+        if (response?.status == 200) {
+          const data = response.data;
+          setPieData(data);
+        }
+      } catch (error: any) {
+        console.error("Error fetching summary:", error);
+        setError("An error occurred while fetching summary.");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchSummary();
   }, [user]); // Dependency array: this will run whenever user.token changes
+
+  useEffect(() => {
+    pieOption.series[0].data = pieData;
+  }, [pieData]);
 
   let option = {
     tooltip: {

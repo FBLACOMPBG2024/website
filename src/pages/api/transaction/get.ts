@@ -35,7 +35,7 @@ async function getTransactions(req: NextApiRequest, res: NextApiResponse) {
     }
 
     // Parse query parameters
-    const { limit = 10, startDate, endDate } = req.query;
+    const { limit = 10, startDate, endDate, filter } = req.query;
 
     // Convert `limit` to a number
     const limitNumber = parseInt(limit as string, 10);
@@ -61,13 +61,33 @@ async function getTransactions(req: NextApiRequest, res: NextApiResponse) {
       dateFilter.date = { ...dateFilter.date, $lte: parsedEndDate };
     }
 
-    // Query the database to get the user's transactions with optional date filters
+    // Parse and validate the filter (tags) parameter
+    let tagsFilter: any = {};
+    if (filter) {
+      let tags: string[] = [];
+      try {
+        tags = JSON.parse(filter as string);
+        if (!Array.isArray(tags) || tags.some(tag => typeof tag !== "string")) {
+          return res
+            .status(400)
+            .json({ message: "Invalid filter format. Must be an array of strings." });
+        }
+      } catch {
+        return res
+          .status(400)
+          .json({ message: "Invalid filter format. Must be a JSON array of strings." });
+      }
+      tagsFilter.tags = { $all: tags }; // Match transactions containing all specified tags
+    }
+
+    // Query the database to get the user's transactions with optional filters
     const transactions = await client
       .db()
       .collection("transactions")
       .find({
         userId: user._id,
         ...dateFilter, // Apply the date filter if provided
+        ...tagsFilter, // Apply the tags filter if provided
       })
       .sort({ date: -1 }) // Sort by creation date, descending
       .limit(limitNumber) // Apply the limit

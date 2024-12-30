@@ -3,7 +3,13 @@ import Card from "@/components/ui/Card";
 import Modal from "@/components/ui/Modal";
 import api from "@/utils/api";
 import TextInput from "@/components/ui/TextInput";
-import { IconPencil, IconTrash, IconPlus, IconUpload } from "@tabler/icons-react";
+import {
+  IconPencil,
+  IconTrash,
+  IconPlus,
+  IconUpload,
+  IconFilter,
+} from "@tabler/icons-react";
 import Papa from "papaparse"; // Import PapaParse for CSV parsing
 
 interface Transaction {
@@ -18,22 +24,44 @@ interface Transaction {
 export default function TransactionsView() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isBulkUploadModalOpen, setIsBulkUploadModalOpen] = useState(false);
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [editTransaction, setEditTransaction] = useState<Transaction | null>(null);
+  const [editTransaction, setEditTransaction] = useState<Transaction | null>(
+    null
+  );
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
-  const [transactionToDelete, setTransactionToDelete] = useState<string | null>(null);
+  const [transactionToDelete, setTransactionToDelete] = useState<string | null>(
+    null
+  );
 
   // Individual state variables for each input
   const [value, setValue] = useState("0.0");
   const [tags, setTags] = useState("");
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [dateTime, setDateTime] = useState(new Date().toISOString().slice(0, 16)); // Default to now
+  const [dateTime, setDateTime] = useState(
+    new Date().toISOString().slice(0, 16)
+  ); // Default to now
+
+  // Filters
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [limit, setLimit] = useState(10);
+  const [tagFilter, setTagFilter] = useState("");
 
   useEffect(() => {
     const fetchTransactions = async () => {
       try {
-        const response = await api.get("/api/transaction/get");
+        const queryParams: any = {
+          limit,
+          startDate,
+          endDate,
+          filter: tags ? JSON.stringify(tagFilter.split(" ")) : undefined, // If tags are provided, format as an array
+        };
+
+        const response = await api.get("/api/transaction/get", {
+          params: queryParams,
+        });
         setTransactions(response.data);
       } catch (error) {
         console.error("Failed to fetch transactions", error);
@@ -41,13 +69,16 @@ export default function TransactionsView() {
     };
 
     fetchTransactions();
-  }, []);
+  }, [tagFilter, startDate, endDate, limit]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     // Remove trailing and leading spaces from tags and split by space
-    const tagsArray = tags.trim().split(" ").map((tag) => tag.trim());
+    const tagsArray = tags
+      .trim()
+      .split(" ")
+      .map((tag) => tag.trim());
     // Prepare payload from individual states
     const payload = {
       value: parseFloat(value) || 0,
@@ -124,25 +155,31 @@ export default function TransactionsView() {
 
   const handleBulkUpload = async (e: React.FormEvent) => {
     e.preventDefault();
-    const fileInput = document.getElementById("csvFileInput") as HTMLInputElement;
+    const fileInput = document.getElementById(
+      "csvFileInput"
+    ) as HTMLInputElement;
     if (fileInput.files && fileInput.files[0]) {
       Papa.parse(fileInput.files[0], {
         header: true,
         complete: async (results) => {
           try {
-
             // Foreach transaction in the CSV, parse and format the data
-            const finalTransactions = results.data.map((transaction: { value: string; tags: string; name: string; description: string; date: string }) => {
+            const finalTransactions = results.data.map((transaction: any) => {
               return {
                 value: parseFloat(transaction.value) || 0,
-                tags: transaction.tags.split(",").map((tag: string) => tag.trim()),
+                tags: transaction.tags
+                  .split(",")
+                  .map((tag: string) => tag.trim()),
                 name: transaction.name,
                 description: transaction.description,
                 date: new Date(transaction.date),
               };
             });
 
-            const response = await api.post("/api/transaction/bulk-add", finalTransactions);
+            const response = await api.post(
+              "/api/transaction/bulk-add",
+              finalTransactions
+            );
             if (response.status === 201) {
               setIsBulkUploadModalOpen(false);
               // Fetch the updated transactions
@@ -161,7 +198,14 @@ export default function TransactionsView() {
     <div>
       <Card className="relative">
         <h1 className="text-2xl font-bold text-text">Transactions</h1>
+
         <div className="absolute top-0 right-0 mt-4 mr-4 flex space-x-2">
+          <button
+            className="transition-all sm:text-lg text-sm px-2 py-1 bg-primary text-white rounded flex items-center"
+            onClick={() => setIsFilterModalOpen(true)}
+          >
+            <IconFilter className="mr-1" /> Filter
+          </button>
           <button
             className="transition-all sm:text-lg text-sm px-2 py-1 bg-primary text-white rounded flex items-center"
             onClick={() => setIsModalOpen(true)}
@@ -181,19 +225,35 @@ export default function TransactionsView() {
           <table className="min-w-full bg-backgroundGray">
             <thead>
               <tr className="text-left">
-                <th className="transition-all sm:text-lg text-sm px-4 py-2">Name</th>
-                <th className="transition-all sm:text-lg text-sm px-4 py-2">Value</th>
-                <th className="transition-all sm:text-lg text-sm px-4 py-2">Tags</th>
-                <th className="transition-all sm:text-lg text-sm px-4 py-2">Description</th>
-                <th className="transition-all sm:text-lg text-sm px-4 py-2">Created</th>
-                <th className="transition-all sm:text-lg text-sm px-4 py-2">Actions</th>
+                <th className="transition-all sm:text-lg text-sm px-4 py-2">
+                  Name
+                </th>
+                <th className="transition-all sm:text-lg text-sm px-4 py-2">
+                  Value
+                </th>
+                <th className="transition-all sm:text-lg text-sm px-4 py-2">
+                  Tags
+                </th>
+                <th className="transition-all sm:text-lg text-sm px-4 py-2">
+                  Description
+                </th>
+                <th className="transition-all sm:text-lg text-sm px-4 py-2">
+                  Created
+                </th>
+                <th className="transition-all sm:text-lg text-sm px-4 py-2">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody>
               {transactions.map((transaction: Transaction, index: number) => (
                 <tr
                   key={index}
-                  className={index < transactions.length - 1 ? "border-b border-backgroundGrayLight" : ""}
+                  className={
+                    index < transactions.length - 1
+                      ? "border-b border-backgroundGrayLight"
+                      : ""
+                  }
                 >
                   <td className="px-4 py-2">{transaction.name}</td>
                   <td className="px-4 py-2">{transaction.value}</td>
@@ -302,7 +362,10 @@ export default function TransactionsView() {
         </form>
       </Modal>
 
-      <Modal open={isBulkUploadModalOpen} onClose={() => setIsBulkUploadModalOpen(false)}>
+      <Modal
+        open={isBulkUploadModalOpen}
+        onClose={() => setIsBulkUploadModalOpen(false)}
+      >
         <form onSubmit={handleBulkUpload}>
           <h1 className="text-2xl font-bold text-text">Bulk Upload</h1>
           <div>
@@ -326,10 +389,16 @@ export default function TransactionsView() {
         </form>
       </Modal>
 
-      <Modal open={isConfirmModalOpen} onClose={() => setIsConfirmModalOpen(false)}>
+      <Modal
+        open={isConfirmModalOpen}
+        onClose={() => setIsConfirmModalOpen(false)}
+      >
         <div className="p-4">
           <h2 className="text-xl font-bold text-text">Are you sure?</h2>
-          <p className="text-text">Do you really want to delete this transaction? This process cannot be undone.</p>
+          <p className="text-text">
+            Do you really want to delete this transaction? This process cannot
+            be undone.
+          </p>
           <div className="flex justify-end mt-4">
             <button
               className="mr-2 px-4 py-2 bg-gray-300 text-gray-800 rounded"
@@ -344,6 +413,41 @@ export default function TransactionsView() {
               Delete
             </button>
           </div>
+        </div>
+      </Modal>
+
+      <Modal
+        open={isFilterModalOpen}
+        onClose={() => setIsFilterModalOpen(false)}
+      >
+        {/* Filter Inputs */}
+        <div className="flex flex-wrap gap-4 mb-4">
+          <TextInput
+            type="text"
+            placeholder="Filter by tags (space separated)"
+            value={tagFilter}
+            onChange={(e) => setTagFilter(e.target.value)}
+            className="w-full sm:w-auto"
+          />
+          <TextInput
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            className="w-full sm:w-auto"
+          />
+          <TextInput
+            type="date"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+            className="w-full sm:w-auto"
+          />
+          <TextInput
+            type="number"
+            value={limit}
+            onChange={(e) => setLimit(Number(e.target.value))}
+            placeholder="Limit"
+            className="w-full sm:w-auto"
+          />
         </div>
       </Modal>
     </div>
