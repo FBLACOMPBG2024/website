@@ -6,6 +6,7 @@ const TransactionSchema = z.object({
     tags: z.array(z.string()),
     name: z.string(),
     description: z.string().optional(),
+    date: z.string().optional(),
 });
 
 export default TransactionSchema;

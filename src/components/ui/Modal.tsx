@@ -23,20 +23,17 @@ export default function Modal({
           transition={{ duration: 0.2 }}
           className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center min-h-[91vh]"
         >
-          <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            exit={{ scale: 0 }}
-            transition={{ duration: 0.2 }}
+          <div
             className="relative bg-background p-4 rounded-md"
           >
             <button className="absolute top-2 right-2" onClick={onClose}>
               <IconX />
             </button>
             {children}
-          </motion.div>
+          </div>
         </motion.div>
-      )}
-    </AnimatePresence>
+      )
+      }
+    </AnimatePresence >
   );
 }

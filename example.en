@@ -1,8 +1,0 @@
-MONGODB_URI=mongodb://127.0.0.1:27017/SmartSpend
-AUTH_SECRET=
-RESEND_API_KEY=
-NODE_ENV=development
-URL=http://127.0.0.1:3000/
-API_URL=http://127.0.0.1:3000//api/
-CLIENT_ID=
-CLIENT_SECRET=

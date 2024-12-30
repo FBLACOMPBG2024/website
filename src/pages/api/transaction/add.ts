@@ -31,7 +31,7 @@ export default async function handler(
       // Validate and parse the request body using the zod schema
       const parsedBody = TransactionSchema.parse(req.body);
 
-      const { value, tags, name, description } = parsedBody;
+      const { value, tags, name, description, date } = parsedBody;
 
       // Create the transaction object
       const transaction = {
@@ -41,7 +41,7 @@ export default async function handler(
         name,
         description,
         userId: user._id,
-        createdAt: new Date(),
+        date: date || new Date(),
       };
 
       // Insert the transaction into the database

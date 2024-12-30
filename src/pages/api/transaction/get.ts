@@ -50,7 +50,7 @@ async function getTransactions(req: NextApiRequest, res: NextApiResponse) {
       if (isNaN(parsedStartDate.getTime())) {
         return res.status(400).json({ message: "Invalid startDate format" });
       }
-      dateFilter.createdAt = { $gte: parsedStartDate };
+      dateFilter.date = { $gte: parsedStartDate };
     }
     if (endDate) {
       const parsedEndDate = new Date(endDate as string);
@@ -58,7 +58,7 @@ async function getTransactions(req: NextApiRequest, res: NextApiResponse) {
         return res.status(400).json({ message: "Invalid endDate format" });
       }
       // Make sure the end date is inclusive
-      dateFilter.createdAt = { ...dateFilter.createdAt, $lte: parsedEndDate };
+      dateFilter.date = { ...dateFilter.date, $lte: parsedEndDate };
     }
 
     // Query the database to get the user's transactions with optional date filters
@@ -69,7 +69,7 @@ async function getTransactions(req: NextApiRequest, res: NextApiResponse) {
         userId: user._id,
         ...dateFilter, // Apply the date filter if provided
       })
-      .sort({ createdAt: -1 }) // Sort by creation date, descending
+      .sort({ date: -1 }) // Sort by creation date, descending
       .limit(limitNumber) // Apply the limit
       .toArray();
 
