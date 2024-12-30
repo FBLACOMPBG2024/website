@@ -73,7 +73,7 @@ export default function Dashboard() {
             case "Dashboard":
                 return <DashboardView user={user} />;
             case "Transactions":
-                return <TransactionsView user={user} />;
+                return <TransactionsView />;
             case "Profile":
                 return <ProfileView user={user} />;
             case "Settings":

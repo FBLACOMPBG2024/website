@@ -1,8 +1,7 @@
 import { NextApiRequest, NextApiResponse } from "next";
-
+import { generateLink } from "@/utils/generateLink";
+import { sendEmailVerification } from "@/utils/email";
 import client from "@/lib/mongodb";
-import { generateEmailLink } from "@/utils/generateEmailLink";
-import { sendEmail } from "@/utils/sendEmail";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     if (req.method === 'POST') {
@@ -40,19 +39,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
 
         // Generate a new link
-        const link = await generateEmailLink(email);
+        const link = await generateLink(email, "email-verification");
 
         // Send the email
-        const emailResponse = await sendEmail(user.firstName, link, email);
+        const emailResponse = await sendEmailVerification(user.firstName, link, email);
 
+        // If the email failed to send, return an error
         if (!emailResponse) {
             res.status(500).json({ message: 'Failed to send email' });
             return;
         }
 
+        // Return a success message
         res.status(200).json({ message: 'Email sent' });
-
-
     } else {
         res.setHeader('Allow', ['POST']);
         res.status(405).end(`Method ${req.method} Not Allowed`);

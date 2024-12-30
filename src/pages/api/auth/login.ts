@@ -1,6 +1,6 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import client from "@/lib/mongodb";
 import LoginSchema from "@/schemas/loginSchema";
+import client from "@/lib/mongodb";
 import argon2 from "argon2";
 import cookie from "cookie";
 
@@ -19,7 +19,7 @@ export default async function handler(
       return;
     }
 
-    let { email, password } = inputData;
+    const { email, password } = inputData;
 
     // Get the user from the database
     const user = await client

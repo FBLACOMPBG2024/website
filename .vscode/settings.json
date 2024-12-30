@@ -4,5 +4,5 @@
         "tailwindcss",
         "Topbar"
     ],
-    "editor.formatOnSave": true,
+    "editor.formatOnSave": false,
 }

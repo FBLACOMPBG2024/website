@@ -1,10 +1,11 @@
+
 import { Html, Head, Body, Tailwind } from "@react-email/components";
-interface EmailTemplateProps {
+interface ResetPasswordEmailTemplateProps {
     name: string;
     link: string;
 }
 
-export const EmailTemplate: React.FC<Readonly<EmailTemplateProps>> = ({
+export const ResetPasswordEmailTemplate: React.FC<Readonly<ResetPasswordEmailTemplateProps>> = ({
     name,
     link
 }) => (
@@ -26,14 +27,14 @@ export const EmailTemplate: React.FC<Readonly<EmailTemplateProps>> = ({
             }
         }}>
             <Head>
-                <title>Verify Email</title>
+                <title>Reset Password</title>
             </Head>
             <Body>
                 <div className="flex justify-center items-center h-screen">
                     <div className="bg-backgroundGray p-6 rounded-lg shadow-lg w-1/2">
-                        <h1 className="text-text text-4xl font-bold mb-4">Welcome, {name}!</h1>
-                        <p className="text-text text-lg mb-4">Please click the link below to verify your email:</p>
-                        <a href={link} className="text-primary text-lg underline">Verify Email</a>
+                        <h1 className="text-text text-4xl font-bold mb-4">Hello, {name}</h1>
+                        <p className="text-text text-lg mb-4">Please click the link below to reset your password:</p>
+                        <a href={link} className="text-primary text-lg underline">Reset Password</a>
                     </div>
                 </div>
             </Body>

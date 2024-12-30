@@ -1,10 +1,10 @@
-import { useEffect } from "react";
-import { useRouter } from "next/router";
+import { IconMail } from "@tabler/icons-react";
 import Topbar from "@/components/ui/Topbar";
 import Card from "@/components/ui/Card";
-import { IconMail } from "@tabler/icons-react";
+import { useRouter } from "next/router";
+import { useEffect } from "react";
 
-export default function Dashboard() {
+export default function() {
     const router = useRouter();
 
     useEffect(() => {

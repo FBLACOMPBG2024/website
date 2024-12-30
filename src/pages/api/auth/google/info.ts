@@ -1,6 +1,6 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import Cors from "cors";
 import api from "@/utils/api";
+import Cors from "cors";
 
 // Initialize CORS middleware
 const cors = Cors({

@@ -17,7 +17,6 @@ export default function Login() {
   const [message, setMessage] = useState("");
   const [isEmailValid, setIsEmailValid] = useState(true);
   const [isPasswordValid, setIsPasswordValid] = useState(true);
-  // Couldn't think of a better name but it is used to check if the user has entered something wrong 
   const [isBad, setIsBad] = useState(false);
 
   const login = useGoogleLogin({
@@ -26,7 +25,7 @@ export default function Login() {
         code,
       });
 
-      let response = await api.post("/api/auth/google/login", {
+      const response = await api.post("/api/auth/google/login", {
         access_token: tokens.data.access_token,
       }).catch((error) => {
         setMessage(error.response.data.message);
@@ -62,7 +61,6 @@ export default function Login() {
       return;
     }
 
-
     const response = await api.post("/api/auth/login", {
       email,
       password,
@@ -70,8 +68,7 @@ export default function Login() {
       if (error.response?.data) {
         setMessage(error.response.data.message);
         setIsBad(true);
-      }
-      else {
+      } else {
         setMessage("An error occurred");
         setIsBad(true);
       }
@@ -82,6 +79,26 @@ export default function Login() {
       router.push("/dashboard");
     }
   }
+
+  const handleResetPassword = async () => {
+    if (!email) {
+      setMessage("Email is required");
+      setIsBad(true);
+      return;
+    }
+  
+    try {
+      const response = await api.post("/api/auth/request-password-reset", { email });
+      if (response.status === 200) {
+        setMessage("Password reset link sent to your email.");
+        setIsBad(false);
+      }
+    } catch (error) {
+      setMessage(error.response?.data?.message || "An error occurred");
+      setIsBad(true);
+    }
+  };
+  
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
@@ -118,10 +135,13 @@ export default function Login() {
                   Login with Google
                 </div>
               </button>
+              <p className="text-sm text-center">
+                Forgot your password? <span className="text-primary cursor-pointer" onClick={() => handleResetPassword()}>Reset it here</span>
+              </p>
             </div>
           </Card>
         </div>
       </div>
     </div >
-  )
+  );
 }

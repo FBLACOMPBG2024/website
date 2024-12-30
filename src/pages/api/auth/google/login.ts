@@ -1,8 +1,6 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import client from "@/lib/mongodb";
 import api from "@/utils/api";
-import { generateEmailLink } from "@/utils/generateEmailLink";
-import { sendEmail } from "@/utils/sendEmail";
 import cookie from "cookie";
 
 export default async function handler(

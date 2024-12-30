@@ -1,30 +1,35 @@
 import { NextApiRequest, NextApiResponse } from "next";
-
 import client from "@/lib/mongodb";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     if (req.method === 'GET') {
         const link = await client.db().collection("links").findOne({ token: req.query.token });
 
-        if (!link) {
+        // Ensure the link exists and is of the type "email-verification"
+        if (!link || link.type !== 'reset-password') {
             res.status(404).json({ message: 'Invalid link' });
             return;
         }
 
+        // Check if the link has expired
         if (link.expires < new Date()) {
             res.status(404).json({ message: 'Link expired' });
             return;
         }
-        const user = await client.db().collection("users").updateOne({ email: link.targetEmail }, { $set: { emailVerified: true } });
 
-        if (!user) {
-            res.status(500).json({ message: 'User not found' });
+        if (link.used) {
+            res.status(400).json({ message: 'Link already used' });
             return;
         }
 
+        // Set the user's flag to reset the password
+        await client.db().collection("users").updateOne({ email: link.targetEmail }, { $set: { resetPassword: true } });
+
+        // Update the link to be used
         await client.db().collection("links").updateOne({ token: req.query.token }, { $set: { used: true, usedAt: new Date(Date.now()) } });
 
-        res.status(200).redirect(process.env.URL + '/email/verified');
+        // Redirect the user to the reset password page
+        res.status(200).redirect(process.env.URL + '/password/set?token=' + req.query.token);
     } else {
         res.setHeader('Allow', ['GET']);
         res.status(405).end(`Method ${req.method} Not Allowed`);

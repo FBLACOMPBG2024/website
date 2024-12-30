@@ -1,27 +1,31 @@
-import { IconMail } from "@tabler/icons-react";
 import Topbar from "@/components/ui/Topbar";
 import Card from "@/components/ui/Card";
 import { useRouter } from "next/router";
 import { useState } from "react";
 import api from "@/utils/api";
+import TextInput from "@/components/ui/TextInput";
 
-export default function Dashboard() {
+export default function Update() {
     const router = useRouter();
-    const email = router.query.email as string;
+
+    // Add the password 
+    const [password, setPassword] = useState("");
 
     const [message, setMessage] = useState("");
     // Couldn't think of a better name but it is used to check if the user has entered something wrong 
     const [isBad, setIsBad] = useState(false);
 
-    const handleResendEmail = async () => {
-        if (!email) {
-            setMessage("Email is required");
+    // Add the handleResendEmail function
+    const handlePasswordSet = async () => {
+        if (!password) {
+            setMessage("Password is required");
             setIsBad(true);
             return;
         }
 
-        const response = await api.post("/api/auth/resend-email", {
-            email: email,
+        const response = await api.post("/api/auth/set-password", {
+            password: password,
+            token: router.query.token as string,
         }).catch((error) => {
             if (error.response?.data) {
                 setMessage(error.response.data.message);
@@ -33,12 +37,15 @@ export default function Dashboard() {
             }
         });
 
-
         if (response?.status === 200) {
-            setMessage("Email sent");
+            setMessage("Password updated");
             setIsBad(false);
+
+            // Redirect to the login page
+            router.push("/login");
         }
     }
+
 
     return (
         <div className="flex flex-col h-screen w-screen">
@@ -50,21 +57,19 @@ export default function Dashboard() {
                     <div className="w-full h-full flex justify-center items-center">
                         <Card className="min-w-96 w-1/4 flex-col justify-center items-center m-10">
                             <h1 className="text-4xl font-bold">
-                                Email Verification
+                                Password Reset
                             </h1>
                             <div className="flex-col justify-center items-center">
                                 <p className="text-lg">
-                                    Please check your email for a verification link.
+                                    Enter your new password.
                                 </p>
-                                <p className="text-sm text-gray-500">
-                                    If you did not receive an email (Be sure to check your spam folder), you can request another one.
-                                </p>
-
+                                <TextInput type="password" placeholder="" value={password} onChange={(e) => setPassword(e.target.value)} >
+                                </TextInput>
                                 <p className={`text-sm text-center ${isBad ? 'text-red-500' : 'text-text'}`}  >
                                     {message}
                                 </p>
-                                <button className="text-lg transition-all duration-300 hover:bg-primary/80 bg-primary p-2 rounded-md shadow-md w-full my-1" onClick={handleResendEmail}>
-                                    Request another email
+                                <button className="text-lg transition-all duration-300 hover:bg-primary/80 bg-primary p-2 rounded-md shadow-md w-full my-1" onClick={handlePasswordSet}>
+                                    Reset
                                 </button>
                             </div>
                         </Card>

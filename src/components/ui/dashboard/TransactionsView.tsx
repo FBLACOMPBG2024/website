@@ -132,7 +132,7 @@ export default function TransactionsView() {
           try {
 
             // Foreach transaction in the CSV, parse and format the data
-            const finalTransactions = results.data.map((transaction: any) => {
+            const finalTransactions = results.data.map((transaction: { value: string; tags: string; name: string; description: string; date: string }) => {
               return {
                 value: parseFloat(transaction.value) || 0,
                 tags: transaction.tags.split(",").map((tag: string) => tag.trim()),

@@ -1,8 +1,8 @@
 import { NextApiRequest, NextApiResponse } from 'next';
+import { generateLink } from "@/utils/generateLink";
+import { sendEmailVerification } from "@/utils/email";
 import client from "@/lib/mongodb";
 import api from "@/utils/api";
-import { generateEmailLink } from "@/utils/generateEmailLink";
-import { sendEmail } from "@/utils/sendEmail";
 
 export default async function handler(
     req: NextApiRequest,
@@ -61,8 +61,8 @@ export default async function handler(
                 return;
             }
 
-            const link = await generateEmailLink(email);
-            const emailResponse = await sendEmail(firstName, link, email);
+            const link = await generateLink(email, "email-verification");
+            const emailResponse = await sendEmailVerification(firstName, link, email);
 
             if (!emailResponse) {
                 res.status(500).json({ message: 'Failed to send email' });

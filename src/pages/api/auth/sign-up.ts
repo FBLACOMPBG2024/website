@@ -1,9 +1,10 @@
 import { NextApiRequest, NextApiResponse } from "next";
+import { generateLink } from "@/utils/generateLink";
 import SignUpSchema from "@/schemas/signupSchema";
+import { sendEmailVerification } from "@/utils/email";
 import client from "@/lib/mongodb";
 import argon2 from "argon2";
-import { generateEmailLink } from "@/utils/generateEmailLink";
-import { sendEmail } from "@/utils/sendEmail";
+
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
@@ -63,8 +64,8 @@ export default async function handler(
       return;
     }
 
-    const link = await generateEmailLink(email);
-    const emailResponse = await sendEmail(firstName, link, email);
+    const link = await generateLink(email, "email-verification");
+    const emailResponse = await sendEmailVerification(firstName, link, email);
 
     if (!emailResponse) {
       res.status(500).json({ message: "Failed to send email" });
@@ -80,12 +81,11 @@ export default async function handler(
 
       return;
     }
-
     res
       .status(200)
       .json({ message: "Sign up successful, awaiting email verification" });
   } else {
-    res.setHeader("Allow", ["GET"]);
+    res.setHeader("Allow", ["POST"]);
     res.status(405).end(`Method ${req.method} Not Allowed`);
   }
 }
