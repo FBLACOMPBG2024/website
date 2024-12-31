@@ -3,18 +3,13 @@ import client from "@/lib/mongodb";
 import { ObjectId } from "mongodb";
 import cookie from "cookie";
 
-type Transaction = {
-  value: number;
-  name: string;
-};
-
-type SummaryResponse = {
-  data: Transaction[];
-};
+// This endpoint is used to get a summary of the user's transactions
+// It returns a list of tags and the sum of values for each tag
+// It is used to display a summary of the user's transactions
 
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse<SummaryResponse>
+  res: NextApiResponse,
 ) {
   if (req.method === "GET") {
     return await getSummary(req, res);
@@ -24,10 +19,7 @@ export default async function handler(
   }
 }
 
-async function getSummary(
-  req: NextApiRequest,
-  res: NextApiResponse<SummaryResponse>
-) {
+async function getSummary(req: NextApiRequest, res: NextApiResponse) {
   try {
     const cookies = cookie.parse(req.headers.cookie || "");
     const token = cookies.token || "";
@@ -52,18 +44,16 @@ async function getSummary(
       .find({ userId: user._id })
       .toArray();
 
-    // Calculate the summary
-    const summary = transactions.reduce((acc, transaction) => {
-      if (transaction.value > 0) {
-        acc.push({
-          value: transaction.value,
-          name: transaction.name,
-        });
+    // Make a list of tags and a value sum for each tag
+    const tags: { [key: string]: number } = {};
+    for (const transaction of transactions) {
+      for (const tag of transaction.tags) {
+        tags[tag] = (tags[tag] || 0) + transaction.value;
       }
-      return acc;
-    }, [] as Transaction[]);
+    }
 
-    return res.status(200).json(summary);
+    // Return the summary
+    return res.status(200).json({ data: tags });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: "Internal Server Error" });

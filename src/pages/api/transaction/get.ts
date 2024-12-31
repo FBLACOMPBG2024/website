@@ -3,9 +3,13 @@ import client from "@/lib/mongodb";
 import { ObjectId } from "mongodb";
 import cookie from "cookie";
 
+// This endpoint is used to get the user's transactions
+// It returns a list of transactions for the user
+// It can be filtered by tag, date range, and limit
+
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse
+  res: NextApiResponse,
 ) {
   if (req.method === "GET") {
     return await getTransactions(req, res);
@@ -44,7 +48,7 @@ async function getTransactions(req: NextApiRequest, res: NextApiResponse) {
     }
 
     // Build the date range filter
-    let dateFilter: any = {};
+    const dateFilter: any = {};
     if (startDate) {
       const parsedStartDate = new Date(startDate as string);
       if (isNaN(parsedStartDate.getTime())) {
@@ -67,15 +71,18 @@ async function getTransactions(req: NextApiRequest, res: NextApiResponse) {
       let tags: string[] = [];
       try {
         tags = JSON.parse(filter as string);
-        if (!Array.isArray(tags) || tags.some(tag => typeof tag !== "string")) {
-          return res
-            .status(400)
-            .json({ message: "Invalid filter format. Must be an array of strings." });
+        if (
+          !Array.isArray(tags) ||
+          tags.some((tag) => typeof tag !== "string")
+        ) {
+          return res.status(400).json({
+            message: "Invalid filter format. Must be an array of strings.",
+          });
         }
       } catch {
-        return res
-          .status(400)
-          .json({ message: "Invalid filter format. Must be a JSON array of strings." });
+        return res.status(400).json({
+          message: "Invalid filter format. Must be a JSON array of strings.",
+        });
       }
       tagsFilter.tags = { $all: tags }; // Match transactions containing all specified tags
     }

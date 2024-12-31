@@ -1,3 +1,8 @@
 {
-  "extends": ["next/core-web-vitals", "next/typescript"]
+  "extends": ["next/core-web-vitals", "next/typescript"],
+  "rules": {
+    "typescript/no-throw-literal": "off",
+    "@typescript-eslint/no-explicit-any": "off",
+    "no-restricted-syntax": ["error", "CatchClause[parameter.type='Error']"]
+  }
 }

@@ -4,9 +4,12 @@ import client from "@/lib/mongodb";
 import { ObjectId } from "mongodb";
 import cookie from "cookie";
 
+// This endpoint is used to create a new transaction
+// It is used to create a new transaction and add it to the user's transaction list
+
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse
+  res: NextApiResponse,
 ) {
   if (req.method === "POST") {
     // Get user from request cookie
@@ -53,7 +56,7 @@ export default async function handler(
         .collection("users")
         .updateOne(
           { _id: user._id },
-          { $addToSet: { transactions: transaction._id } }
+          { $addToSet: { transactions: transaction._id } },
         );
 
       const transactions = await client
@@ -65,7 +68,7 @@ export default async function handler(
       // Calculate the balance
       const balance = transactions.reduce(
         (acc, transaction) => acc + transaction.value,
-        0
+        0,
       );
 
       // Update user balance

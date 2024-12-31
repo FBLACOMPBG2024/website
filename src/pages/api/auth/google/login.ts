@@ -3,24 +3,30 @@ import client from "@/lib/mongodb";
 import api from "@/utils/api";
 import cookie from "cookie";
 
+// This file defines the API route that allows the user to login with Google
+// It uses the Google OAuth2 API to authenticate the user
+
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse
+  res: NextApiResponse,
 ) {
   if (req.method === "POST") {
     try {
       const access_token = req.body.access_token;
 
+      // Check if the access token is present
       if (!access_token) {
         res.status(400).json({ message: "No access token" });
       }
 
+      // Get the user's information from Google
       const userInfo = await api
         .get("https://www.googleapis.com/oauth2/v3/userinfo", {
           headers: { Authorization: `Bearer ${access_token}` },
         })
         .then((res) => res.data);
 
+      // Get the user's email
       const email = userInfo.email;
 
       if (!email) {
@@ -36,6 +42,7 @@ export default async function handler(
         res.status(400).json({ message: "User does not exist" });
       }
 
+      // Set the user's token in a cookie
       res.setHeader(
         "Set-Cookie",
         cookie.serialize("token", user?._id.toString() || "", {
@@ -44,9 +51,10 @@ export default async function handler(
           maxAge: 60 * 60 * 24 * 7, // 1 week
           sameSite: "strict",
           path: "/",
-        })
+        }),
       );
 
+      // Return the user's information
       res.status(200).json({ message: "Login successful", user: user });
     } catch (error) {
       console.error("Google sign-up error:", error);

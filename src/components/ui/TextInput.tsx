@@ -1,6 +1,10 @@
 import React, { ReactNode } from "react";
 import clsx from "clsx";
 
+// This is a reusable text input component
+// It's used to get user input
+// It's a simple text input with a border and a placeholder
+
 interface TextInputProps {
   children?: ReactNode;
   className?: string;
@@ -30,7 +34,7 @@ export default function TextInput({
     <div
       className={clsx(
         "transition-colors duration-500 text-lg bg-backgroundGrayLight p-2 rounded-md shadow-md text-neutral-500 outline-none border-b border-b-backgroundGrayLight focus-within:border-b-primary ",
-        className
+        className,
       )}
     >
       {name && (

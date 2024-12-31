@@ -4,9 +4,12 @@ import client from "@/lib/mongodb";
 import { ObjectId } from "mongodb";
 import cookie from "cookie";
 
+// This endpoint is used to create and edit transactions
+// It is used to create a new transaction and edit an existing transaction
+
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse
+  res: NextApiResponse,
 ) {
   if (req.method === "POST") {
     return await createTransaction(req, res);
@@ -132,7 +135,7 @@ async function editTransaction(req: NextApiRequest, res: NextApiResponse) {
     // Calculate the balance
     const balance = transactions.reduce(
       (acc, transaction) => acc + transaction.value,
-      0
+      0,
     );
 
     // Update user balance

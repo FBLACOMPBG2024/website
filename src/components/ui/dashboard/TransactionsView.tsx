@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
-import Card from "@/components/ui/Card";
-import Modal from "@/components/ui/Modal";
-import api from "@/utils/api";
 import TextInput from "@/components/ui/TextInput";
+import { useState, useEffect } from "react";
+import Modal from "@/components/ui/Modal";
+import Card from "@/components/ui/Card";
+import api from "@/utils/api";
 import {
   IconPencil,
   IconTrash,
@@ -27,11 +27,11 @@ export default function TransactionsView() {
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [editTransaction, setEditTransaction] = useState<Transaction | null>(
-    null
+    null,
   );
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [transactionToDelete, setTransactionToDelete] = useState<string | null>(
-    null
+    null,
   );
 
   // Individual state variables for each input
@@ -40,15 +40,16 @@ export default function TransactionsView() {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [dateTime, setDateTime] = useState(
-    new Date().toISOString().slice(0, 16)
+    new Date().toISOString().slice(0, 16),
   ); // Default to now
 
   // Filters
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  const [limit, setLimit] = useState(10);
+  const [limit, setLimit] = useState("20"); // Default to 20
   const [tagFilter, setTagFilter] = useState("");
 
+  // TODO: Make this update on a delay instead of spamming each time it is changed
   useEffect(() => {
     const fetchTransactions = async () => {
       try {
@@ -56,7 +57,7 @@ export default function TransactionsView() {
           limit,
           startDate,
           endDate,
-          filter: tags ? JSON.stringify(tagFilter.split(" ")) : undefined, // If tags are provided, format as an array
+          filter: tagFilter ? JSON.stringify(tagFilter.split(" ")) : undefined, // If tags are provided, format as an array
         };
 
         const response = await api.get("/api/transaction/get", {
@@ -156,7 +157,7 @@ export default function TransactionsView() {
   const handleBulkUpload = async (e: React.FormEvent) => {
     e.preventDefault();
     const fileInput = document.getElementById(
-      "csvFileInput"
+      "csvFileInput",
     ) as HTMLInputElement;
     if (fileInput.files && fileInput.files[0]) {
       Papa.parse(fileInput.files[0], {
@@ -178,7 +179,7 @@ export default function TransactionsView() {
 
             const response = await api.post(
               "/api/transaction/bulk-add",
-              finalTransactions
+              finalTransactions,
             );
             if (response.status === 201) {
               setIsBulkUploadModalOpen(false);
@@ -256,7 +257,12 @@ export default function TransactionsView() {
                   }
                 >
                   <td className="px-4 py-2">{transaction.name}</td>
-                  <td className="px-4 py-2">{transaction.value}</td>
+                  <td className="px-4 py-2">
+                    {transaction.value.toLocaleString("en-US", {
+                      style: "currency",
+                      currency: "USD",
+                    })}
+                  </td>
                   <td className="px-4 py-2">
                     {transaction.tags ? (
                       <div className="flex flex-wrap gap-1">
@@ -431,13 +437,13 @@ export default function TransactionsView() {
             className="w-full sm:w-auto"
           />
           <TextInput
-            type="date"
+            type="datetime-local"
             value={startDate}
             onChange={(e) => setStartDate(e.target.value)}
             className="w-full sm:w-auto"
           />
           <TextInput
-            type="date"
+            type="datetime-local"
             value={endDate}
             onChange={(e) => setEndDate(e.target.value)}
             className="w-full sm:w-auto"
@@ -445,7 +451,7 @@ export default function TransactionsView() {
           <TextInput
             type="number"
             value={limit}
-            onChange={(e) => setLimit(Number(e.target.value))}
+            onChange={(e) => setLimit(e.target.value)}
             placeholder="Limit"
             className="w-full sm:w-auto"
           />

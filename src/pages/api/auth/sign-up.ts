@@ -5,9 +5,13 @@ import { sendEmailVerification } from "@/utils/email";
 import client from "@/lib/mongodb";
 import argon2 from "argon2";
 
+// This endpoint is used to sign up a new user
+// It will create a new user in the database
+// It will send an email verification link to the user's email
+
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse
+  res: NextApiResponse,
 ) {
   if (req.method === "POST") {
     // Get information from the request
@@ -64,14 +68,17 @@ export default async function handler(
       return;
     }
 
+    // Generate a new link
     const link = await generateLink(email, "email-verification");
     const emailResponse = await sendEmailVerification(firstName, link, email);
 
+    // If the email failed to send, return an error
     if (!emailResponse) {
       res.status(500).json({ message: "Failed to send email" });
       return;
     }
 
+    // If the email failed to send, return an error
     if (emailResponse.error) {
       console.error(emailResponse.error);
       res.status(500).json({ message: "Failed to send email" });

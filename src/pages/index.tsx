@@ -25,7 +25,12 @@ export default function Home() {
               </div>
             </div>
             <div className="w-[50vh] h-[70vh] relative">
-              <Image src="/phone.png" alt="Phone" layout="fill" objectFit="contain" />
+              <Image
+                src="/phone.png"
+                alt="Phone"
+                layout="fill"
+                objectFit="contain"
+              />
             </div>
           </div>
         </div>

@@ -1,9 +1,19 @@
-import Card from "@/components/ui/Card";
+import { useEffect } from "react";
+import router from "next/router";
+
+// This just redirects the user to the logout page
+// It's a dummy component that does nothing but allow the user to logout
 
 export default function LogoutView() {
-    return (
-        <Card className="h-full w-full" >
-            <h1 className="text-2xl font-bold text-text">Log out</h1>
-        </Card>
-    );
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    // Redirect the user to the logout page
+    router.push("/logout");
+  });
+
+  // Just return an empty fragment
+  return <></>;
 }

@@ -1,12 +1,38 @@
-import Card from "@/components/ui/Card";
-import TextInput from "@/components/ui/TextInput";
 import { IUser } from "@/components/context/UserContext";
+import TextInput from "@/components/ui/TextInput";
+import Card from "@/components/ui/Card";
+import { useState } from "react";
+import Router from "next/router";
+import api from "@/utils/api";
+
+// This is the profile view component
+// It allows the user to view and update their profile information
 
 interface ProfileViewProps {
   user: IUser;
 }
 
 export default function ProfileView({ user }: ProfileViewProps) {
+  // Hold the user's updated information
+  const [firstName, setFirstName] = useState(user.firstName);
+  const [lastName, setLastName] = useState(user.lastName);
+  const [email, setEmail] = useState(user.email);
+
+  // Make a function to update the user's profile
+  async function updateUserProfile() {
+    // Make a POST request to the API updating the user's information
+    const response = await api.post("/api/user/info", {
+      firstName: firstName,
+      lastName: lastName,
+      email: email,
+    });
+
+    // If the response is successful, update the user context by reloading the page
+    if (response.status === 200) {
+      Router.reload();
+    }
+  }
+
   return (
     <Card className="h-full w-full">
       <h1 className="text-2xl font-bold text-text">Profile</h1>
@@ -16,8 +42,10 @@ export default function ProfileView({ user }: ProfileViewProps) {
           <TextInput
             className="w-fit"
             placeholder="First Name"
-            value={user.firstName}
-            onChange={(e) => {}}
+            value={firstName}
+            onChange={(e) => {
+              setFirstName(e.target.value);
+            }}
           />
         </div>
         <div className="flex flex-col gap-2">
@@ -25,8 +53,10 @@ export default function ProfileView({ user }: ProfileViewProps) {
           <TextInput
             className="w-fit"
             placeholder="Last Name"
-            value={user.lastName}
-            onChange={(e) => {}}
+            value={lastName}
+            onChange={(e) => {
+              setLastName(e.target.value);
+            }}
           />
         </div>
       </div>
@@ -35,15 +65,19 @@ export default function ProfileView({ user }: ProfileViewProps) {
         <TextInput
           className="w-fit"
           placeholder="Email"
-          value={user.email}
-          onChange={(e) => {}}
+          value={email}
+          onChange={(e) => {
+            setEmail(e.target.value);
+          }}
         />
       </div>
       <div className="flex flex-row justify-end">
         {/* Save Button (Right Aligned) */}
         <button
           className="text-lg bg-backgroundGrayLight rounded-md shadow-md py-1 px-10"
-          onClick={() => {}}
+          onClick={() => {
+            updateUserProfile();
+          }}
         >
           Save
         </button>

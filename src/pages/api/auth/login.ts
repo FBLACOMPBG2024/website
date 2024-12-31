@@ -4,14 +4,17 @@ import client from "@/lib/mongodb";
 import argon2 from "argon2";
 import cookie from "cookie";
 
+// This file defines the API route that allows the user to log in
+
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse
+  res: NextApiResponse,
 ) {
   if (req.method === "POST") {
     const inputData = req.body;
 
     const result = LoginSchema.safeParse(inputData);
+    // Parse login data with zod to ensure its all correct for us
     if (!result.success) {
       res
         .status(400)
@@ -40,11 +43,13 @@ export default async function handler(
       return;
     }
 
+    // Check if the user has verified their email
     if (!user.emailVerified) {
       res.status(401).json({ message: "Awaiting email verification" });
       return;
     }
 
+    // Set the user's token in a cookie
     res.setHeader(
       "Set-Cookie",
       cookie.serialize("token", user._id.toString(), {
@@ -53,9 +58,10 @@ export default async function handler(
         maxAge: 60 * 60 * 24 * 7, // 1 week
         sameSite: "strict",
         path: "/",
-      })
+      }),
     );
 
+    // Return the user's information
     res.status(200).json({ message: "Login successful", user: user });
   } else {
     res.setHeader("Allow", ["POST"]);

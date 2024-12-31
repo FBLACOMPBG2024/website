@@ -3,9 +3,12 @@ import client from "@/lib/mongodb";
 import { ObjectId } from "mongodb";
 import cookie from "cookie";
 
+// This endpoint is used to delete a transaction
+// It is used to delete a transaction from the user's transaction list it uses the transaction ID to delete the transaction
+
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse
+  res: NextApiResponse,
 ) {
   if (req.method === "DELETE") {
     // Get user from request cookie
@@ -50,7 +53,11 @@ export default async function handler(
         .collection("users")
         .updateOne(
           { _id: user._id },
-          { $pull: { transactions: new ObjectId(transactionId) } }
+          {
+            $pull: {
+              transactions: { _id: new ObjectId(transactionId) } as any,
+            },
+          }, // This is kind of a hack to make TypeScript happy
         );
 
       const transactions = await client
@@ -62,7 +69,7 @@ export default async function handler(
       // Calculate the balance
       const balance = transactions.reduce(
         (acc, transaction) => acc + transaction.value,
-        0
+        0,
       );
 
       // Update user balance

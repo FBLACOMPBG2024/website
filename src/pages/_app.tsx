@@ -1,18 +1,21 @@
 import "@/styles/globals.css";
 import type { AppProps } from "next/app";
-import { Inter } from 'next/font/google';
+import { Inter } from "next/font/google";
 import { useEffect, useState } from "react";
 import { IUser, UserProvider } from "@/components/context/UserContext";
 import api from "@/utils/api";
-import { GoogleOAuthProvider } from '@react-oauth/google';
+import { GoogleOAuthProvider } from "@react-oauth/google";
 import PropagateLoader from "react-spinners/PropagateLoader";
 import Head from "next/head";
 // Load the Inter font with the Latin subset (The only one our site will require)
-const inter = Inter({ subsets: ['latin'] });
+const inter = Inter({ subsets: ["latin"] });
 
 // Define the App component
 // Import our font and apply it to the main element
-export default function App({ Component, pageProps: { ...pageProps } }: AppProps) {
+export default function App({
+  Component,
+  pageProps: { ...pageProps },
+}: AppProps) {
   const [user, setUser] = useState<IUser>(null as unknown as IUser);
   const [loading, setLoading] = useState(true);
 
@@ -27,37 +30,34 @@ export default function App({ Component, pageProps: { ...pageProps } }: AppProps
         console.error(error);
       }
       setLoading(false);
-    }
+    };
 
-    if (!user) refreshResponse()
+    if (!user) refreshResponse();
   }, [user]);
 
-  return (
-    loading ?
-      <>
-        <Head>
-          <title>Loading...</title>
-        </Head>
-        <main className={inter.className}>
-          <div className="w-full h-screen flex items-center justify-center">
-            <PropagateLoader
-              height="10vh"
-              color="rgb(var(--primary))"
-            />
-          </div>
-        </main>
-      </> :
-      <>
-        <Head>
-          <title>Smart Spend</title>
-        </Head>
-        <GoogleOAuthProvider clientId="50088023361-h8voq3f3kv7941obpmvjsckjcuqt2der.apps.googleusercontent.com">
-          <UserProvider value={{ user, setUser }}>
-            <main className={inter.className}>
-              <Component {...pageProps} />
-            </main>
-          </UserProvider>
-        </GoogleOAuthProvider>
-      </>
-  )
+  return loading ? (
+    <>
+      <Head>
+        <title>Loading...</title>
+      </Head>
+      <main className={inter.className}>
+        <div className="w-full h-screen flex items-center justify-center">
+          <PropagateLoader height="10vh" color="rgb(var(--primary))" />
+        </div>
+      </main>
+    </>
+  ) : (
+    <>
+      <Head>
+        <title>Smart Spend</title>
+      </Head>
+      <GoogleOAuthProvider clientId="50088023361-h8voq3f3kv7941obpmvjsckjcuqt2der.apps.googleusercontent.com">
+        <UserProvider value={{ user, setUser }}>
+          <main className={inter.className}>
+            <Component {...pageProps} />
+          </main>
+        </UserProvider>
+      </GoogleOAuthProvider>
+    </>
+  );
 }
