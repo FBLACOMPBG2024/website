@@ -195,8 +195,8 @@ export default function TransactionsView() {
   };
 
   return (
-    <div>
-      <Card className="relative">
+    <div className="h-full w-full">
+      <Card className="min-h-[90vh] w-full">
         <h1 className="text-2xl font-bold text-text">Transactions</h1>
 
         <div className="absolute top-0 right-0 mt-4 mr-4 flex space-x-2">
@@ -221,7 +221,7 @@ export default function TransactionsView() {
         </div>
 
         {/* Table Wrapper for Responsiveness */}
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto overflow-y-auto max-h-[80vh] mt-8">
           <table className="min-w-full bg-backgroundGray">
             <thead>
               <tr className="text-left">
@@ -421,7 +421,8 @@ export default function TransactionsView() {
         onClose={() => setIsFilterModalOpen(false)}
       >
         {/* Filter Inputs */}
-        <div className="flex flex-wrap gap-4 mb-4">
+        <div className="flex flex-col gap-4 mb-4">
+          <h2 className="text-xl font-bold text-text">Filter</h2>
           <TextInput
             type="text"
             placeholder="Filter by tags (space separated)"
