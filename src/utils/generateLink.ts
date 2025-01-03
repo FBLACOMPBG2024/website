@@ -4,6 +4,11 @@ export async function generateLink(
   email: string,
   type: string,
 ): Promise<string> {
+  // This function generates a link for the user to click on
+  // Its purpose is to verify the user's email or reset their password
+  // The link is stored in the database and is only valid for 24 hours
+  // The link is generated with a random token
+  // So the user cannot guess the link and access it
   const token = crypto.randomBytes(32).toString("hex");
 
   // the URL the user will be sent

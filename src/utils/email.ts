@@ -3,6 +3,7 @@ import { ResetPasswordEmailTemplate } from "@/components/ui/ResetPasswordEmailTe
 import { Resend } from "resend";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
+const sendingEmail = process.env.EMAIL || "";
 
 export async function sendEmailVerification(
   name: string,
@@ -10,7 +11,7 @@ export async function sendEmailVerification(
   email: string,
 ) {
   const { data, error } = await resend.emails.send({
-    from: "SmartSpend <noreply@quit-selling-my-info.online>",
+    from: `SmartSpend <${sendingEmail}>`,
     to: [email],
     subject: "Welcome to SmartSpend!",
     react: EmailVerifyTemplate({ name: name, link: link }),
@@ -26,7 +27,7 @@ export async function sendPasswordReset(
   email: string,
 ) {
   const { data, error } = await resend.emails.send({
-    from: "SmartSpend <noreply@quit-selling-my-info.online>",
+    from: `SmartSpend <${sendingEmail}>`,
     to: [email],
     subject: "Welcome to SmartSpend!",
     react: ResetPasswordEmailTemplate({ name: name, link: link }),
