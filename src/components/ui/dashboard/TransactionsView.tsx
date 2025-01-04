@@ -283,11 +283,12 @@ export default function TransactionsView() {
                       <span className="flex items-center gap-1">
                       {label}
                       {(sortKey === key &&
-                        {
-                          asc: <IconSortAscending className="w-4 h-auto" />,
-                          desc: <IconSortDescending className="w-4 h-auto " />,
-                        }[sortDirection]) ||
-                        null}
+                      <IconSortAscending
+                         className={`w-4 h-auto transition-transform ${
+                          sortDirection == "asc" ? "rotate-0" : "rotate-180"
+                         }`}
+                        />
+                      )}
                       </span>
                     </th>
                   ))}
