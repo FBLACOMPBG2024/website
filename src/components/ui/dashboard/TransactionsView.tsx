@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import Modal from "@/components/ui/Modal";
 import Card from "@/components/ui/Card";
 import api from "@/utils/api";
+import { motion } from "framer-motion";
 import {
   IconPencil,
   IconTrash,
@@ -10,6 +11,8 @@ import {
   IconUpload,
   IconFilter,
   IconX,
+  IconSortDescending,
+  IconSortAscending,
 } from "@tabler/icons-react";
 import Papa from "papaparse"; // Import PapaParse for CSV parsing
 
@@ -43,6 +46,9 @@ export default function TransactionsView() {
   const [dateTime, setDateTime] = useState(
     new Date().toISOString().slice(0, 16)
   ); // Default to now
+
+  const [sortKey, setSortKey] = useState<keyof Transaction | null>(null);
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
 
   // Filters
   const [startDate, setStartDate] = useState("");
@@ -193,6 +199,40 @@ export default function TransactionsView() {
     }
   };
 
+  // Function to handle tag filter toggling
+  const toggleTagFilter = (tag: string) => {
+    if (tagFilter.includes(tag)) {
+      setTagFilter(
+        tagFilter
+          .split(" ")
+          .filter((t) => t !== tag)
+          .join(" ")
+      );
+    } else {
+      setTagFilter((tagFilter + " " + tag).trim());
+    }
+  };
+
+  const sortTransactionsByKey = (key: keyof Transaction) => {
+    // Determine the new sorting direction
+    let direction: "asc" | "desc" = "asc";
+    if (key === sortKey) {
+      direction = sortDirection === "asc" ? "desc" : "asc";
+    }
+
+    // Sort the transactions
+    const sorted = [...transactions].sort((a, b) => {
+      if (a[key] > b[key]) return direction === "asc" ? 1 : -1;
+      if (a[key] < b[key]) return direction === "asc" ? -1 : 1;
+      return 0;
+    });
+
+    // Update state
+    setTransactions(sorted);
+    setSortKey(key);
+    setSortDirection(direction);
+  };
+
   return (
     <div className="h-full w-full">
       <Card className="min-h-[90vh] w-full">
@@ -221,96 +261,113 @@ export default function TransactionsView() {
 
         {/* Table Wrapper for Responsiveness */}
         <div className="overflow-x-auto overflow-y-auto max-h-[80vh] mt-8">
-          <table className="min-w-full bg-backgroundGray">
-            <thead>
-              <tr className="text-left">
-                <th className="transition-all sm:text-lg text-sm px-4 py-2">
-                  Name
-                </th>
-                <th className="transition-all sm:text-lg text-sm px-4 py-2">
-                  Value
-                </th>
-                <th className="transition-all sm:text-lg text-sm px-4 py-2">
-                  Tags
-                </th>
-                <th className="transition-all sm:text-lg text-sm px-4 py-2">
-                  Description
-                </th>
-                <th className="transition-all sm:text-lg text-sm px-4 py-2">
-                  Created
-                </th>
-                <th className="transition-all sm:text-lg text-sm px-4 py-2">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {transactions.map((transaction: Transaction, index: number) => (
-                <tr
-                  key={index}
-                  className={
-                    index < transactions.length - 1
-                      ? "border-b border-backgroundGrayLight"
-                      : ""
-                  }
-                >
-                  <td className="px-4 py-2">{transaction.name}</td>
-                  <td className="px-4 py-2">
-                    {transaction.value.toLocaleString("en-US", {
-                      style: "currency",
-                      currency: "USD",
-                    })}
-                  </td>
-                  <td className="px-4 py-2">
-                    {transaction.tags ? (
-                      <div className="flex flex-wrap gap-1">
-                        {transaction.tags.map((tag, index) => (
-                            <span
-                            key={index}
-                            className={`select-none bg-primary hover:opacity-80 text-white px-2 py-1 rounded text-sm flex items-center ${
-                              tagFilter.includes(tag) ? "bg-accent" : ""
-                            }`}
-                            onClick={() => {
-                              if (tagFilter.includes(tag)) {
-                              setTagFilter(
-                                tagFilter
-                                .split(" ")
-                                .filter((t) => t !== tag)
-                                .join(" ")
-                              );
-                              } else {
-                              setTagFilter((tagFilter + " " + tag).trim());
-                              }
-                            }}
-                            >
-                            {tag}
-                            {tagFilter.includes(tag) && (
-                              <IconX className="w-4 ml-1 mr-0" />
-                            )}
-                            </span>
-                        ))}
-                      </div>
-                    ) : (
-                      ""
-                    )}
-                  </td>
-                  <td className="px-4 py-2">{transaction.description}</td>
-                  <td className="px-4 py-2 text-sm md:text-base">
-                    {new Date(transaction.date).toLocaleString()}
-                  </td>
-
-                  <td className="px-4 py-2 gap-2">
-                    <button onClick={() => handleEdit(transaction)}>
-                      <IconPencil className="stroke-text" />
-                    </button>
-                    <button onClick={() => confirmDelete(transaction._id)}>
-                      <IconTrash className="stroke-text transition-all duration-200 hover:stroke-red-500" />
-                    </button>
-                  </td>
+          {transactions.length > 0 ? (
+            <table className="min-w-full bg-backgroundGray">
+              <thead>
+                <tr className="text-left">
+                  {[
+                    { label: "Name", key: "name" as keyof Transaction },
+                    { label: "Value", key: "value" as keyof Transaction },
+                    { label: "Tags", key: "tags" as keyof Transaction },
+                    {
+                      label: "Description",
+                      key: "description" as keyof Transaction,
+                    },
+                    { label: "Created", key: "date" as keyof Transaction },
+                  ].map(({ label, key }) => (
+                    <th
+                      key={key}
+                      className="transition-all sm:text-lg text-sm px-4 py-2 cursor-pointer"
+                      onClick={() => sortTransactionsByKey(key)}
+                    >
+                      <span className="flex items-center gap-1">
+                      {label}
+                      {(sortKey === key &&
+                        {
+                          asc: <IconSortAscending className="w-4 h-auto" />,
+                          desc: <IconSortDescending className="w-4 h-auto " />,
+                        }[sortDirection]) ||
+                        null}
+                      </span>
+                    </th>
+                  ))}
+                  <th className="transition-all sm:text-lg text-sm px-4 py-2">
+                    Actions
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {transactions.map((transaction: Transaction, index: number) => (
+                  <motion.tr
+                    key={index}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 10 }}
+                    transition={{ duration: 0.2, delay: index * 0.05 }}
+                    className={
+                      index < transactions.length - 1
+                        ? "border-b border-backgroundGrayLight"
+                        : ""
+                    }
+                  >
+                    <td className="px-4 py-2">{transaction.name}</td>
+                    <td className="px-4 py-2">
+                      {transaction.value.toLocaleString("en-US", {
+                        style: "currency",
+                        currency: "USD",
+                      })}
+                    </td>
+                    <td className="px-4 py-2">
+                      {transaction.tags ? (
+                        <div className="flex flex-wrap gap-1 relative">
+                          {transaction.tags.map((tag, tagIndex) => (
+                            <span
+                              key={tagIndex}
+                              className={`transition-all duration-200 relative select-none bg-primary hover:opacity-80 text-white px-2 py-1 rounded text-sm flex items-center ${
+                                tagFilter.includes(tag) ? "bg-accent" : ""
+                              }`}
+                              onClick={() => toggleTagFilter(tag)}
+                            >
+                              <span className="mr-1">{tag}</span>
+                              {tagFilter.includes(tag) && (
+                                <IconX className="w-3 h-auto" />
+                              )}
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        "-"
+                      )}
+                    </td>
+                    <td className="px-4 py-2">
+                      {transaction.description || "-"}
+                    </td>
+                    <td className="px-4 py-2 text-sm md:text-base">
+                      {new Date(transaction.date).toLocaleString()}
+                    </td>
+                    <td className="px-4 py-2 flex gap-2">
+                      <button
+                        onClick={() => handleEdit(transaction)}
+                        className="hover:text-blue-500"
+                      >
+                        <IconPencil className="stroke-text" />
+                      </button>
+                      <button
+                        onClick={() => confirmDelete(transaction._id)}
+                        className="hover:text-red-500"
+                      >
+                        <IconTrash className="stroke-text transition-all duration-200" />
+                      </button>
+                    </td>
+                  </motion.tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <div className="text-center text-gray-500 py-4">
+              No transactions found. Add some to get started!
+            </div>
+          )}
         </div>
       </Card>
 
