@@ -20,9 +20,9 @@ export default function App({
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const refreshResponse = async () => {
+    const infoResponse = async () => {
       try {
-        const response = await api.get("api/auth/refresh");
+        const response = await api.get("api/user/info");
         if (response?.status == 200) {
           setUser(response.data.user);
         }
@@ -32,7 +32,7 @@ export default function App({
       setLoading(false);
     };
 
-    if (!user) refreshResponse();
+    if (!user) infoResponse();
   }, [user]);
 
   return loading ? (

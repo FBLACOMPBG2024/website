@@ -9,7 +9,7 @@
   --background-gray-light: 38, 38, 38;
   --text: 255, 255, 255;
   --accent: 0, 194, 103;
-  --primary: 49, 216, 138;
+  --primary: 25, 105, 70;
   --secondary: 0, 36, 19;
   --background-green: 6, 19, 13;
 }
@@ -21,6 +21,7 @@
     --background-gray: 232, 232, 232;
     --background-gray-light: 217, 217, 217;
     --text: 66, 66, 66;
+    --primary: 49, 216, 138;
     --background-green: 200, 236, 202;
   }
 }

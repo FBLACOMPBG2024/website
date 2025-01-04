@@ -23,19 +23,6 @@ export default function Dashboard() {
   const [selectedLink, setSelectedLink] = useState("Dashboard");
   const { user, setUser } = useUser();
 
-  useEffect(() => {
-    const hash = window.location.hash;
-    const link = links.find((link) => link.href === hash);
-    if (link) {
-      setSelectedLink(link.label);
-    }
-  }, []);
-
-  if (!user) {
-    router.push("/login");
-    return;
-  }
-
   const links = [
     {
       label: "Dashboard",
@@ -52,17 +39,30 @@ export default function Dashboard() {
       href: "#profile",
       icon: <IconUser className="text-text h-5 w-5 flex-shrink-0" />,
     },
-    {
-      label: "Settings",
-      href: "#settings",
-      icon: <IconSettings className="text-text h-5 w-5 flex-shrink-0" />,
-    },
+    // {
+    //   label: "Settings",
+    //   href: "#settings",
+    //   icon: <IconSettings className="text-text h-5 w-5 flex-shrink-0" />,
+    // },
     {
       label: "Logout",
       href: "#logout",
       icon: <IconArrowLeft className="text-text h-5 w-5 flex-shrink-0" />,
     },
   ];
+
+  useEffect(() => {
+    const hash = window.location.hash;
+    const link = links.find((link) => link.href === hash);
+    if (link) {
+      setSelectedLink(link.label);
+    }
+  }, [links]); // Include links in the dependency array if necessary.
+
+  if (!user) {
+    router.push("/login");
+    return;
+  }
 
   const renderContent = () => {
     switch (selectedLink) {
@@ -72,8 +72,8 @@ export default function Dashboard() {
         return <TransactionsView />;
       case "Profile":
         return <ProfileView user={user} />;
-      case "Settings":
-        return <SettingsView />;
+      // case "Settings":
+      //   return <SettingsView />;
       case "Logout":
         return <LogoutView />;
       default:
@@ -99,8 +99,8 @@ export default function Dashboard() {
                       setSelectedLink(link.label);
 
                       try {
-                        const response = await api.get("api/auth/refresh");
-                        if (response.status == 200) {
+                        const response = await api.get("api/user/info");
+                        if (response.status === 200) {
                           setUser(response.data.user);
                         }
                       } catch (error) {

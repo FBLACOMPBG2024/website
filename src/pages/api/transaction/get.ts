@@ -1,15 +1,13 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import client from "@/lib/mongodb";
+import { getIronSession } from "iron-session";
+import { sessionOptions } from "@/utils/sessionConfig";
 import { ObjectId } from "mongodb";
-import cookie from "cookie";
 
-// This endpoint is used to get the user's transactions
-// It returns a list of transactions for the user
-// It can be filtered by tag, date range, and limit
-
+// Main handler function for the API route
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse,
+  res: NextApiResponse
 ) {
   if (req.method === "GET") {
     return await getTransactions(req, res);
@@ -21,27 +19,32 @@ export default async function handler(
 
 // Get transactions for a user
 async function getTransactions(req: NextApiRequest, res: NextApiResponse) {
-  const cookies = cookie.parse(req.headers.cookie || "");
-  const token = cookies.token || "";
-
-  if (!token) {
-    return res.status(401).json({ message: "Unauthorized" });
-  }
-
   try {
-    // Get the user from the database
+    const session = await getIronSession(req, res, sessionOptions);
+
+    // Ensure the user is authenticated
+    if (!session.user?._id) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const userId = session.user._id;
+
+    // Fetch the user from the database
     const user = await client
       .db()
       .collection("users")
-      .findOne({ _id: new ObjectId(token) });
-    if (!user) {
+      .findOne({
+        _id: new ObjectId(userId),
+      });
+
+    if (!user || !user._id) {
       return res.status(401).json({ message: "Unauthorized" });
     }
 
     // Parse query parameters
     const { limit = 10, startDate, endDate, filter } = req.query;
 
-    // Convert `limit` to a number
+    // Convert `limit` to a number and validate
     const limitNumber = parseInt(limit as string, 10);
     if (isNaN(limitNumber) || limitNumber <= 0) {
       return res.status(400).json({ message: "Invalid limit value" });
@@ -79,12 +82,15 @@ async function getTransactions(req: NextApiRequest, res: NextApiResponse) {
             message: "Invalid filter format. Must be an array of strings.",
           });
         }
+        // If no tags are provided, do not filter by tags
+        if (tags.length > 0) {
+          tagsFilter.tags = { $all: tags }; // Match transactions containing all specified tags
+        }
       } catch {
         return res.status(400).json({
           message: "Invalid filter format. Must be a JSON array of strings.",
         });
       }
-      tagsFilter.tags = { $all: tags }; // Match transactions containing all specified tags
     }
 
     // Query the database to get the user's transactions with optional filters
@@ -92,7 +98,7 @@ async function getTransactions(req: NextApiRequest, res: NextApiResponse) {
       .db()
       .collection("transactions")
       .find({
-        userId: user._id,
+        userId: new ObjectId(user._id),
         ...dateFilter, // Apply the date filter if provided
         ...tagsFilter, // Apply the tags filter if provided
       })

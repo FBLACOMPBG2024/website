@@ -9,6 +9,7 @@ import {
   IconPlus,
   IconUpload,
   IconFilter,
+  IconX,
 } from "@tabler/icons-react";
 import Papa from "papaparse"; // Import PapaParse for CSV parsing
 
@@ -27,11 +28,11 @@ export default function TransactionsView() {
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [editTransaction, setEditTransaction] = useState<Transaction | null>(
-    null,
+    null
   );
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [transactionToDelete, setTransactionToDelete] = useState<string | null>(
-    null,
+    null
   );
 
   // Individual state variables for each input
@@ -40,7 +41,7 @@ export default function TransactionsView() {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [dateTime, setDateTime] = useState(
-    new Date().toISOString().slice(0, 16),
+    new Date().toISOString().slice(0, 16)
   ); // Default to now
 
   // Filters
@@ -49,39 +50,42 @@ export default function TransactionsView() {
   const [limit, setLimit] = useState("20"); // Default to 20
   const [tagFilter, setTagFilter] = useState("");
 
-  // TODO: Make this update on a delay instead of spamming each time it is changed
+  // Extract the fetchTransactions function for reusability
+  const fetchTransactions = async () => {
+    try {
+      const queryParams: any = {
+        limit,
+        startDate,
+        endDate,
+        filter: tagFilter ? JSON.stringify(tagFilter.split(" ")) : undefined, // Format tags as an array
+      };
+
+      const response = await api.get("/api/transaction/get", {
+        params: queryParams,
+      });
+      setTransactions(response.data);
+    } catch (error) {
+      console.error("Failed to fetch transactions", error);
+    }
+  };
+
+  // UseEffect for filters
   useEffect(() => {
-    const fetchTransactions = async () => {
-      try {
-        const queryParams: any = {
-          limit,
-          startDate,
-          endDate,
-          filter: tagFilter ? JSON.stringify(tagFilter.split(" ")) : undefined, // If tags are provided, format as an array
-        };
-
-        const response = await api.get("/api/transaction/get", {
-          params: queryParams,
-        });
-        setTransactions(response.data);
-      } catch (error) {
-        console.error("Failed to fetch transactions", error);
-      }
-    };
-
-    fetchTransactions();
+    fetchTransactions(); // Fetch transactions when filters change
   }, [tagFilter, startDate, endDate, limit]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Remove trailing and leading spaces from tags and split by space
+    // Parse tags into an array
     const tagsArray = tags
       .trim()
       .split(" ")
       .map((tag) => tag.trim());
-    // Prepare payload from individual states
+
+    // Prepare payload
     const payload = {
+      _id: editTransaction?._id || undefined,
       value: parseFloat(value) || 0,
       tags: tagsArray,
       name,
@@ -105,16 +109,15 @@ export default function TransactionsView() {
         }
       }
 
-      // Reset the fields after successful submission
+      // Reset form fields
       setValue("0.0");
       setTags("");
       setName("");
       setDescription("");
-      setDateTime(new Date().toISOString().slice(0, 16)); // Reset to now
+      setDateTime(new Date().toISOString().slice(0, 16));
 
-      // Fetch the updated transactions
-      const updatedTransactions = await api.get("/api/transaction/get");
-      setTransactions(updatedTransactions.data);
+      // Fetch updated transactions
+      fetchTransactions();
     } catch (error) {
       console.error("Failed to create or edit transaction", error);
     }
@@ -135,12 +138,10 @@ export default function TransactionsView() {
 
     try {
       const response = await api.delete(`/api/transaction/delete`, {
-        data: { transactionId: transactionToDelete },
+        data: { _id: transactionToDelete },
       });
       if (response.status === 200) {
-        // Fetch the updated transactions
-        const updatedTransactions = await api.get("/api/transaction/get");
-        setTransactions(updatedTransactions.data);
+        fetchTransactions(); // Refresh transactions after deletion
         setIsConfirmModalOpen(false);
         setTransactionToDelete(null);
       }
@@ -157,14 +158,13 @@ export default function TransactionsView() {
   const handleBulkUpload = async (e: React.FormEvent) => {
     e.preventDefault();
     const fileInput = document.getElementById(
-      "csvFileInput",
+      "csvFileInput"
     ) as HTMLInputElement;
     if (fileInput.files && fileInput.files[0]) {
       Papa.parse(fileInput.files[0], {
         header: true,
         complete: async (results) => {
           try {
-            // Foreach transaction in the CSV, parse and format the data
             const finalTransactions = results.data.map((transaction: any) => {
               return {
                 value: parseFloat(transaction.value) || 0,
@@ -179,13 +179,11 @@ export default function TransactionsView() {
 
             const response = await api.post(
               "/api/transaction/bulk-add",
-              finalTransactions,
+              finalTransactions
             );
             if (response.status === 201) {
               setIsBulkUploadModalOpen(false);
-              // Fetch the updated transactions
-              const updatedTransactions = await api.get("/api/transaction/get");
-              setTransactions(updatedTransactions.data);
+              fetchTransactions(); // Refresh transactions after bulk upload
             }
           } catch (error) {
             console.error("Failed to bulk upload transactions", error);
@@ -202,19 +200,19 @@ export default function TransactionsView() {
 
         <div className="absolute top-0 right-0 mt-4 mr-4 flex space-x-2">
           <button
-            className="transition-all sm:text-lg text-sm px-2 py-1 bg-primary text-white rounded flex items-center"
+            className="transition-all duration-200 hover:opacity-80 sm:text-lg text-sm px-2 py-1 bg-primary text-white rounded flex items-center"
             onClick={() => setIsFilterModalOpen(true)}
           >
             <IconFilter className="mr-1" /> Filter
           </button>
           <button
-            className="transition-all sm:text-lg text-sm px-2 py-1 bg-primary text-white rounded flex items-center"
+            className="transition-all duration-200 hover:opacity-80 sm:text-lg text-sm px-2 py-1 bg-primary text-white rounded flex items-center"
             onClick={() => setIsModalOpen(true)}
           >
             <IconPlus className="mr-1" /> Add Transaction
           </button>
           <button
-            className="transition-all sm:text-lg text-sm px-2 py-1 bg-primary text-white rounded flex items-center"
+            className="transition-all duration-200 hover:opacity-80 sm:text-lg text-sm px-2 py-1 bg-primary text-white rounded flex items-center"
             onClick={() => setIsBulkUploadModalOpen(true)}
           >
             <IconUpload className="mr-1" /> Bulk Upload
@@ -267,12 +265,29 @@ export default function TransactionsView() {
                     {transaction.tags ? (
                       <div className="flex flex-wrap gap-1">
                         {transaction.tags.map((tag, index) => (
-                          <span
+                            <span
                             key={index}
-                            className="bg-primary text-white px-2 py-1 rounded text-xs"
-                          >
+                            className={`select-none bg-primary hover:opacity-80 text-white px-2 py-1 rounded text-sm flex items-center ${
+                              tagFilter.includes(tag) ? "bg-accent" : ""
+                            }`}
+                            onClick={() => {
+                              if (tagFilter.includes(tag)) {
+                              setTagFilter(
+                                tagFilter
+                                .split(" ")
+                                .filter((t) => t !== tag)
+                                .join(" ")
+                              );
+                              } else {
+                              setTagFilter((tagFilter + " " + tag).trim());
+                              }
+                            }}
+                            >
                             {tag}
-                          </span>
+                            {tagFilter.includes(tag) && (
+                              <IconX className="w-4 ml-1 mr-0" />
+                            )}
+                            </span>
                         ))}
                       </div>
                     ) : (
@@ -286,10 +301,10 @@ export default function TransactionsView() {
 
                   <td className="px-4 py-2 gap-2">
                     <button onClick={() => handleEdit(transaction)}>
-                      <IconPencil />
+                      <IconPencil className="stroke-text" />
                     </button>
                     <button onClick={() => confirmDelete(transaction._id)}>
-                      <IconTrash />
+                      <IconTrash className="stroke-text transition-all duration-200 hover:stroke-red-500" />
                     </button>
                   </td>
                 </tr>

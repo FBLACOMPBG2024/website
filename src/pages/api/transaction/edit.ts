@@ -2,14 +2,15 @@ import TransactionSchema from "@/schemas/transactionSchema";
 import { NextApiRequest, NextApiResponse } from "next";
 import client from "@/lib/mongodb";
 import { ObjectId } from "mongodb";
-import cookie from "cookie";
+import { getIronSession } from "iron-session";
+import { sessionOptions } from "@/utils/sessionConfig";
 
 // This endpoint is used to create and edit transactions
 // It is used to create a new transaction and edit an existing transaction
 
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse,
+  res: NextApiResponse
 ) {
   if (req.method === "POST") {
     return await createTransaction(req, res);
@@ -23,18 +24,19 @@ export default async function handler(
 
 // Handle creating a new transaction (same as before)
 async function createTransaction(req: NextApiRequest, res: NextApiResponse) {
-  const cookies = cookie.parse(req.headers.cookie || "");
-  const token = cookies.token || "";
-
-  if (!token) {
-    return res.status(401).json({ message: "Unauthorized" });
-  }
-
   try {
+    // Get session
+    const session = await getIronSession(req, res, sessionOptions);
+
+    if (!session.user?._id) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    // Get the user from the database
     const user = await client
       .db()
       .collection("users")
-      .findOne({ _id: new ObjectId(token) });
+      .findOne({ _id: new ObjectId(session.user._id) });
+
     if (!user) {
       return res.status(401).json({ message: "Unauthorized" });
     }
@@ -51,9 +53,20 @@ async function createTransaction(req: NextApiRequest, res: NextApiResponse) {
       userId: user._id,
     };
 
-    await client.db().collection("transactions").insertOne(transaction);
+    try {
+      await client.db().collection("transactions").insertOne(transaction);
 
-    return res.status(201).json(transaction);
+      // Update user balance by adding the value of the new transaction
+      const newBalance = user.balance + value;
+      await client
+        .db()
+        .collection("users")
+        .updateOne({ _id: user._id }, { $set: { balance: newBalance } });
+      return res.status(201).json(transaction);
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ message: "Internal Server Error" });
+    }
   } catch (error: any) {
     if (error.name === "ZodError") {
       return res.status(400).json({
@@ -69,82 +82,80 @@ async function createTransaction(req: NextApiRequest, res: NextApiResponse) {
 
 // Handle editing an existing transaction
 async function editTransaction(req: NextApiRequest, res: NextApiResponse) {
-  const cookies = cookie.parse(req.headers.cookie || "");
-  const token = cookies.token || "";
-
-  if (!token) {
-    return res.status(401).json({ message: "Unauthorized" });
-  }
-
   try {
+    // Get session
+    const session = await getIronSession(req, res, sessionOptions);
+
+    if (!session.user?._id) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    // Get the user from the database
     const user = await client
       .db()
       .collection("users")
-      .findOne({ _id: new ObjectId(token) });
+      .findOne({ _id: new ObjectId(session.user._id) });
+
     if (!user) {
       return res.status(401).json({ message: "Unauthorized" });
     }
 
-    // Validate and parse the request body using the updated schema
     const parsedBody = TransactionSchema.parse(req.body);
-
     const { _id, value, tags, name, description } = parsedBody;
 
-    // Ensure the transaction exists in the database
+    if (!_id) {
+      return res.status(400).json({ message: "Transaction ID is required" });
+    }
+
     const transaction = await client
       .db()
       .collection("transactions")
-      .findOne({ _id: new ObjectId(_id) });
+      .findOne({ _id: new ObjectId(_id), userId: user._id });
+
     if (!transaction) {
       return res.status(404).json({ message: "Transaction not found" });
     }
 
-    // Ensure the user is the owner of the transaction
-    if (transaction.userId.toString() !== user._id.toString()) {
-      return res.status(403).json({
-        message:
-          "Forbidden: You do not have permission to edit this transaction",
-      });
-    }
-
-    // Prepare the update object by conditionally updating only the fields provided
+    // Prepare update fields
     const updatedFields: any = {};
     if (value !== undefined) updatedFields.value = value;
     if (tags !== undefined) updatedFields.tags = tags;
     if (name !== undefined) updatedFields.name = name;
     if (description !== undefined) updatedFields.description = description;
 
-    // Update the transaction
+    // Update transaction
     const updatedTransaction = {
       ...transaction,
       ...updatedFields,
-      updatedAt: new Date(), // Optionally add a timestamp of the update
+      updatedAt: new Date(),
     };
 
-    await client
-      .db()
-      .collection("transactions")
-      .updateOne({ _id: new ObjectId(_id) }, { $set: updatedTransaction });
+    // Adjust balance: subtract old value and add new value
+    const balanceAdjustment = (value || 0) - (transaction.value || 0);
 
-    const transactions = await client
-      .db()
-      .collection("transactions")
-      .find({ userId: user._id })
-      .toArray();
+    try {
+      await client
+        .db()
+        .collection("transactions")
+        .updateOne(
+          { _id: new ObjectId(_id) },
+          { $set: updatedTransaction },
+        );
 
-    // Calculate the balance
-    const balance = transactions.reduce(
-      (acc, transaction) => acc + transaction.value,
-      0,
-    );
+      // Update user balance
+      const newBalance = user.balance + balanceAdjustment;
+      await client
+        .db()
+        .collection("users")
+        .updateOne(
+          { _id: user._id },
+          { $set: { balance: newBalance } },
+        );
 
-    // Update user balance
-    await client
-      .db()
-      .collection("users")
-      .updateOne({ _id: user._id }, { $set: { balance: balance } });
-
-    return res.status(200).json(updatedTransaction);
+      return res.status(200).json(updatedTransaction);
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ message: "Internal Server Error" });
+    }
   } catch (error: any) {
     if (error.name === "ZodError") {
       return res.status(400).json({

@@ -1,23 +1,17 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import cookie from "cookie";
+import { getIronSession } from "iron-session";
+import { sessionOptions } from "@/utils/sessionConfig";
 
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse,
 ) {
   if (req.method === "POST") {
-    // Empty the token cookie
-    res.setHeader(
-      "Set-Cookie",
-      cookie.serialize("token", "", {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        maxAge: 0,
-        sameSite: "strict",
-        path: "/",
-      }),
-    );
+    // Get session
+    const session = await getIronSession(req, res, sessionOptions);
 
+    // Destroy the session
+    session.destroy();
     // Return a success message
     res.status(200).json({ message: "Signed out" });
   } else {
