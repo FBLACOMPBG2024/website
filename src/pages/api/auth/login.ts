@@ -2,7 +2,8 @@ import { NextApiRequest, NextApiResponse } from "next";
 import LoginSchema from "@/schemas/loginSchema";
 import client from "@/lib/mongodb";
 import argon2 from "argon2";
-import cookie from "cookie";
+import { getIronSession } from "iron-session";
+import { sessionOptions } from "@/utils/sessionConfig";
 
 // This file defines the API route that allows the user to log in
 
@@ -35,6 +36,11 @@ export default async function handler(
       return;
     }
 
+    if (user.password === undefined || user.password === "GOOGLE") {
+      res.status(401).json({ message: "This account was created using google" });
+      return;
+    }
+
     // Check argon2 hash
     const isPasswordValid = await argon2.verify(user.password, password);
 
@@ -49,17 +55,16 @@ export default async function handler(
       return;
     }
 
-    // Set the user's token in a cookie
-    res.setHeader(
-      "Set-Cookie",
-      cookie.serialize("token", user._id.toString(), {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        maxAge: 60 * 60 * 24 * 7, // 1 week
-        sameSite: "strict",
-        path: "/",
-      }),
-    );
+    // Initialize the session
+    const session = await getIronSession(req, res, sessionOptions);
+
+    // Set session data
+    session.user = {
+      _id: user._id.toString(),
+      email: user.email,
+    };
+
+    await session.save();
 
     // Return the user's information
     res.status(200).json({ message: "Login successful", user: user });

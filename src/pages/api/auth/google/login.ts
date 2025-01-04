@@ -1,9 +1,10 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import client from "@/lib/mongodb";
 import api from "@/utils/api";
-import cookie from "cookie";
+import { getIronSession } from "iron-session";
+import { sessionOptions } from "@/utils/sessionConfig";
 
-// This file defines the API route that allows the user to login with Google
+// This file defines the API route that allows the user to log in with Google
 // It uses the Google OAuth2 API to authenticate the user
 
 export default async function handler(
@@ -12,11 +13,11 @@ export default async function handler(
 ) {
   if (req.method === "POST") {
     try {
-      const access_token = req.body.access_token;
+      const { access_token } = req.body;
 
       // Check if the access token is present
       if (!access_token) {
-        res.status(400).json({ message: "No access token" });
+        return res.status(400).json({ message: "Access token is missing" });
       }
 
       // Get the user's information from Google
@@ -26,38 +27,42 @@ export default async function handler(
         })
         .then((res) => res.data);
 
-      // Get the user's email
-      const email = userInfo.email;
+      const { email } = userInfo;
 
+      // Ensure email exists in response
       if (!email) {
-        res.status(400).json({ message: "No email" });
+        return res.status(400).json({ message: "No email associated with this account" });
       }
 
-      // Check if the user exists
-      const user = await client
+      // Check if the user exists in the database
+      let user = await client
         .db()
         .collection("users")
-        .findOne({ email: email });
+        .findOne({ email });
+
       if (!user) {
-        res.status(400).json({ message: "User does not exist" });
+        // If the user doesn't exist, return an error or optionally create a new user
+        return res.status(400).json({ message: "User does not exist" });
       }
 
-      // Set the user's token in a cookie
-      res.setHeader(
-        "Set-Cookie",
-        cookie.serialize("token", user?._id.toString() || "", {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === "production",
-          maxAge: 60 * 60 * 24 * 7, // 1 week
-          sameSite: "strict",
-          path: "/",
-        }),
-      );
+      // Create or update session
+      const session = await getIronSession(req, res, sessionOptions);
+      session.user = {
+        _id: user._id.toString(),
+        email,
+      };
+      await session.save();
 
       // Return the user's information
-      res.status(200).json({ message: "Login successful", user: user });
-    } catch (error) {
-      console.error("Google sign-up error:", error);
+      res.status(200).json({
+        message: "Login successful",
+        user: {
+          id: user._id,
+          email,
+        },
+      });
+    } catch (error: any) {
+      console.error("Google login error:", error.message);
       return res.status(500).json({ message: "Authentication failed" });
     }
   } else {

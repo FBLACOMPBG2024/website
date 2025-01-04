@@ -7,10 +7,7 @@ import cookie from "cookie";
 // It returns a list of tags and the sum of values for each tag
 // It is used to display a summary of the user's transactions
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse,
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === "GET") {
     return await getSummary(req, res);
   } else {
@@ -37,23 +34,30 @@ async function getSummary(req: NextApiRequest, res: NextApiResponse) {
       return res.status(401).json({ message: "Unauthorized" });
     }
 
-    // Fetch the user's transactions
-    const transactions = await client
+    // Use aggregation to get the sum of values for each tag
+    const summary = await client
       .db()
       .collection("transactions")
-      .find({ userId: user._id })
+      .aggregate([
+        { $match: { userId: user._id } }, // Match transactions for the user
+        { $unwind: "$tags" }, // Unwind the tags array to process each tag individually
+        {
+          $group: {
+            _id: "$tags", // Group by tag
+            totalValue: { $sum: "$value" }, // Sum the values for each tag
+          },
+        },
+        { $project: { _id: 0, tag: "$_id", totalValue: 1 } }, // Project the results
+      ])
       .toArray();
 
-    // Make a list of tags and a value sum for each tag
-    const tags: { [key: string]: number } = {};
-    for (const transaction of transactions) {
-      for (const tag of transaction.tags) {
-        tags[tag] = (tags[tag] || 0) + transaction.value;
-      }
-    }
+    // Return the summary as a map of tags to their total value
+    const tagsSummary = summary.reduce((acc: any, { tag, totalValue }) => {
+      acc[tag] = totalValue;
+      return acc;
+    }, {});
 
-    // Return the summary
-    return res.status(200).json({ data: tags });
+    return res.status(200).json({ data: tagsSummary });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: "Internal Server Error" });

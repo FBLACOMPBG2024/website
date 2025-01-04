@@ -31,7 +31,7 @@ export default async function handler(
     }
 
     // Mark the user's email as verified
-    const user = await client
+    await client
       .db()
       .collection("users")
       .updateOne(

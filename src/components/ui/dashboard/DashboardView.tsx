@@ -127,6 +127,17 @@ export default function DashboardView({ user }: DashboardViewProps) {
       },
     ],
   };
+  
+
+  if (loading || !user || typeof user.balance === "undefined") {
+    return <div>Loading...</div>;
+  }
+
+  const balance = (user.balance || 0).toLocaleString("en-US", {
+    style: "currency",
+    currency: "USD",
+  });
+  
 
   return (
     <div>
@@ -135,13 +146,12 @@ export default function DashboardView({ user }: DashboardViewProps) {
           <h1 className="text-2xl font-bold text-text">Dashboard</h1>
 
           <motion.h1
-            key={user.balance}
+            key={balance}
             initial={{ y: 0 }}
             animate={{ y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            {user.balance
-              .toLocaleString("en-US", { style: "currency", currency: "USD" })
+            {balance
               .split("")
               .map((char, index) => (
                 <motion.span
