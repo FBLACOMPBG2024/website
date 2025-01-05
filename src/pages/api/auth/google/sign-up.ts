@@ -3,13 +3,17 @@ import client from "@/lib/mongodb";
 import api from "@/utils/api";
 import { getIronSession } from "iron-session";
 import { sessionOptions } from "@/utils/sessionConfig";
+import argon2 from "argon2";
+import { ObjectId } from "mongodb";
+import { sendEmailVerification } from "@/utils/email";
+import { generateLink } from "@/utils/generateLink";
 
 // This file defines the API route that allows the user to log in with Google
 // It uses the Google OAuth2 API to authenticate the user
 
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse,
+  res: NextApiResponse
 ) {
   if (req.method === "POST") {
     try {
@@ -27,40 +31,59 @@ export default async function handler(
         })
         .then((res) => res.data);
 
-      const { email, name, picture, sub: googleId } = userInfo;
+        console.log(userInfo);
+
+      const { email, given_name, family_name, picture, sub: googleId } = userInfo;
 
       // Ensure email exists in response
       if (!email) {
-        return res.status(400).json({ message: "No email associated with this account" });
+        return res
+          .status(400)
+          .json({ message: "No email associated with this account" });
       }
 
       // Check if the user exists in the database
-      let user = await client
-        .db()
-        .collection("users")
-        .findOne({ email });
+      let user = await client.db().collection("users").findOne({ email });
 
-      if (!user) {
-        // If the user doesn't exist, return an error or optionally create a new user
-        return res.status(400).json({ message: "User does not exist" });
+      if (user) {
+        // Tell the user the email is already in use
+        return res.status(400).json({ message: "Email already in use" });
       }
 
-      // Create or update session
-      const session = await getIronSession(req, res, sessionOptions);
-      session.user = {
-        _id: user._id.toString(),
-        email,
-      };
-      await session.save();
+      // Create a new user if one does not exist
+      const hashedPassword = await argon2.hash("google-" + googleId);
 
-      // Return the user's information
-      res.status(200).json({
-        message: "Login successful",
-        user: {
-          id: user._id,
-          email,
-        },
+      await client.db().collection("users").insertOne({
+        email: email.toLowerCase(),
+        password: hashedPassword,
+        firstName: given_name,
+        lastName: family_name,
+        emailVerified: false,
+        createdAt: new Date(),
+        balance: 0,
       });
+
+      // Generate and send the email verification link
+      const link = await generateLink(email.toLowerCase(), "email-verification");
+      const emailResponse = await sendEmailVerification(
+        given_name,
+        link,
+        email.toLowerCase()
+      );
+
+      // If sending the email failed, delete the user and return an error
+      if (!emailResponse || emailResponse.error) {
+        console.error(emailResponse?.error || "Email failed to send");
+        await client
+          .db()
+          .collection("users")
+          .deleteOne({ email: email.toLowerCase() });
+        return res.status(500).json({ message: "Failed to send email" });
+      }
+
+      res
+        .status(200)
+        .json({ message: "Sign up successful, awaiting email verification" });
     } catch (error: any) {
       console.error("Google login error:", error.message);
       return res.status(500).json({ message: "Authentication failed" });

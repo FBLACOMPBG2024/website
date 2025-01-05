@@ -366,7 +366,7 @@ export default function TransactionsView() {
             </table>
           ) : (
             <div className="text-center text-gray-500 py-4">
-              No transactions found. Add some to get started!
+              No transactions found. Add some to get started
             </div>
           )}
         </div>
