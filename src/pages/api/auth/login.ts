@@ -37,7 +37,9 @@ export default async function handler(
     }
 
     if (user.password === undefined || user.password === "GOOGLE") {
-      res.status(401).json({ message: "This account was created using google" });
+      res
+        .status(401)
+        .json({ message: "This account was created using google" });
       return;
     }
 

@@ -7,7 +7,7 @@ import { ObjectId } from "mongodb";
 // Main handler function for the API route
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse
+  res: NextApiResponse,
 ) {
   if (req.method === "GET") {
     return await getTransactions(req, res);

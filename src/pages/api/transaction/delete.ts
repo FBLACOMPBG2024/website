@@ -7,26 +7,27 @@ import { sessionOptions } from "@/utils/sessionConfig";
 // This endpoint is used to delete a transaction
 // It is used to delete a transaction from the user's transaction list, using the transaction ID to delete the transaction
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse,
+) {
   if (req.method === "DELETE") {
- 
-
     try {
-     // Get session
-     const session = await getIronSession(req, res, sessionOptions);
+      // Get session
+      const session = await getIronSession(req, res, sessionOptions);
 
-     if (!session.user?._id) {
-       return res.status(401).json({ message: "Unauthorized" });
-     }
-     // Get the user from the database
-     const user = await client
-       .db()
-       .collection("users")
-       .findOne({ _id: new ObjectId(session.user?._id) });
- 
-     if (!user) {
-       return res.status(401).json({ message: "Unauthorized" });
-     }
+      if (!session.user?._id) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      // Get the user from the database
+      const user = await client
+        .db()
+        .collection("users")
+        .findOne({ _id: new ObjectId(session.user?._id) });
+
+      if (!user) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
       // Get the transaction ID from the request body
       const { _id } = req.body;
 
@@ -63,7 +64,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             $pull: {
               transactions: new ObjectId(_id),
             },
-          }
+          },
         );
 
       // Update the balance by subtracting the value of the deleted transaction
@@ -75,7 +76,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         .collection("users")
         .updateOne({ _id: user._id }, { $set: { balance: newBalance } });
 
-      return res.status(200).json({ message: "Transaction deleted successfully" });
+      return res
+        .status(200)
+        .json({ message: "Transaction deleted successfully" });
     } catch (error: any) {
       console.error(error); // Log any unexpected errors
       return res.status(500).json({ message: "Internal Server Error" });

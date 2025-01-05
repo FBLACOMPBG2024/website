@@ -13,7 +13,7 @@ import { generateLink } from "@/utils/generateLink";
 
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse
+  res: NextApiResponse,
 ) {
   if (req.method === "POST") {
     try {
@@ -31,9 +31,15 @@ export default async function handler(
         })
         .then((res) => res.data);
 
-        console.log(userInfo);
+      console.log(userInfo);
 
-      const { email, given_name, family_name, picture, sub: googleId } = userInfo;
+      const {
+        email,
+        given_name,
+        family_name,
+        picture,
+        sub: googleId,
+      } = userInfo;
 
       // Ensure email exists in response
       if (!email) {
@@ -64,11 +70,14 @@ export default async function handler(
       });
 
       // Generate and send the email verification link
-      const link = await generateLink(email.toLowerCase(), "email-verification");
+      const link = await generateLink(
+        email.toLowerCase(),
+        "email-verification",
+      );
       const emailResponse = await sendEmailVerification(
         given_name,
         link,
-        email.toLowerCase()
+        email.toLowerCase(),
       );
 
       // If sending the email failed, delete the user and return an error

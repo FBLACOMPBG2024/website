@@ -10,7 +10,7 @@ import { sessionOptions } from "@/utils/sessionConfig";
 
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse
+  res: NextApiResponse,
 ) {
   if (req.method === "POST") {
     return await createTransaction(req, res);
@@ -136,20 +136,14 @@ async function editTransaction(req: NextApiRequest, res: NextApiResponse) {
       await client
         .db()
         .collection("transactions")
-        .updateOne(
-          { _id: new ObjectId(_id) },
-          { $set: updatedTransaction },
-        );
+        .updateOne({ _id: new ObjectId(_id) }, { $set: updatedTransaction });
 
       // Update user balance
       const newBalance = user.balance + balanceAdjustment;
       await client
         .db()
         .collection("users")
-        .updateOne(
-          { _id: user._id },
-          { $set: { balance: newBalance } },
-        );
+        .updateOne({ _id: user._id }, { $set: { balance: newBalance } });
 
       return res.status(200).json(updatedTransaction);
     } catch (error) {

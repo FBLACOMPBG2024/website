@@ -16,9 +16,12 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   const userId = session.user._id;
 
   // Fetch the user from the database
-  const user = await client.db().collection("users").findOne({
-    _id: new ObjectId(userId),
-  });
+  const user = await client
+    .db()
+    .collection("users")
+    .findOne({
+      _id: new ObjectId(userId),
+    });
 
   if (!user || !user._id) {
     return res.status(401).json({ message: "Unauthorized" });
@@ -42,7 +45,6 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     // Handle unsupported methods
     res.setHeader("Allow", ["POST", "GET"]);
     return res.status(405).end(`Method ${req.method} Not Allowed`);
-
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: "Internal Server Error" });
@@ -50,7 +52,11 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 }
 
 // Helper function to update user information
-async function updateUser(req: NextApiRequest, res: NextApiResponse, user: any) {
+async function updateUser(
+  req: NextApiRequest,
+  res: NextApiResponse,
+  user: any,
+) {
   const { firstName, lastName, email } = req.body;
 
   // Validate email format
@@ -69,12 +75,15 @@ async function updateUser(req: NextApiRequest, res: NextApiResponse, user: any) 
   }
 
   // Update the user in the database
-  await client.db().collection("users").updateOne(
-    { _id: new ObjectId(user._id) },
-    {
-      $set: updatedFields,
-    }
-  );
+  await client
+    .db()
+    .collection("users")
+    .updateOne(
+      { _id: new ObjectId(user._id) },
+      {
+        $set: updatedFields,
+      },
+    );
 
   return res.status(200).json({ message: "User updated successfully" });
 }
@@ -86,12 +95,15 @@ async function getUserInfo(res: NextApiResponse, user: any) {
     return res.status(401).json({ message: "Awaiting email verification" });
   }
 
-  return res.status(200).json({ message: "User information fetched", user: {
-    firstName: user.firstName,
-    lastName: user.lastName,
-    email: user.email,
-    balance: user.balance,
-  } });
+  return res.status(200).json({
+    message: "User information fetched",
+    user: {
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      balance: user.balance,
+    },
+  });
 }
 
 // Helper function to validate email format

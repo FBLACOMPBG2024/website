@@ -9,7 +9,10 @@ import argon2 from "argon2";
 // It will create a new user in the database
 // It will send an email verification link to the user's email
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse,
+) {
   if (req.method === "POST") {
     // Get information from the request
     const { firstName, lastName, email, password } = req.body;
@@ -17,7 +20,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Validate the input data
     const result = SignUpSchema.safeParse(req.body);
     if (!result.success) {
-      return res.status(400).json({ message: "Invalid input data", error: result.error });
+      return res
+        .status(400)
+        .json({ message: "Invalid input data", error: result.error });
     }
 
     const normalizedEmail = email.toString().toLowerCase();
@@ -48,25 +53,41 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const existingLinks = await client
       .db()
       .collection("links")
-      .find({ targetEmail: normalizedEmail, createdAt: { $gt: threeMinutesAgo } })
+      .find({
+        targetEmail: normalizedEmail,
+        createdAt: { $gt: threeMinutesAgo },
+      })
       .toArray();
 
     if (existingLinks.length > 0) {
-      return res.status(400).json({ message: "Too many links generated recently, Try again later." });
+      return res
+        .status(400)
+        .json({
+          message: "Too many links generated recently, Try again later.",
+        });
     }
 
     // Generate and send the email verification link
     const link = await generateLink(normalizedEmail, "email-verification");
-    const emailResponse = await sendEmailVerification(firstName, link, normalizedEmail);
+    const emailResponse = await sendEmailVerification(
+      firstName,
+      link,
+      normalizedEmail,
+    );
 
     // If sending the email failed, delete the user and return an error
     if (!emailResponse || emailResponse.error) {
       console.error(emailResponse?.error || "Email failed to send");
-      await client.db().collection("users").deleteOne({ email: normalizedEmail });
+      await client
+        .db()
+        .collection("users")
+        .deleteOne({ email: normalizedEmail });
       return res.status(500).json({ message: "Failed to send email" });
     }
 
-    res.status(200).json({ message: "Sign up successful, awaiting email verification" });
+    res
+      .status(200)
+      .json({ message: "Sign up successful, awaiting email verification" });
   } else {
     res.setHeader("Allow", ["POST"]);
     return res.status(405).end(`Method ${req.method} Not Allowed`);

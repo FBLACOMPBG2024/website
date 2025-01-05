@@ -22,44 +22,12 @@ interface Transaction {
   updatedAt: string;
 }
 
-let pieOption = {
-  backgroundColor: "#171717",
-  tooltip: {
-    trigger: "item",
-  },
-  legend: {
-    top: "bottom",
-    left: "center",
-  },
-  series: [
-    {
-      name: "Spending Diversity",
-      type: "pie",
-      radius: ["40%", "70%"],
-      avoidLabelOverlap: false,
-      padAngle: 5,
-      itemStyle: {
-        borderRadius: 5,
-        color: "#31D88A",
-      },
-      labelLine: {
-        show: false,
-      },
-      data: [
-        { value: 10, name: "Entertainment" },
-        { value: 25, name: "Grocery" },
-        { value: 50, name: "Bills" },
-        { value: 10, name: "Gifts" },
-        { value: 5, name: "Misc" },
-      ],
-    },
-  ],
-};
-
 export default function DashboardView({ user }: DashboardViewProps) {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
+  const [chartData, setChartData] = useState<number[]>([]); // For storing chart data
+  const [chartLabels, setChartLabels] = useState<string[]>([]); // Store labels for x-axis, initialized with an empty array
 
   useEffect(() => {
     // Fetch all transactions for the user
@@ -83,10 +51,38 @@ export default function DashboardView({ user }: DashboardViewProps) {
       }
     }
 
+    async function fetchChartData() {
+      try {
+        const response = await api
+          .get("api/transaction/summary")
+          .catch((error) => {
+            console.error(error);
+            setError("Failed to fetch chart data.");
+          });
+
+        if (response?.status === 200) {
+          const summaryData = response.data; // Assuming the summary data is in response.data
+
+          // Assuming the response contains a 'data' object with day names as keys and values as totals
+          const labels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+          const values = labels.map((day) => summaryData.data[day] || 0); // Map to day names and default to 0 if no data for the day
+
+          // Update chart data and labels
+          setChartData(values);
+          setChartLabels(labels);
+        }
+      } catch (error: any) {
+        console.error("Error fetching chart data:", error);
+        setError("An error occurred while fetching chart data.");
+      }
+    }
+
     fetchTransactions();
+    fetchChartData();
   }, [user]); // Dependency array: this will run whenever user.token changes
 
-  let option = {
+  // Option for the line chart, dynamically updated with chartData and chartLabels
+  const option = {
     tooltip: {
       trigger: "axis",
       axisPointer: {
@@ -105,7 +101,10 @@ export default function DashboardView({ user }: DashboardViewProps) {
     xAxis: [
       {
         type: "category",
-        data: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+        data:
+          chartLabels.length > 0
+            ? chartLabels
+            : ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"], // Fallback to default labels if no data
       },
     ],
     yAxis: [
@@ -123,11 +122,11 @@ export default function DashboardView({ user }: DashboardViewProps) {
         emphasis: {
           focus: "series",
         },
-        data: [120, 132, 101, 134, 90, 230, 210],
+        data:
+          chartData.length > 0 ? chartData : [120, 132, 101, 134, 90, 230, 210], // Fallback if no data available
       },
     ],
   };
-  
 
   if (loading || !user || typeof user.balance === "undefined") {
     return <div>Loading...</div>;
@@ -137,7 +136,6 @@ export default function DashboardView({ user }: DashboardViewProps) {
     style: "currency",
     currency: "USD",
   });
-  
 
   return (
     <div>
@@ -151,23 +149,21 @@ export default function DashboardView({ user }: DashboardViewProps) {
             animate={{ y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            {balance
-              .split("")
-              .map((char, index) => (
-                <motion.span
-                  key={index}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.1, delay: index * 0.1 }}
-                >
-                  {char}
-                </motion.span>
-              ))}
+            {balance.split("").map((char, index) => (
+              <motion.span
+                key={index}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.1, delay: index * 0.1 }}
+              >
+                {char}
+              </motion.span>
+            ))}
           </motion.h1>
         </div>
         <div className="w-1/2 h-full">
-          <ReactECharts className="w-5/6" option={pieOption} />
+          <ReactECharts className="w-5/6" option={option} />
         </div>
       </Card>
     </div>

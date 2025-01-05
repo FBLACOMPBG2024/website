@@ -10,7 +10,7 @@ import { sessionOptions } from "@/utils/sessionConfig";
 
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse
+  res: NextApiResponse,
 ) {
   if (req.method !== "POST") {
     res.setHeader("Allow", ["POST"]);
@@ -68,7 +68,7 @@ export default async function handler(
 
     // Update user transaction list
     const transactionIds = formattedTransactions.map(
-      (transaction) => transaction._id
+      (transaction) => transaction._id,
     );
     await client
       .db()
@@ -81,17 +81,14 @@ export default async function handler(
     // Calculate new balance
     const newBalance = formattedTransactions.reduce(
       (acc, transaction) => acc + transaction.value,
-      user.balance
+      user.balance,
     );
 
     // Update the user's balance
     await client
       .db()
       .collection("users")
-      .updateOne(
-        { _id: user._id },
-        { $set: { balance: newBalance } },
-      );
+      .updateOne({ _id: user._id }, { $set: { balance: newBalance } });
 
     return res.status(201).json({
       message: "Transactions added successfully",

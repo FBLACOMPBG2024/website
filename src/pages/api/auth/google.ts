@@ -6,7 +6,6 @@ import Cors from "cors";
 // It uses the Google OAuth2 API to get the user's information
 // (See the other google api related stuff for an explanation of the cors )
 
-
 // Initialize OAuth2Client with credentials
 const oAuth2Client = new OAuth2Client(
   process.env.GOOGLE_CLIENT_ID,
@@ -18,7 +17,6 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse,
 ) {
-
   if (req.method === "POST") {
     try {
       const { tokens } = await oAuth2Client.getToken(req.body.code); // exchange code for tokens

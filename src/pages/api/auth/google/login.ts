@@ -31,14 +31,13 @@ export default async function handler(
 
       // Ensure email exists in response
       if (!email) {
-        return res.status(400).json({ message: "No email associated with this account" });
+        return res
+          .status(400)
+          .json({ message: "No email associated with this account" });
       }
 
       // Check if the user exists in the database
-      let user = await client
-        .db()
-        .collection("users")
-        .findOne({ email });
+      let user = await client.db().collection("users").findOne({ email });
 
       if (!user) {
         // If the user doesn't exist, return an error or optionally create a new user

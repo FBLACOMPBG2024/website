@@ -106,7 +106,7 @@ export default function SignUp() {
 
       if (response?.status === 200) {
         router.push(
-          "/email/awaiting-verification?email=" + response.data.email,
+          "/email/awaiting-verification?email=" + response.data.email
         );
       }
     },

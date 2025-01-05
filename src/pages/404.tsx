@@ -1,4 +1,4 @@
-import Topbar from "@/components/ui/Topbar";
+import Test from "@/components/ui/Topbar";
 import { useRouter } from "next/router";
 
 export default function Custom404() {
@@ -7,7 +7,7 @@ export default function Custom404() {
   return (
     <div className="flex flex-col h-screen w-screen">
       {/* Topbar */}
-      <Topbar />
+      <Test />
       <div className="w-full h-screen flex items-center justify-center">
         <div className="text-center">
           <a className="text-text text-7xl font-bold">404</a>

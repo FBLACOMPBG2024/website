@@ -8,11 +8,14 @@ import { sessionOptions } from "@/utils/sessionConfig";
 // This endpoint is used to create a new transaction
 // It is used to create a new transaction and add it to the user's transaction list
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse,
+) {
   if (req.method === "POST") {
     // Get session
     const session = await getIronSession(req, res, sessionOptions);
-    
+
     if (!session.user?._id) {
       return res.status(401).json({ message: "Unauthorized" });
     }
@@ -54,10 +57,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         await client.db().collection("transactions").insertOne(transaction);
 
         // Update user transaction list
-        await client.db().collection("users").updateOne(
-          { _id: user._id },
-          { $addToSet: { transactions: transaction._id } },
-        );
+        await client
+          .db()
+          .collection("users")
+          .updateOne(
+            { _id: user._id },
+            { $addToSet: { transactions: transaction._id } },
+          );
 
         // Recalculate balance
         const transactions = await client
@@ -65,17 +71,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           .collection("transactions")
           .find({ userId: user._id })
           .toArray();
-        
+
         const balance = transactions.reduce(
           (acc, transaction) => acc + transaction.value,
           0,
         );
 
         // Update user balance
-        await client.db().collection("users").updateOne(
-          { _id: user._id },
-          { $set: { balance: balance } }
-        );
+        await client
+          .db()
+          .collection("users")
+          .updateOne({ _id: user._id }, { $set: { balance: balance } });
 
         // Commit the transaction
         await sessionDb.commitTransaction();
@@ -83,14 +89,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
         // Respond with the created transaction
         return res.status(201).json(transaction);
-
       } catch (err) {
         // If any error occurs, abort the transaction
         await sessionDb.abortTransaction();
         sessionDb.endSession();
         throw err;
       }
-
     } catch (error: any) {
       // Handle validation or other errors
       if (error.name === "ZodError") {
