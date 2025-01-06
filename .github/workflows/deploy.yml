@@ -21,11 +21,6 @@ jobs:
         with:
           node-version: "18" # Specify the Node.js version you need
 
-      - name: Fix directory permissions
-        run: |
-          sudo chown -R $USER:$USER .next
-          sudo chmod -R 755 .next
-
       - name: Copy .env file
         run: cp ../.env ./ # Copy the .env file from the parent directory
 
