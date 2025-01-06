@@ -17,6 +17,9 @@ jobs:
         with:
           node-version: "18" # Specify the Node.js version you need
 
+      - name: Copy .env file
+        run: cp ../.env ./ # Copy the .env file from the parent directory
+
       - name: Install dependencies
         run: |
           npm install
@@ -27,7 +30,7 @@ jobs:
 
       - name: Start the project (if required)
         run: |
-          npm run start
+          pm2 start npm --  run
         env:
           NODE_ENV: production
 
