@@ -3,13 +3,14 @@ import client from "@/lib/mongodb";
 import api from "@/utils/api";
 import { getIronSession } from "iron-session";
 import { sessionOptions } from "@/utils/sessionConfig";
+import { SessionData } from "@/utils/sessionData";
 
 // This file defines the API route that allows the user to log in with Google
 // It uses the Google OAuth2 API to authenticate the user
 
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse,
+  res: NextApiResponse
 ) {
   if (req.method === "POST") {
     try {
@@ -45,7 +46,11 @@ export default async function handler(
       }
 
       // Create or update session
-      const session = await getIronSession(req, res, sessionOptions);
+      const session = await getIronSession<SessionData>(
+        req,
+        res,
+        sessionOptions
+      );
       session.user = {
         _id: user._id.toString(),
         email,

@@ -4,17 +4,18 @@ import client from "@/lib/mongodb";
 import { ObjectId } from "mongodb";
 import { getIronSession } from "iron-session";
 import { sessionOptions } from "@/utils/sessionConfig";
+import { SessionData } from "@/utils/sessionData";
 
 // This endpoint is used to create a new transaction
 // It is used to create a new transaction and add it to the user's transaction list
 
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse,
+  res: NextApiResponse
 ) {
   if (req.method === "POST") {
     // Get session
-    const session = await getIronSession(req, res, sessionOptions);
+    const session = await getIronSession<SessionData>(req, res, sessionOptions);
 
     if (!session.user?._id) {
       return res.status(401).json({ message: "Unauthorized" });
@@ -62,7 +63,7 @@ export default async function handler(
           .collection("users")
           .updateOne(
             { _id: user._id },
-            { $addToSet: { transactions: transaction._id } },
+            { $addToSet: { transactions: transaction._id } }
           );
 
         // Recalculate balance
@@ -74,7 +75,7 @@ export default async function handler(
 
         const balance = transactions.reduce(
           (acc, transaction) => acc + transaction.value,
-          0,
+          0
         );
 
         // Update user balance

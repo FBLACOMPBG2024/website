@@ -1,8 +1,25 @@
 {
-  "extends": ["next/core-web-vitals", "next/typescript"],
+  "extends": [
+    "next/core-web-vitals",   // Next.js core web vitals linting
+    "next/typescript",         // TypeScript support for Next.js
+    "eslint:recommended",      // ESLint's recommended settings
+    "plugin:@typescript-eslint/recommended", // Recommended TypeScript rules
+    "prettier"                 // Disable rules that conflict with Prettier
+  ],
+  "plugins": ["@typescript-eslint"], // Add the TypeScript ESLint plugin
+  "parserOptions": {
+    "project": "./tsconfig.json",
+    "tsconfigRootDir": __dirname
+  },
   "rules": {
-    "typescript/no-throw-literal": "off",
-    "@typescript-eslint/no-explicit-any": "off",
-    "no-restricted-syntax": ["error", "CatchClause[parameter.type='Error']"]
+    "typescript/no-throw-literal": "off", // Allow throwing literals
+    "@typescript-eslint/no-explicit-any": "off", // Allow 'any' type (modify as needed)
+    "no-restricted-syntax": [
+      "error", 
+      {
+        "selector": "CatchClause[parameter.type='Error']",
+        "message": "Use specific error types instead of the generic 'Error'"
+      }
+    ]
   }
 }

@@ -4,13 +4,14 @@ import client from "@/lib/mongodb";
 import { ObjectId } from "mongodb";
 import { getIronSession } from "iron-session";
 import { sessionOptions } from "@/utils/sessionConfig";
+import { SessionData } from "@/utils/sessionData";
 
 // This endpoint is used to add multiple transactions
 // It is used to add multiple transactions to the user's transaction list
 
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse,
+  res: NextApiResponse
 ) {
   if (req.method !== "POST") {
     res.setHeader("Allow", ["POST"]);
@@ -19,7 +20,7 @@ export default async function handler(
 
   try {
     // Get session
-    const session = await getIronSession(req, res, sessionOptions);
+    const session = await getIronSession<SessionData>(req, res, sessionOptions);
 
     if (!session.user?._id) {
       return res.status(401).json({ message: "Unauthorized" });
@@ -54,7 +55,7 @@ export default async function handler(
             ? new Date(parsedTransaction.date)
             : new Date(),
         };
-      } catch (error) {
+      } catch (error: any) {
         // If any single transaction fails validation, we return an error
         throw new Error(`Invalid transaction data: ${error.message}`);
       }
@@ -68,20 +69,20 @@ export default async function handler(
 
     // Update user transaction list
     const transactionIds = formattedTransactions.map(
-      (transaction) => transaction._id,
+      (transaction) => transaction._id
     );
     await client
       .db()
       .collection("users")
       .updateOne(
         { _id: user._id },
-        { $addToSet: { transactions: { $each: transactionIds } } },
+        { $addToSet: { transactions: { $each: transactionIds } } }
       );
 
     // Calculate new balance
     const newBalance = formattedTransactions.reduce(
       (acc, transaction) => acc + transaction.value,
-      user.balance,
+      user.balance
     );
 
     // Update the user's balance

@@ -10,7 +10,7 @@ export default function SignOut() {
   useEffect(() => {
     const logout = async () => {
       await api.post("/api/auth/logout");
-      setUser(null);
+      setUser({} as IUser);
       router.push("/login");
     };
     logout();

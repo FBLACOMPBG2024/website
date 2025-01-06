@@ -4,13 +4,14 @@ import client from "@/lib/mongodb";
 import { ObjectId } from "mongodb";
 import { getIronSession } from "iron-session";
 import { sessionOptions } from "@/utils/sessionConfig";
+import { SessionData } from "@/utils/sessionData";
 
 // This endpoint is used to create and edit transactions
 // It is used to create a new transaction and edit an existing transaction
 
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse,
+  res: NextApiResponse
 ) {
   if (req.method === "POST") {
     return await createTransaction(req, res);
@@ -26,7 +27,7 @@ export default async function handler(
 async function createTransaction(req: NextApiRequest, res: NextApiResponse) {
   try {
     // Get session
-    const session = await getIronSession(req, res, sessionOptions);
+    const session = await getIronSession<SessionData>(req, res, sessionOptions);
 
     if (!session.user?._id) {
       return res.status(401).json({ message: "Unauthorized" });
@@ -84,7 +85,7 @@ async function createTransaction(req: NextApiRequest, res: NextApiResponse) {
 async function editTransaction(req: NextApiRequest, res: NextApiResponse) {
   try {
     // Get session
-    const session = await getIronSession(req, res, sessionOptions);
+    const session = await getIronSession<SessionData>(req, res, sessionOptions);
 
     if (!session.user?._id) {
       return res.status(401).json({ message: "Unauthorized" });
