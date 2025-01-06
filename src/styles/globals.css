@@ -30,3 +30,23 @@ body {
   color: rgba(var(--text));
   background: rgba(var(--background));
 }
+
+.dark {
+  --background: 16, 16, 16 !important;
+  --background-gray: 23, 23, 23 !important;
+  --background-gray-light: 38, 38, 38 !important;
+  --text: 255, 255, 255 !important;
+  --accent: 0, 194, 103 !important;
+  --primary: 25, 105, 70 !important;
+  --secondary: 0, 36, 19 !important;
+  --background-green: 6, 19, 13 !important;
+}
+
+.light {
+  --background: 239, 239, 239 !important;
+  --background-gray: 232, 232, 232 !important;
+  --background-gray-light: 217, 217, 217 !important;
+  --text: 66, 66, 66 !important;
+  --primary: 49, 216, 138 !important;
+  --background-green: 200, 236, 202 !important;
+}

@@ -32,7 +32,12 @@ export default function App({
       setLoading(false);
     };
 
-    if (!user) infoResponse();
+    if (!user) {
+      infoResponse();
+      return;
+    }
+
+    document.body.classList.add(user.preferences.theme);
   }, [user]);
 
   return loading ? (
