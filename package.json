@@ -11,7 +11,7 @@
   "dependencies": {
     "@auth/core": "^0.37.2",
     "@auth/mongodb-adapter": "^3.7.2",
-    "@react-email/components": "0.0.27",
+    "@react-email/components": "0.0.31",
     "@react-oauth/google": "^0.12.1",
     "@tabler/icons-react": "^3.20.0",
     "@typescript-eslint/eslint-plugin": "^8.19.0",
