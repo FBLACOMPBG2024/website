@@ -9,6 +9,10 @@ jobs:
   build:
     runs-on: self-hosted # This will run on your self-hosted runner
     steps:
+      - name: Start the project (if required)
+        run: |
+          pm2 stop 0
+
       - name: Check out the repository
         uses: actions/checkout@v3
 
