@@ -37,3 +37,7 @@ jobs:
           pm2 start npm --name "smartspend" -- run start
         env:
           NODE_ENV: production
+
+      - name: Cleanup Cache
+        if: always() # Ensures this runs even if the job fails
+        run: rm -rf /home/flash/actions-runner/_work/website/website/.next/
