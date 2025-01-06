@@ -30,7 +30,7 @@ jobs:
 
       - name: Build the project
         run: |
-          npm run build
+          npx next build
 
       - name: Start the project with pm2
         run: |
