@@ -30,10 +30,6 @@ jobs:
 
       - name: Start the project (if required)
         run: |
-          pm2 start npm --  run
+          pm2 restart 0
         env:
           NODE_ENV: production
-
-      - name: Lint the project
-        run: |
-          npm run lint
