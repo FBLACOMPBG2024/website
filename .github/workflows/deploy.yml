@@ -11,7 +11,7 @@ jobs:
     steps:
       - name: Start the project (if required)
         run: |
-          pm2 stop all
+          pm2 delete all
 
       - name: Check out the repository
         uses: actions/checkout@v3
@@ -34,6 +34,6 @@ jobs:
 
       - name: Start the project (if required)
         run: |
-          pm2 restart all
+          pm2 start npm --name "smartspend" -- run start
         env:
           NODE_ENV: production
