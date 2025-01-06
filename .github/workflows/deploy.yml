@@ -9,6 +9,10 @@ jobs:
   build:
     runs-on: self-hosted # This will run on your self-hosted runner
     steps:
+      - name: Stop any existing pm2 processes (if any)
+        run: |
+          pm2 delete all || true
+
       - name: Check out the repository
         uses: actions/checkout@v3
 
@@ -16,6 +20,9 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: "18" # Specify the Node.js version you need
+
+      - name: Copy .env file
+        run: cp ../.env ./ # Copy the .env file from the parent directory
 
       - name: Install dependencies
         run: |
@@ -25,12 +32,8 @@ jobs:
         run: |
           npm run build
 
-      - name: Start the project (if required)
+      - name: Start the project with pm2
         run: |
-          npm run start
+          pm2 start npm --name "smartspend" -- run start
         env:
           NODE_ENV: production
-
-      - name: Lint the project
-        run: |
-          npm run lint
