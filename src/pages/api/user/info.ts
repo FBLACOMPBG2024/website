@@ -3,10 +3,11 @@ import client from "@/lib/mongodb";
 import { ObjectId } from "mongodb";
 import { getIronSession } from "iron-session";
 import { sessionOptions } from "@/utils/sessionConfig";
+import { SessionData } from "@/utils/sessionData";
 
 // This endpoint updates user information and handles session refresh
 async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const session = await getIronSession(req, res, sessionOptions);
+  const session = await getIronSession<SessionData>(req, res, sessionOptions);
 
   // Ensure the user is authenticated
   if (!session.user?._id) {
@@ -55,7 +56,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 async function updateUser(
   req: NextApiRequest,
   res: NextApiResponse,
-  user: any,
+  user: any
 ) {
   const { firstName, lastName, email } = req.body;
 
@@ -82,7 +83,7 @@ async function updateUser(
       { _id: new ObjectId(user._id) },
       {
         $set: updatedFields,
-      },
+      }
     );
 
   return res.status(200).json({ message: "User updated successfully" });
@@ -131,7 +132,7 @@ async function refreshSession(session: any, user: any) {
   // Calculate the balance
   const balance = transactions.reduce(
     (acc, transaction) => acc + transaction.value,
-    0,
+    0
   );
 
   // Update user balance in the database

@@ -3,11 +3,12 @@ import client from "@/lib/mongodb";
 import { getIronSession } from "iron-session";
 import { sessionOptions } from "@/utils/sessionConfig";
 import { ObjectId } from "mongodb";
+import { SessionData } from "@/utils/sessionData";
 
 // Main handler function for the API route
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse,
+  res: NextApiResponse
 ) {
   if (req.method === "GET") {
     return await getTransactions(req, res);
@@ -20,7 +21,7 @@ export default async function handler(
 // Get transactions for a user
 async function getTransactions(req: NextApiRequest, res: NextApiResponse) {
   try {
-    const session = await getIronSession(req, res, sessionOptions);
+    const session = await getIronSession<SessionData>(req, res, sessionOptions);
 
     // Ensure the user is authenticated
     if (!session.user?._id) {

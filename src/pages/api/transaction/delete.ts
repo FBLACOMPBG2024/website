@@ -3,18 +3,23 @@ import client from "@/lib/mongodb";
 import { ObjectId } from "mongodb";
 import { getIronSession } from "iron-session";
 import { sessionOptions } from "@/utils/sessionConfig";
+import { SessionData } from "@/utils/sessionData";
 
 // This endpoint is used to delete a transaction
 // It is used to delete a transaction from the user's transaction list, using the transaction ID to delete the transaction
 
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse,
+  res: NextApiResponse
 ) {
   if (req.method === "DELETE") {
     try {
       // Get session
-      const session = await getIronSession(req, res, sessionOptions);
+      const session = await getIronSession<SessionData>(
+        req,
+        res,
+        sessionOptions
+      );
 
       if (!session.user?._id) {
         return res.status(401).json({ message: "Unauthorized" });
@@ -54,7 +59,6 @@ export default async function handler(
         return res.status(404).json({ message: "Transaction not found" });
       }
 
-      // Update user transaction list
       await client
         .db()
         .collection("users")
@@ -62,9 +66,9 @@ export default async function handler(
           { _id: user._id },
           {
             $pull: {
-              transactions: new ObjectId(_id),
+              transactions: _id,
             },
-          },
+          }
         );
 
       // Update the balance by subtracting the value of the deleted transaction

@@ -4,12 +4,13 @@ import client from "@/lib/mongodb";
 import argon2 from "argon2";
 import { getIronSession } from "iron-session";
 import { sessionOptions } from "@/utils/sessionConfig";
+import { SessionData } from "@/utils/sessionData";
 
 // This file defines the API route that allows the user to log in
 
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse,
+  res: NextApiResponse
 ) {
   if (req.method === "POST") {
     const inputData = req.body;
@@ -58,7 +59,7 @@ export default async function handler(
     }
 
     // Initialize the session
-    const session = await getIronSession(req, res, sessionOptions);
+    const session = await getIronSession<SessionData>(req, res, sessionOptions);
 
     // Set session data
     session.user = {

@@ -3,11 +3,12 @@ import client from "@/lib/mongodb";
 import { ObjectId } from "mongodb";
 import { getIronSession } from "iron-session";
 import { sessionOptions } from "@/utils/sessionConfig";
+import { SessionData } from "@/utils/sessionData";
 
 // New endpoint to get weekly spending grouped by day of the week
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse,
+  res: NextApiResponse
 ) {
   if (req.method === "GET") {
     return await getWeeklySpending(req, res);
@@ -20,7 +21,7 @@ export default async function handler(
 // Get weekly spending grouped by day of the week
 async function getWeeklySpending(req: NextApiRequest, res: NextApiResponse) {
   try {
-    const session = await getIronSession(req, res, sessionOptions);
+    const session = await getIronSession<SessionData>(req, res, sessionOptions);
 
     // Ensure the user is authenticated
     if (!session.user?._id) {
@@ -71,7 +72,7 @@ async function getWeeklySpending(req: NextApiRequest, res: NextApiResponse) {
         acc[day] = 0; // Default to 0 for all days
         return acc;
       },
-      {} as Record<string, number>,
+      {} as Record<string, number>
     );
 
     // Populate groupedData with actual transaction data

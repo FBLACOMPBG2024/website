@@ -99,7 +99,7 @@ export default function Login() {
         setMessage("Password reset link sent to your email.");
         setIsBad(false);
       }
-    } catch (error) {
+    } catch (error: any) {
       setMessage(error.response?.data?.message || "An error occurred");
       setIsBad(true);
     }

@@ -42,7 +42,7 @@ export default function App({
       </Head>
       <main className={inter.className}>
         <div className="w-full h-screen flex items-center justify-center">
-          <PropagateLoader height="10vh" color="rgb(var(--primary))" />
+          <PropagateLoader color="rgb(var(--primary))" />
         </div>
       </main>
     </>
