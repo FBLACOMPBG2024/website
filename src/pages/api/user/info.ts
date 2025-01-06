@@ -58,7 +58,7 @@ async function updateUser(
   res: NextApiResponse,
   user: any
 ) {
-  const { firstName, lastName, email } = req.body;
+  const { firstName, lastName, email, preferences } = req.body;
 
   // Validate email format
   if (email && !validateEmail(email)) {
@@ -70,6 +70,7 @@ async function updateUser(
   if (firstName) updatedFields.firstName = firstName;
   if (lastName) updatedFields.lastName = lastName;
   if (email) updatedFields.email = email;
+  if (preferences) updatedFields.preferences = preferences;
 
   if (Object.keys(updatedFields).length === 0) {
     return res.status(400).json({ message: "No fields provided to update" });
@@ -103,6 +104,9 @@ async function getUserInfo(res: NextApiResponse, user: any) {
       lastName: user.lastName,
       email: user.email,
       balance: user.balance,
+      preferences: {
+        theme: user.preferences.theme
+      }
     },
   });
 }
