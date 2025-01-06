@@ -11,7 +11,7 @@ jobs:
     steps:
       - name: Stop any existing pm2 processes (if any)
         run: |
-          pm2 delete all || true # Continue regardless of existing processes
+          pm2 delete all || true
 
       - name: Check out the repository
         uses: actions/checkout@v3
