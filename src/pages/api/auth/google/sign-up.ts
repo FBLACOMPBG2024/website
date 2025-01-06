@@ -67,6 +67,9 @@ export default async function handler(
         emailVerified: false,
         createdAt: new Date(),
         balance: 0,
+        preferences: {
+          theme: "dark"
+        }
       });
 
       // Generate and send the email verification link

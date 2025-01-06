@@ -11,6 +11,9 @@ export interface IUser {
   createdAt: Date;
   emailVerified: boolean;
   balance: number;
+  preferences: {
+    theme: string;
+  }
 }
 
 interface IUserContext {
@@ -27,9 +30,12 @@ const defaultvalues: IUserContext = {
     createdAt: new Date(),
     emailVerified: false,
     balance: 1337,
+    preferences: {
+      theme: "dark",
+    }
   },
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  setUser(user: IUser): void {},
+  setUser(user: IUser): void { },
 };
 
 const UserContext = createContext(defaultvalues);

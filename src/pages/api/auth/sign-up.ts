@@ -46,6 +46,9 @@ export default async function handler(
       emailVerified: false,
       createdAt: new Date(),
       balance: 0,
+      preferences: {
+        theme: "dark"
+      }
     });
 
     // Prevent generating multiple verification links within 3 minutes

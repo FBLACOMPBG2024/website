@@ -17,6 +17,7 @@ export default function ProfileView({ user }: ProfileViewProps) {
   const [firstName, setFirstName] = useState(user.firstName);
   const [lastName, setLastName] = useState(user.lastName);
   const [email, setEmail] = useState(user.email);
+  const [theme, setTheme] = useState(user.preferences.theme)
 
   // Make a function to update the user's profile
   async function updateUserProfile() {
@@ -25,6 +26,9 @@ export default function ProfileView({ user }: ProfileViewProps) {
       firstName: firstName,
       lastName: lastName,
       email: email,
+      preferences: {
+        theme: theme
+      }
     });
 
     // If the response is successful, update the user context by reloading the page
@@ -70,6 +74,18 @@ export default function ProfileView({ user }: ProfileViewProps) {
             setEmail(e.target.value);
           }}
         />
+      </div>
+      <div className="">
+        <h2 className="text-lg font-bold text-text">Theme</h2>
+        <select
+          className="bg-backgroundGrayLight border-none focus:text-white selection:bg-primary text-neutral-500 h-8 text-base rounded-md marker"
+          value={theme}
+          onChange={(e) => {
+            setTheme(e.target.value);
+          }}>
+          <option value="dark">Dark</option>
+          <option value="light">Light</option>
+        </select>
       </div>
       <div className="flex flex-row justify-end">
         {/* Save Button (Right Aligned) */}
