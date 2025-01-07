@@ -1,13 +1,16 @@
 import type { NextConfig } from "next";
 import withPWA from "next-pwa";
 
-const nextConfig: NextConfig = {
+const config: Partial<NextConfig> = {
   reactStrictMode: true,
 };
 
-export default withPWA({
+const withPWAConfig = withPWA({
   dest: "public",
-  register: true,
-  skipWaiting: true,
   disable: process.env.NODE_ENV === "development",
-})(nextConfig);
+});
+
+// Use type assertion to resolve the type mismatch
+const nextConfig = withPWAConfig(config as any);
+
+export default nextConfig;

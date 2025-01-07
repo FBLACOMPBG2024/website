@@ -240,22 +240,25 @@ export default function TransactionsView() {
 
         <div className="absolute top-0 right-0 mt-4 mr-4 flex space-x-2">
           <button
-            className="transition-all duration-200 hover:opacity-80 sm:text-lg text-sm px-2 py-1 bg-primary text-white rounded flex items-center"
+            className="sm:max-h-10 max-h-10 transition-all duration-200 hover:opacity-80 sm:text-lg text-sm px-2 py-1 bg-primary text-white rounded flex items-center"
             onClick={() => setIsFilterModalOpen(true)}
           >
-            <IconFilter className="mr-1" /> Filter
+            <IconFilter className="mr-1" />
+            <p className="hidden sm:block">Filter</p>
           </button>
           <button
-            className="transition-all duration-200 hover:opacity-80 sm:text-lg text-sm px-2 py-1 bg-primary text-white rounded flex items-center"
+            className="sm:max-h-10 max-h-10 transition-all duration-200 hover:opacity-80 sm:text-lg text-sm px-2 py-1 bg-primary text-white rounded flex items-center"
             onClick={() => setIsModalOpen(true)}
           >
-            <IconPlus className="mr-1" /> Add Transaction
+            <IconPlus className="mr-1" />
+            <p className="hidden sm:block">Add Transaction</p>
           </button>
           <button
-            className="transition-all duration-200 hover:opacity-80 sm:text-lg text-sm px-2 py-1 bg-primary text-white rounded flex items-center"
+            className="sm:max-h-10 max-h-10 transition-all duration-200 hover:opacity-80 sm:text-lg text-sm px-2 py-1 bg-primary text-white rounded flex items-center"
             onClick={() => setIsBulkUploadModalOpen(true)}
           >
-            <IconUpload className="mr-1" /> Bulk Upload
+            <IconUpload className="mr-1" />
+            <p className="hidden sm:block">Bulk Upload</p>
           </button>
         </div>
 
@@ -277,7 +280,7 @@ export default function TransactionsView() {
                   ].map(({ label, key }) => (
                     <th
                       key={key}
-                      className="transition-all sm:text-lg text-sm px-4 py-2 cursor-pointer"
+                      className="transition-all sm:text-sm text-base px-4 py-2 cursor-pointer"
                       onClick={() => sortTransactionsByKey(key)}
                     >
                       <span className="flex items-center gap-1">
@@ -292,7 +295,7 @@ export default function TransactionsView() {
                       </span>
                     </th>
                   ))}
-                  <th className="transition-all sm:text-lg text-sm px-4 py-2">
+                  <th className="transition-all sm:text-sm text-base px-4 py-2">
                     Actions
                   </th>
                 </tr>
@@ -311,8 +314,10 @@ export default function TransactionsView() {
                         : ""
                     }
                   >
-                    <td className="px-4 py-2">{transaction.name}</td>
-                    <td className="px-4 py-2">
+                    <td className="sm:text-base text-xs px-4 py-2">
+                      {transaction.name}
+                    </td>
+                    <td className="sm:text-base text-xs px-4 py-2">
                       {transaction.value.toLocaleString("en-US", {
                         style: "currency",
                         currency: "USD",
@@ -324,7 +329,7 @@ export default function TransactionsView() {
                           {transaction.tags.map((tag, tagIndex) => (
                             <span
                               key={tagIndex}
-                              className={`transition-all duration-200 relative select-none bg-primary hover:opacity-80 text-white px-2 py-1 rounded text-sm flex items-center ${
+                              className={`sm:text-base text-xs transition-all duration-200 relative select-none bg-primary hover:opacity-80 text-white px-2 py-1 rounded flex items-center ${
                                 tagFilter.includes(tag) ? "bg-accent" : ""
                               }`}
                               onClick={() => toggleTagFilter(tag)}
@@ -340,10 +345,10 @@ export default function TransactionsView() {
                         "-"
                       )}
                     </td>
-                    <td className="px-4 py-2">
+                    <td className="sm:text-base text-xs px-4 py-2">
                       {transaction.description || "-"}
                     </td>
-                    <td className="px-4 py-2 text-sm md:text-base">
+                    <td className="sm:text-base text-xs px-4 py-2">
                       {new Date(transaction.date).toLocaleString()}
                     </td>
                     <td className="px-4 py-2 flex gap-2">

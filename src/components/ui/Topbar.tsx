@@ -31,7 +31,10 @@ export default function Topbar() {
               >
                 Dashboard
               </button>
-              <button className="transition-all sm:px-4 sm:py-1 sm:text-xl text-lg px-2 py-0.5 font-semibold rounded-md border-neutral-600 border-2 whitespace-nowrap">
+              <button
+                className="transition-all sm:px-4 sm:py-1 sm:text-xl text-lg px-2 py-0.5 font-semibold rounded-md border-neutral-600 border-2 whitespace-nowrap"
+                onClick={() => router.push("/logout")}
+              >
                 Log out
               </button>
             </>

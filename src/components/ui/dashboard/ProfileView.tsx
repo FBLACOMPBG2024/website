@@ -17,7 +17,7 @@ export default function ProfileView({ user }: ProfileViewProps) {
   const [firstName, setFirstName] = useState(user.firstName);
   const [lastName, setLastName] = useState(user.lastName);
   const [email, setEmail] = useState(user.email);
-  const [theme, setTheme] = useState(user.preferences.theme)
+  const [theme, setTheme] = useState(user.preferences.theme);
 
   // Make a function to update the user's profile
   async function updateUserProfile() {
@@ -27,8 +27,8 @@ export default function ProfileView({ user }: ProfileViewProps) {
       lastName: lastName,
       email: email,
       preferences: {
-        theme: theme
-      }
+        theme: theme,
+      },
     });
 
     // If the response is successful, update the user context by reloading the page
@@ -82,7 +82,9 @@ export default function ProfileView({ user }: ProfileViewProps) {
           value={theme}
           onChange={(e) => {
             setTheme(e.target.value);
-          }}>
+          }}
+        >
+          <option value="system">System</option>
           <option value="dark">Dark</option>
           <option value="light">Light</option>
         </select>

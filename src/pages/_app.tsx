@@ -43,13 +43,16 @@ export default function App({
       return;
     }
 
-    document.body.classList.add(user.preferences.theme);
+    if (user.preferences.theme !== "system") {
+      document.body.classList.add(user.preferences.theme);
+    }
   }, [user]);
 
   return loading ? (
     <>
       <Head>
         <title>Loading...</title>
+        <meta name="description" content="Loading..." />
       </Head>
       <main className={inter.className}>
         <div className="w-full h-screen flex items-center justify-center">
@@ -61,6 +64,7 @@ export default function App({
     <>
       <Head>
         <title>Smart Spend</title>
+        <meta name="description" content="Smart Spend" />
       </Head>
       <GoogleOAuthProvider clientId="50088023361-h8voq3f3kv7941obpmvjsckjcuqt2der.apps.googleusercontent.com">
         <UserProvider value={{ user, setUser }}>
