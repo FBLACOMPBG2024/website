@@ -6,6 +6,11 @@
   "start_url": "/",
   "display": "standalone",
   "orientation": "portrait",
+  "id": "smartspend",
+  "description": "Smart Spend allows users to manage their expenses with ease.",
+  "dir": "ltr",
+  "lang": "en",
+  "categories": ["finance"],
   "icons": [
     {
       "src": "windows11/SmallTile.scale-100.png",

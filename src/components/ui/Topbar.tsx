@@ -23,7 +23,7 @@ export default function Topbar() {
 
         {/* Buttons */}
         <div className="flex space-x-4">
-          {user && user._id ? (
+          {user && user.email ? (
             <>
               <button
                 className="transition-all sm:pr-3 pr-0 text-lg sm:text-xl font-semibold whitespace-nowrap"
