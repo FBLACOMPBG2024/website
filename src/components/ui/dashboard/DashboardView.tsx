@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { IUser } from "@/components/context/UserContext";
 import api from "@/utils/api";
 import ReactECharts from "echarts-for-react";
-import { set } from "zod";
+import router from "next/router";
 
 // This is a sample dashboard view component
 // It displays the user's balance and other data in a card
@@ -128,7 +128,12 @@ export default function DashboardView({ user }: DashboardViewProps) {
     ],
   };
 
-  if (loading || !user || typeof user.balance === "undefined") {
+  if (!user || typeof user.balance === "undefined") {
+    router.reload();
+  }
+
+  if (loading) {
+    // Refresh the page if the user is not loaded yet
     return <div>Loading...</div>;
   }
 
