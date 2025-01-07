@@ -236,7 +236,7 @@ export default function TransactionsView() {
   return (
     <div className="h-full w-full">
       <Card className="min-h-[90vh] w-full">
-        <h1 className="text-2xl font-bold text-text">Transactions</h1>
+        <h1 className="text-4xl font-black text-text">Transactions</h1>
 
         <div className="absolute top-0 right-0 mt-4 mr-4 flex space-x-2">
           <button

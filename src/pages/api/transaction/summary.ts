@@ -41,13 +41,14 @@ async function getWeeklySpending(req: NextApiRequest, res: NextApiResponse) {
       .collection("transactions")
       .find({
         userId: new ObjectId(userId),
-        date: { $gte: sevenDaysAgo, $lte: now },
       })
+      .sort({ date: 1 })
       .toArray();
 
-    console.log("Transactions:", transactions);
-    console.log("Now", now);
-    console.log("7 days ago", sevenDaysAgo.getTime());
+    // Filter out transactions that are not in the last 7 days
+    const filteredTransactions = transactions.filter(
+      (transaction) => new Date(transaction.date) >= sevenDaysAgo
+    );
 
     // Group the transactions by day of the week
     // Get every day of the week
@@ -65,23 +66,17 @@ async function getWeeklySpending(req: NextApiRequest, res: NextApiResponse) {
       day.setDate(day.getDate() + i);
       return {
         day: weekday[day.getDay()],
-        total: transactions.reduce((acc, transaction) => {
+        total: filteredTransactions.reduce((acc, transaction) => {
           const transactionDay = new Date(transaction.date).getDay();
           return transactionDay === day.getDay()
-            ? acc + transaction.value
+            ? acc + (transaction.value < 0 ? -transaction.value : 0)
             : acc;
         }, 0),
       };
     });
 
-    // Reverse the array so that the first day of the week is Sunday
-    weeklySpending.reverse();
-
     const labels = weeklySpending.map((day) => day.day);
     const data = weeklySpending.map((day) => day.total);
-
-    console.log("Labels:", labels);
-    console.log("Data:", data);
 
     return res.status(200).json({ labels, data });
   } catch (error) {

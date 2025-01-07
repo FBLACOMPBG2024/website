@@ -39,7 +39,7 @@ export default function ProfileView({ user }: ProfileViewProps) {
 
   return (
     <Card className="h-full w-full">
-      <h1 className="text-2xl font-bold text-text">Profile</h1>
+      <h1 className="text-4xl font-black text-text">Profile</h1>
       <div className="flex flex-row gap-4">
         <div className="flex flex-col gap-2">
           <h2 className="text-lg font-bold text-text">First Name</h2>
