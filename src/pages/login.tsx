@@ -118,7 +118,7 @@ export default function Login() {
       {/* Gradient background that fills the remaining screen space */}
       <div className="flex-1 bg-gradient-to-bl from-background via-backgroundGreen to-background justify-center items-center">
         <div className="w-full h-full flex justify-center items-center">
-          <Card className="min-w-96 w-1/4 flex-col justify-center items-center m-10">
+          <Card className="sm:min-w-96 min-w-3/4 max-w-md w-full mx-6 flex-col justify-center items-center">
             <h1 className="text-4xl font-bold p-2">Login</h1>
             <div className="w-full py-2">
               <TextInput

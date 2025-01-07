@@ -35,55 +35,55 @@ async function getWeeklySpending(req: NextApiRequest, res: NextApiResponse) {
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(now.getDate() - 7);
 
-    // Query transactions in the last 7 days
+    // We now want to get all transactions for the user in the last 7 days
     const transactions = await client
       .db()
       .collection("transactions")
-      .aggregate([
-        {
-          $match: {
-            userId: new ObjectId(userId),
-            date: { $gte: sevenDaysAgo, $lt: now },
-          },
-        },
-        {
-          $project: {
-            dayOfWeek: { $dayOfWeek: "$date" }, // Extract day of the week
-            deduction: {
-              $cond: [{ $lt: ["$value", 0] }, { $abs: "$value" }, 0], // Include only negative values
-            },
-          },
-        },
-        {
-          $group: {
-            _id: "$dayOfWeek",
-            totalDeductions: { $sum: "$deduction" }, // Sum deductions per day
-          },
-        },
-      ])
+      .find({
+        userId: new ObjectId(userId),
+        date: { $gte: sevenDaysAgo, $lte: now },
+      })
       .toArray();
 
-    // Map MongoDB day-of-week (1=Sun, 7=Sat) to custom day names
-    const daysOrder = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    console.log("Transactions:", transactions);
+    console.log("Now", now);
+    console.log("7 days ago", sevenDaysAgo.getTime());
 
-    // Initialize the grouped data with all days set to 0
-    const groupedData = daysOrder.reduce(
-      (acc, day) => {
-        acc[day] = 0; // Default to 0 for all days
-        return acc;
-      },
-      {} as Record<string, number>
-    );
-
-    // Populate groupedData with actual transaction data
-    transactions.forEach(({ _id, totalDeductions }) => {
-      const dayName = daysOrder[_id - 1]; // Map day number to name
-      groupedData[dayName] = totalDeductions;
+    // Group the transactions by day of the week
+    // Get every day of the week
+    const weekday = [
+      "Sunday",
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday",
+      "Saturday",
+    ];
+    const weeklySpending = Array.from({ length: 7 }, (_, i) => {
+      const day = new Date(sevenDaysAgo);
+      day.setDate(day.getDate() + i);
+      return {
+        day: weekday[day.getDay()],
+        total: transactions.reduce((acc, transaction) => {
+          const transactionDay = new Date(transaction.date).getDay();
+          return transactionDay === day.getDay()
+            ? acc + transaction.value
+            : acc;
+        }, 0),
+      };
     });
 
-    return res.status(200).json({
-      data: groupedData,
-    });
+    // Reverse the array so that the first day of the week is Sunday
+    weeklySpending.reverse();
+
+    const labels = weeklySpending.map((day) => day.day);
+    const data = weeklySpending.map((day) => day.total);
+
+    console.log("Labels:", labels);
+    console.log("Data:", data);
+
+    return res.status(200).json({ labels, data });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: "Internal Server Error" });

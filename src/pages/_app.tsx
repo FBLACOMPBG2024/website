@@ -37,6 +37,12 @@ export default function App({
       return;
     }
 
+    if (!user.preferences) {
+      // This should almost never happen but just in case
+      setLoading(false);
+      return;
+    }
+
     document.body.classList.add(user.preferences.theme);
   }, [user]);
 

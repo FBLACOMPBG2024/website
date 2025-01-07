@@ -1,4 +1,5 @@
 import { MongoClient } from "mongodb";
+import type { MongoClientOptions } from "mongodb";
 
 // This file connects to MongoDB using the connection string
 // provided in the MONGODB_URI environment variable.
@@ -10,6 +11,11 @@ if (!process.env.MONGODB_URI) {
 
 const uri = process.env.MONGODB_URI;
 
+const options: MongoClientOptions = {
+  // Use ipv4 for local connections
+  family: 4,
+};
+
 let client: MongoClient;
 
 if (process.env.NODE_ENV === "development") {
@@ -20,12 +26,12 @@ if (process.env.NODE_ENV === "development") {
   };
 
   if (!globalWithMongo._mongoClient) {
-    globalWithMongo._mongoClient = new MongoClient(uri);
+    globalWithMongo._mongoClient = new MongoClient(uri, options);
   }
   client = globalWithMongo._mongoClient;
 } else {
   // In production mode, it's best to not use a global variable.
-  client = new MongoClient(uri);
+  client = new MongoClient(uri, options);
 }
 
 client

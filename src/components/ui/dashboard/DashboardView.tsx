@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { IUser } from "@/components/context/UserContext";
 import api from "@/utils/api";
 import ReactECharts from "echarts-for-react";
+import { set } from "zod";
 
 // This is a sample dashboard view component
 // It displays the user's balance and other data in a card
@@ -26,7 +27,7 @@ export default function DashboardView({ user }: DashboardViewProps) {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
-  const [chartData, setChartData] = useState<number[]>([]); // For storing chart data
+  const [chartData, setChartData] = useState<string[]>([]); // For storing chart data
   const [chartLabels, setChartLabels] = useState<string[]>([]); // Store labels for x-axis, initialized with an empty array
 
   useEffect(() => {
@@ -63,13 +64,12 @@ export default function DashboardView({ user }: DashboardViewProps) {
         if (response?.status === 200) {
           const summaryData = response.data; // Assuming the summary data is in response.data
 
-          // Assuming the response contains a 'data' object with day names as keys and values as totals
-          const labels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-          const values = labels.map((day) => summaryData.data[day] || 0); // Map to day names and default to 0 if no data for the day
+          // Expected format:
+          // Labels: [ "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun" ]
+          // Data: [ 120, 132, 101, 134, 90, 230, 210 ]
 
-          // Update chart data and labels
-          setChartData(values);
-          setChartLabels(labels);
+          setChartLabels(summaryData.labels);
+          setChartData(summaryData.data);
         }
       } catch (error: any) {
         console.error("Error fetching chart data:", error);
