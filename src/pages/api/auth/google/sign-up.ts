@@ -13,7 +13,7 @@ import { generateLink } from "@/utils/generateLink";
 
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse,
+  res: NextApiResponse
 ) {
   if (req.method === "POST") {
     try {
@@ -59,28 +59,31 @@ export default async function handler(
       // Create a new user if one does not exist
       const hashedPassword = await argon2.hash("google-" + googleId);
 
-      await client.db().collection("users").insertOne({
-        email: email.toLowerCase(),
-        password: hashedPassword,
-        firstName: given_name,
-        lastName: family_name,
-        emailVerified: false,
-        createdAt: new Date(),
-        balance: 0,
-        preferences: {
-          theme: "dark"
-        }
-      });
+      await client
+        .db()
+        .collection("users")
+        .insertOne({
+          email: email.toLowerCase(),
+          password: hashedPassword,
+          firstName: given_name,
+          lastName: family_name,
+          emailVerified: false,
+          createdAt: new Date(),
+          balance: 0,
+          preferences: {
+            theme: "system",
+          },
+        });
 
       // Generate and send the email verification link
       const link = await generateLink(
         email.toLowerCase(),
-        "email-verification",
+        "email-verification"
       );
       const emailResponse = await sendEmailVerification(
         given_name,
         link,
-        email.toLowerCase(),
+        email.toLowerCase()
       );
 
       // If sending the email failed, delete the user and return an error
