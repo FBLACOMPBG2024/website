@@ -24,12 +24,13 @@ export default function Home() {
                 </p>
               </div>
             </div>
-            <div className="w-[50vh] h-[70vh] relative">
+            <div className="w-[50vh] h-[70vh] relative -rotate-12">
               <Image
                 src="/phone.png"
                 alt="Phone"
                 layout="fill"
                 objectFit="contain"
+                quality={100}
               />
             </div>
           </div>

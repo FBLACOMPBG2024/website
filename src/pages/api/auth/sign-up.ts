@@ -11,7 +11,7 @@ import argon2 from "argon2";
 
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse,
+  res: NextApiResponse
 ) {
   if (req.method === "POST") {
     // Get information from the request
@@ -38,18 +38,21 @@ export default async function handler(
 
     // Create the user in the database
     const hashedPassword = await argon2.hash(password);
-    await client.db().collection("users").insertOne({
-      email: normalizedEmail,
-      password: hashedPassword,
-      firstName,
-      lastName,
-      emailVerified: false,
-      createdAt: new Date(),
-      balance: 0,
-      preferences: {
-        theme: "dark"
-      }
-    });
+    await client
+      .db()
+      .collection("users")
+      .insertOne({
+        email: normalizedEmail,
+        password: hashedPassword,
+        firstName,
+        lastName,
+        emailVerified: false,
+        createdAt: new Date(),
+        balance: 0,
+        preferences: {
+          theme: "system",
+        },
+      });
 
     // Prevent generating multiple verification links within 3 minutes
     const threeMinutesAgo = new Date(Date.now() - 1000 * 60 * 3);
@@ -63,11 +66,9 @@ export default async function handler(
       .toArray();
 
     if (existingLinks.length > 0) {
-      return res
-        .status(400)
-        .json({
-          message: "Too many links generated recently, Try again later.",
-        });
+      return res.status(400).json({
+        message: "Too many links generated recently, Try again later.",
+      });
     }
 
     // Generate and send the email verification link
@@ -75,7 +76,7 @@ export default async function handler(
     const emailResponse = await sendEmailVerification(
       firstName,
       link,
-      normalizedEmail,
+      normalizedEmail
     );
 
     // If sending the email failed, delete the user and return an error
