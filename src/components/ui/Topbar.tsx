@@ -23,22 +23,15 @@ export default function Topbar() {
 
         {/* Buttons */}
         <div className="flex space-x-4">
-<<<<<<< Updated upstream
-          {user ? (
-=======
           {user && user.email ? (
->>>>>>> Stashed changes
             <>
               <button
-                className="transition-all px-4 text-lg sm:text-xl font-semibold whitespace-nowrap"
+                className="transition-all sm:pr-3 pr-0 text-lg sm:text-xl font-semibold whitespace-nowrap"
                 onClick={() => router.push("/dashboard")}
               >
                 Dashboard
               </button>
-              <button
-                className="transition-all  sm:px-4  sm:py-1 sm:text-xl text-lg px-2 py-0.5 font-semibold rounded-md border-neutral-600 border-2 whitespace-nowrap"
-                onClick={() => router.push("/logout")}
-              >
+              <button className="transition-all sm:px-4 sm:py-1 sm:text-xl text-lg px-2 py-0.5 font-semibold rounded-md border-neutral-600 border-2 whitespace-nowrap">
                 Log out
               </button>
             </>
