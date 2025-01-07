@@ -23,7 +23,11 @@ export default function Topbar() {
 
         {/* Buttons */}
         <div className="flex space-x-4">
+<<<<<<< Updated upstream
           {user ? (
+=======
+          {user && user.email ? (
+>>>>>>> Stashed changes
             <>
               <button
                 className="transition-all px-4 text-lg sm:text-xl font-semibold whitespace-nowrap"
