@@ -65,6 +65,22 @@ export default function ProfileView({ user }: ProfileViewProps) {
 
   // Make a function to update the user's profile
   async function updateUserProfile() {
+    // Check the accountId has changed
+    if (accountId !== user.preferences.accountId) {
+      // Warn the user changing this will remove the current account's transactions
+      const confirm = window.confirm(
+        "Changing your account will remove your current account's transactions. Are you sure you want to continue?"
+      );
+
+      // If the user cancels the change, return
+      if (!confirm) {
+        return;
+      }
+
+      // If the user confirms the change, remove the transactions
+      api.delete("/api/transaction/bulk-delete");
+    }
+
     // Make a POST request to the API updating the user's information
     const response = await api.post("/api/user/info", {
       firstName,
