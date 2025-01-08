@@ -11,8 +11,8 @@ import {
   IconUpload,
   IconFilter,
   IconX,
-  IconSortDescending,
   IconSortAscending,
+  IconRefresh,
 } from "@tabler/icons-react";
 import Papa from "papaparse"; // Import PapaParse for CSV parsing
 
@@ -79,6 +79,17 @@ export default function TransactionsView() {
   useEffect(() => {
     fetchTransactions(); // Fetch transactions when filters change
   }, [tagFilter, startDate, endDate, limit]);
+
+  const handleSync = async () => {
+    try {
+      const response = await api.post("/api/user/bank/sync");
+      if (response.status === 200) {
+        fetchTransactions(); // Refresh transactions after sync
+      }
+    } catch (error) {
+      console.error("Failed to sync transactions", error);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -239,6 +250,13 @@ export default function TransactionsView() {
         <h1 className="text-4xl font-black text-text">Transactions</h1>
 
         <div className="absolute top-0 right-0 mt-4 mr-4 flex space-x-2">
+          <button
+            className="sm:max-h-10 max-h-10 transition-all duration-200 hover:opacity-80 sm:text-lg text-sm px-2 py-1 bg-primary text-white rounded flex items-center"
+            onClick={() => handleSync()}
+          >
+            <IconRefresh className="mr-1" />
+            <p className="hidden sm:block">Sync</p>
+          </button>
           <button
             className="sm:max-h-10 max-h-10 transition-all duration-200 hover:opacity-80 sm:text-lg text-sm px-2 py-1 bg-primary text-white rounded flex items-center"
             onClick={() => setIsFilterModalOpen(true)}

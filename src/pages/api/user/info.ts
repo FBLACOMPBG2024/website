@@ -104,9 +104,11 @@ async function getUserInfo(res: NextApiResponse, user: any) {
       lastName: user.lastName,
       email: user.email,
       balance: user.balance,
+      bankAccessToken: user.bankAccessToken,
       preferences: {
-        theme: user.preferences.theme
-      }
+        theme: user.preferences.theme,
+        accountId: user.preferences.accountId,
+      },
     },
   });
 }

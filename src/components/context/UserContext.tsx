@@ -11,8 +11,10 @@ export interface IUser {
   createdAt: Date;
   emailVerified: boolean;
   balance: number;
+  bankAccessToken?: string;
   preferences: {
     theme: string;
+    accountId: string;
   };
 }
 
@@ -30,8 +32,10 @@ const defaultvalues: IUserContext = {
     createdAt: new Date(),
     emailVerified: false,
     balance: 1337,
+    bankAccessToken: "",
     preferences: {
       theme: "system",
+      accountId: "",
     },
   },
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
