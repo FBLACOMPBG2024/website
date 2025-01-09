@@ -38,6 +38,11 @@ export default async function handler(
       const parsedBody = TransactionSchema.parse(req.body);
       const { value, tags, name, description, date } = parsedBody;
 
+      // Make sure the date is not in the future and is valid
+      if (date && new Date(date) > new Date()) {
+        return res.status(400).json({ message: "Invalid date" });
+      }
+
       // Create the transaction object
       const transaction = {
         _id: new ObjectId(),
@@ -46,7 +51,7 @@ export default async function handler(
         name,
         description,
         userId: user._id,
-        date: date || new Date(),
+        date: date ? new Date(date) : new Date(),
       };
 
       // Use a transaction to ensure atomicity

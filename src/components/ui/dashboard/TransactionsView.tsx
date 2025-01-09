@@ -53,7 +53,7 @@ export default function TransactionsView() {
   // Filters
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  const [limit, setLimit] = useState("20"); // Default to 20
+  const [limit, setLimit] = useState("200"); // Default to 20
   const [tagFilter, setTagFilter] = useState("");
 
   // Extract the fetchTransactions function for reusability
