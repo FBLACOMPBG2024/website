@@ -10,7 +10,7 @@ import { SessionData } from "@/utils/sessionData";
 
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse
+  res: NextApiResponse,
 ) {
   if (req.method !== "DELETE") {
     res.setHeader("Allow", ["DELETE"]);
@@ -83,7 +83,7 @@ export default async function handler(
       .collection("users")
       .updateOne(
         { _id: user._id },
-        { $addToSet: { transactions: { $in: objectIds } } }
+        { $addToSet: { transactions: { $in: objectIds } } },
       );
 
     // Recalculate the user's balance after deletion
@@ -95,7 +95,7 @@ export default async function handler(
 
     const newBalance = remainingTransactions.reduce(
       (acc, transaction) => acc + transaction.value,
-      0
+      0,
     );
 
     // Update the user's balance

@@ -50,7 +50,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
           password: "", // Teller API requires only the token, so password can be empty
         },
         httpsAgent,
-      }
+      },
     );
 
     console.log("Teller response:", tellerResponse.data);
@@ -67,7 +67,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         tags: [transaction.details?.category, transaction.type],
         userId: user._id,
         bankRunningBalance: Number.parseFloat(transaction.running_balance),
-      })
+      }),
     );
     // Filter out transactions that already exist in the database
     const existingTransactionIds = (
@@ -78,7 +78,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
           userId: user._id,
           bankId: {
             $in: internalTransactions.map(
-              (transaction: any) => transaction.bankId
+              (transaction: any) => transaction.bankId,
             ),
           },
         })
@@ -87,7 +87,8 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
     // Filter internalTransactions to exclude the ones that already exist
     const newTransactions = internalTransactions.filter(
-      (transaction: any) => !existingTransactionIds.includes(transaction.bankId)
+      (transaction: any) =>
+        !existingTransactionIds.includes(transaction.bankId),
     );
 
     // Insert only the new transactions that don't already exist in the database
@@ -107,7 +108,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
               $each: newTransactions.map((transaction: any) => transaction._id),
             },
           },
-        }
+        },
       );
 
     // Respond with the transactions data from the Teller API
@@ -118,7 +119,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   } catch (error: any) {
     console.error(
       "Error fetching transactions:",
-      error.response?.data || error.message
+      error.response?.data || error.message,
     );
     return res.status(error.response?.status || 500).json({
       message: error?.message || "Internal Server Error",

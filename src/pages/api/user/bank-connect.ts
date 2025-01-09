@@ -33,7 +33,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
           { _id: new ObjectId(userId) },
           {
             $set: { bankAccessToken: accessToken },
-          }
+          },
         );
 
       return res

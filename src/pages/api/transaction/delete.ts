@@ -10,7 +10,7 @@ import { SessionData } from "@/utils/sessionData";
 
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse
+  res: NextApiResponse,
 ) {
   if (req.method === "DELETE") {
     try {
@@ -18,7 +18,7 @@ export default async function handler(
       const session = await getIronSession<SessionData>(
         req,
         res,
-        sessionOptions
+        sessionOptions,
       );
 
       if (!session.user?._id) {
@@ -68,7 +68,7 @@ export default async function handler(
             $pull: {
               transactions: _id,
             },
-          }
+          },
         );
 
       // Update the balance by subtracting the value of the deleted transaction

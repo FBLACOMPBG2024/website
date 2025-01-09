@@ -50,14 +50,14 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
           password: "", // Teller API requires only the token, so password can be empty
         },
         httpsAgent,
-      }
+      },
     );
     // Respond with the balance data from the Teller API
     return res.status(200).json(tellerResponse.data);
   } catch (error: any) {
     console.error(
       "Error fetching balance:",
-      error.response?.data || error.message
+      error.response?.data || error.message,
     );
     return res.status(error.response?.status || 500).json({
       message: error?.message || "Internal Server Error",

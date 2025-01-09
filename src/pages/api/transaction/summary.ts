@@ -8,7 +8,7 @@ import { SessionData } from "@/utils/sessionData";
 // New endpoint to get weekly spending grouped by day of the week
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse
+  res: NextApiResponse,
 ) {
   if (req.method === "GET") {
     return await getWeeklySpending(req, res);
@@ -47,7 +47,7 @@ async function getWeeklySpending(req: NextApiRequest, res: NextApiResponse) {
 
     // Filter out transactions that are not in the last 7 days
     const filteredTransactions = transactions.filter(
-      (transaction) => new Date(transaction.date) >= sevenDaysAgo
+      (transaction) => new Date(transaction.date) >= sevenDaysAgo,
     );
 
     // Group the transactions by day of the week
