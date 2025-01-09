@@ -24,14 +24,17 @@ export default function Home() {
                 </p>
               </div>
             </div>
-            <div className="w-[50vw] h-[70vh] relative -rotate-12">
-              <Image
-                src="/phone.png"
-                alt="Phone"
-                layout="fill"
-                objectFit="contain"
-                quality={100}
-              />
+            {/* Image container with breakpoints */}
+            <div className="p-4 w-full sm:w-[80%] md:w-[60%] lg:w-[33%] max-h-[70vh] flex justify-center items-center">
+              <div className="relative w-full h-0 pb-[120%]">
+                <Image
+                  src="/phone.png"
+                  alt="Phone"
+                  layout="fill"
+                  objectFit="contain"
+                  quality={100}
+                />
+              </div>
             </div>
           </div>
         </div>
