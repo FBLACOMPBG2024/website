@@ -4,6 +4,8 @@ import Card from "@/components/ui/Card";
 import { useState } from "react";
 import Router from "next/router";
 import api from "@/utils/api";
+import { useTellerConnect } from "teller-connect-react";
+import { useEffect } from "react";
 
 // This is the profile view component
 // It allows the user to view and update their profile information
@@ -18,22 +20,81 @@ export default function ProfileView({ user }: ProfileViewProps) {
   const [lastName, setLastName] = useState(user.lastName);
   const [email, setEmail] = useState(user.email);
   const [theme, setTheme] = useState(user.preferences.theme);
+  const [accountId, setAccountId] = useState(user.preferences.accountId);
+  interface BankAccount {
+    id: string;
+    name: string;
+  }
+
+  const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([]);
+
+  // Initialize Teller Connect
+  const { open, ready } = useTellerConnect({
+    applicationId: "app_p8gs0depa90f4sgbou000",
+    appearance: "dark",
+    environment:
+      process.env.NODE_ENV === "development" ? "sandbox" : "development",
+    onSuccess: (authorization) => {
+      console.log("Authorization success:", authorization);
+      // Handle the access token (e.g., send it to your API for storage)
+      api.post("/api/user/bank-connect", {
+        accessToken: authorization.accessToken,
+      });
+    },
+  });
+
+  // Use effect to get the user's accounts
+  useEffect(() => {
+    async function getAccounts() {
+      if (user.bankAccessToken === "" || user.bankAccessToken === null) {
+        return;
+      }
+
+      const response = await api.get("/api/user/bank/accounts");
+      if (response.status === 200) {
+        setBankAccounts(response.data);
+      }
+    }
+
+    if (user.preferences.accountId !== "") {
+      setAccountId(user.preferences.accountId);
+    }
+
+    getAccounts();
+  }, []); // Empty dependency array ensures it runs only once when the component mounts
 
   // Make a function to update the user's profile
   async function updateUserProfile() {
+    // Check the accountId has changed
+    if (accountId !== user.preferences.accountId) {
+      // Warn the user changing this will remove the current account's transactions
+      const confirm = window.confirm(
+        "Changing your account will remove your current account's transactions. Are you sure you want to continue?"
+      );
+
+      // If the user cancels the change, return
+      if (!confirm) {
+        return;
+      }
+
+      // If the user confirms the change, remove the transactions
+      api.delete("/api/transaction/bulk-delete");
+    }
+
     // Make a POST request to the API updating the user's information
     const response = await api.post("/api/user/info", {
-      firstName: firstName,
-      lastName: lastName,
-      email: email,
+      firstName,
+      lastName,
+      email,
       preferences: {
-        theme: theme,
+        theme,
+        accountId,
       },
     });
 
     // If the response is successful, update the user context by reloading the page
     if (response.status === 200) {
-      Router.reload();
+      //Router.reload();
     }
   }
 
@@ -47,9 +108,7 @@ export default function ProfileView({ user }: ProfileViewProps) {
             className="w-fit"
             placeholder="First Name"
             value={firstName}
-            onChange={(e) => {
-              setFirstName(e.target.value);
-            }}
+            onChange={(e) => setFirstName(e.target.value)}
           />
         </div>
         <div className="flex flex-col gap-2">
@@ -58,9 +117,7 @@ export default function ProfileView({ user }: ProfileViewProps) {
             className="w-fit"
             placeholder="Last Name"
             value={lastName}
-            onChange={(e) => {
-              setLastName(e.target.value);
-            }}
+            onChange={(e) => setLastName(e.target.value)}
           />
         </div>
       </div>
@@ -70,9 +127,7 @@ export default function ProfileView({ user }: ProfileViewProps) {
           className="w-fit"
           placeholder="Email"
           value={email}
-          onChange={(e) => {
-            setEmail(e.target.value);
-          }}
+          onChange={(e) => setEmail(e.target.value)}
         />
       </div>
       <div className="">
@@ -80,22 +135,40 @@ export default function ProfileView({ user }: ProfileViewProps) {
         <select
           className="bg-backgroundGrayLight border-none focus:text-white selection:bg-primary text-neutral-500 h-8 text-base rounded-md marker"
           value={theme}
-          onChange={(e) => {
-            setTheme(e.target.value);
-          }}
+          onChange={(e) => setTheme(e.target.value)}
         >
           <option value="system">System</option>
           <option value="dark">Dark</option>
           <option value="light">Light</option>
         </select>
       </div>
-      <div className="flex flex-row justify-end">
-        {/* Save Button (Right Aligned) */}
+      <div className="">
+        <h2 className="text-lg font-bold text-text">Account</h2>
+        <select
+          className="bg-backgroundGrayLight border-none focus:text-white selection:bg-primary text-neutral-500 h-8 text-base rounded-md marker"
+          value={accountId}
+          onChange={(e) => setAccountId(e.target.value)}
+        >
+          {bankAccounts.map((account) => (
+            <option key={account.id} value={account.id}>
+              {account.name}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div className="pt-2 flex flex-row justify-between items-center">
+        {/* Teller Connect Button */}
+        <button
+          className="text-lg bg-primary text-white rounded-md shadow-md py-1 px-10 disabled:opacity-40"
+          onClick={() => open()}
+          disabled={!ready}
+        >
+          Connect a Bank Account
+        </button>
+        {/* Save Button */}
         <button
           className="text-lg bg-backgroundGrayLight rounded-md shadow-md py-1 px-10"
-          onClick={() => {
-            updateUserProfile();
-          }}
+          onClick={() => updateUserProfile()}
         >
           Save
         </button>

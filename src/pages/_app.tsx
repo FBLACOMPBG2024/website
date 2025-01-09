@@ -48,31 +48,28 @@ export default function App({
     }
   }, [user]);
 
-  return loading ? (
-    <>
-      <Head>
-        <title>Loading...</title>
-        <meta name="description" content="Loading..." />
-      </Head>
-      <main className={inter.className}>
-        <div className="w-full h-screen flex items-center justify-center">
-          <PropagateLoader color="rgb(var(--primary))" />
-        </div>
-      </main>
-    </>
-  ) : (
+  return (
     <>
       <Head>
         <title>Smart Spend</title>
         <meta name="description" content="Smart Spend" />
       </Head>
-      <GoogleOAuthProvider clientId="50088023361-h8voq3f3kv7941obpmvjsckjcuqt2der.apps.googleusercontent.com">
-        <UserProvider value={{ user, setUser }}>
-          <main className={inter.className}>
-            <Component {...pageProps} />
-          </main>
-        </UserProvider>
-      </GoogleOAuthProvider>
+
+      {loading ? (
+        <main className={inter.className}>
+          <div className="w-full h-screen flex items-center justify-center">
+            <PropagateLoader color="rgb(var(--primary))" />
+          </div>
+        </main>
+      ) : (
+        <GoogleOAuthProvider clientId="50088023361-h8voq3f3kv7941obpmvjsckjcuqt2der.apps.googleusercontent.com">
+          <UserProvider value={{ user, setUser }}>
+            <main className={inter.className}>
+              <Component {...pageProps} />
+            </main>
+          </UserProvider>
+        </GoogleOAuthProvider>
+      )}
     </>
   );
 }

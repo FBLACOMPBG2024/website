@@ -43,7 +43,7 @@ async function getTransactions(req: NextApiRequest, res: NextApiResponse) {
     }
 
     // Parse query parameters
-    const { limit = 10, startDate, endDate, filter } = req.query;
+    const { limit, startDate, endDate, filter } = req.query;
 
     // Convert `limit` to a number and validate
     const limitNumber = parseInt(limit as string, 10);

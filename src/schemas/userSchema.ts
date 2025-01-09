@@ -9,6 +9,12 @@ const UserSchema = z.object({
   createdAt: z.date(),
   emailVerified: z.boolean(),
   balance: z.number(),
+  preferences: z
+    .object({
+      theme: z.enum(["dark", "light", "system"]).optional(),
+    })
+    .optional(),
+  transactions: z.array(TransactionSchema),
 });
 
 export default UserSchema;

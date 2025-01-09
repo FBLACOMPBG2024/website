@@ -7,6 +7,7 @@ const TransactionSchema = z.object({
   name: z.string(),
   description: z.string().optional(),
   date: z.string().optional(),
+  imported: z.boolean().optional(),
 });
 
 export default TransactionSchema;
