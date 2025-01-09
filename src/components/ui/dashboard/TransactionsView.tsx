@@ -31,11 +31,11 @@ export default function TransactionsView() {
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [editTransaction, setEditTransaction] = useState<Transaction | null>(
-    null
+    null,
   );
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [transactionToDelete, setTransactionToDelete] = useState<string | null>(
-    null
+    null,
   );
 
   // Individual state variables for each input
@@ -44,7 +44,7 @@ export default function TransactionsView() {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [dateTime, setDateTime] = useState(
-    new Date().toISOString().slice(0, 16)
+    new Date().toISOString().slice(0, 16),
   ); // Default to now
 
   const [sortKey, setSortKey] = useState<keyof Transaction | null>(null);
@@ -175,7 +175,7 @@ export default function TransactionsView() {
   const handleBulkUpload = async (e: React.FormEvent) => {
     e.preventDefault();
     const fileInput = document.getElementById(
-      "csvFileInput"
+      "csvFileInput",
     ) as HTMLInputElement;
     if (fileInput.files && fileInput.files[0]) {
       Papa.parse(fileInput.files[0], {
@@ -196,7 +196,7 @@ export default function TransactionsView() {
 
             const response = await api.post(
               "/api/transaction/bulk-add",
-              finalTransactions
+              finalTransactions,
             );
             if (response.status === 201) {
               setIsBulkUploadModalOpen(false);
@@ -217,7 +217,7 @@ export default function TransactionsView() {
         tagFilter
           .split(" ")
           .filter((t) => t !== tag)
-          .join(" ")
+          .join(" "),
       );
     } else {
       setTagFilter((tagFilter + " " + tag).trim());

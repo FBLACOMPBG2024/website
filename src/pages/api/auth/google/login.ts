@@ -10,7 +10,7 @@ import { SessionData } from "@/utils/sessionData";
 
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse
+  res: NextApiResponse,
 ) {
   if (req.method === "POST") {
     try {
@@ -49,7 +49,7 @@ export default async function handler(
       const session = await getIronSession<SessionData>(
         req,
         res,
-        sessionOptions
+        sessionOptions,
       );
       session.user = {
         _id: user._id.toString(),

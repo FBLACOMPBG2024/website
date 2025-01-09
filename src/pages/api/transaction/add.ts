@@ -11,7 +11,7 @@ import { SessionData } from "@/utils/sessionData";
 
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse
+  res: NextApiResponse,
 ) {
   if (req.method === "POST") {
     // Get session
@@ -68,7 +68,7 @@ export default async function handler(
           .collection("users")
           .updateOne(
             { _id: user._id },
-            { $addToSet: { transactions: transaction._id } }
+            { $addToSet: { transactions: transaction._id } },
           );
 
         // Recalculate balance
@@ -80,7 +80,7 @@ export default async function handler(
 
         const balance = transactions.reduce(
           (acc, transaction) => acc + transaction.value,
-          0
+          0,
         );
 
         // Update user balance

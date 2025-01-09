@@ -4,7 +4,7 @@ import {
   IconArrowLeft,
   IconArrowsRightLeft,
   IconBrandTabler,
-  IconSettings,
+  IconHelp,
   IconUser,
 } from "@tabler/icons-react";
 import { useState, useEffect } from "react";
@@ -13,10 +13,10 @@ import { useUser } from "@/components/context/UserContext";
 import api from "@/utils/api";
 import DashboardView from "@/components/ui/dashboard/DashboardView";
 import ProfileView from "@/components/ui/dashboard/ProfileView";
-import SettingsView from "@/components/ui/dashboard/SettingsView";
 import LogoutView from "@/components/ui/dashboard/LogoutView";
 import router from "next/router";
 import TransactionsView from "@/components/ui/dashboard/TransactionsView";
+import HelpView from "@/components/ui/dashboard/HelpView";
 
 export default function Dashboard() {
   const [open, setOpen] = useState(false);
@@ -44,6 +44,11 @@ export default function Dashboard() {
     //   href: "#settings",
     //   icon: <IconSettings className="text-text h-5 w-5 flex-shrink-0" />,
     // },
+    {
+      label: "Help",
+      href: "#help",
+      icon: <IconHelp className="text-text h-5 w-5 flex-shrink-0" />,
+    },
     {
       label: "Logout",
       href: "#logout",
@@ -74,6 +79,8 @@ export default function Dashboard() {
         return <ProfileView user={user} />;
       // case "Settings":
       //   return <SettingsView />;
+      case "Help":
+        return <HelpView user={user} />;
       case "Logout":
         return <LogoutView />;
       default:

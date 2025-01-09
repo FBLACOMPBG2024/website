@@ -46,7 +46,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   } catch (error: any) {
     console.error(
       "Error fetching account:",
-      error.response?.data || error.message
+      error.response?.data || error.message,
     );
     return res.status(error.response?.status || 500).json({
       message: error?.message || "Internal Server Error",

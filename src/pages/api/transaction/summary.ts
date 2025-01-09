@@ -8,7 +8,7 @@ import { SessionData } from "@/utils/sessionData";
 // New endpoint to get weekly spending grouped by day of the week
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse
+  res: NextApiResponse,
 ) {
   if (req.method === "GET") {
     return await getWeeklySpending(req, res);
@@ -41,10 +41,14 @@ async function getWeeklySpending(req: NextApiRequest, res: NextApiResponse) {
       .collection("transactions")
       .find({
         userId: new ObjectId(userId),
-        date: { $gte: sevenDaysAgo },
       })
-      .sort({ date: -1 })
+      .sort({ date: 1 })
       .toArray();
+
+    // Filter out transactions that are not in the last 7 days
+    const filteredTransactions = transactions.filter(
+      (transaction) => new Date(transaction.date) >= sevenDaysAgo,
+    );
 
     // Group the transactions by day of the week
     // Get every day of the week
@@ -62,23 +66,13 @@ async function getWeeklySpending(req: NextApiRequest, res: NextApiResponse) {
       day.setDate(day.getDate() + i);
       return {
         day: weekday[day.getDay()],
-        total: transactions.reduce((acc, transaction) => {
+        total: filteredTransactions.reduce((acc, transaction) => {
           const transactionDay = new Date(transaction.date).getDay();
           return transactionDay === day.getDay()
             ? acc + (transaction.value < 0 ? -transaction.value : 0)
             : acc;
         }, 0),
       };
-    });
-
-    // Put the date next to the name of the day
-    weeklySpending.forEach((day, i) => {
-      day.day = `${day.day} ${new Date(
-        sevenDaysAgo.getTime() + i * 24 * 60 * 60 * 1000
-      ).toLocaleDateString("en-US", {
-        month: "numeric",
-        day: "numeric",
-      })}`;
     });
 
     const labels = weeklySpending.map((day) => day.day);

@@ -69,7 +69,7 @@ export default function ProfileView({ user }: ProfileViewProps) {
     if (accountId !== user.preferences.accountId) {
       // Warn the user changing this will remove the current account's transactions
       const confirm = window.confirm(
-        "Changing your account will remove your current account's transactions. Are you sure you want to continue?"
+        "Changing your account will remove your current account's transactions. Are you sure you want to continue?",
       );
 
       // If the user cancels the change, return

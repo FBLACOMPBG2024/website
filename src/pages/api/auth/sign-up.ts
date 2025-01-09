@@ -11,7 +11,7 @@ import argon2 from "argon2";
 
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse
+  res: NextApiResponse,
 ) {
   if (req.method === "POST") {
     // Get information from the request
@@ -77,7 +77,7 @@ export default async function handler(
     const emailResponse = await sendEmailVerification(
       firstName,
       link,
-      normalizedEmail
+      normalizedEmail,
     );
 
     // If sending the email failed, delete the user and return an error

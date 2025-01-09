@@ -11,7 +11,7 @@ import { SessionData } from "@/utils/sessionData";
 
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse
+  res: NextApiResponse,
 ) {
   if (req.method !== "POST") {
     res.setHeader("Allow", ["POST"]);
@@ -69,20 +69,20 @@ export default async function handler(
 
     // Update user transaction list
     const transactionIds = formattedTransactions.map(
-      (transaction) => transaction._id
+      (transaction) => transaction._id,
     );
     await client
       .db()
       .collection("users")
       .updateOne(
         { _id: user._id },
-        { $addToSet: { transactions: { $each: transactionIds } } }
+        { $addToSet: { transactions: { $each: transactionIds } } },
       );
 
     // Calculate new balance
     const newBalance = formattedTransactions.reduce(
       (acc, transaction) => acc + transaction.value,
-      user.balance
+      user.balance,
     );
 
     // Update the user's balance

@@ -56,7 +56,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 async function updateUser(
   req: NextApiRequest,
   res: NextApiResponse,
-  user: any
+  user: any,
 ) {
   const { firstName, lastName, email, preferences } = req.body;
 
@@ -84,7 +84,7 @@ async function updateUser(
       { _id: new ObjectId(user._id) },
       {
         $set: updatedFields,
-      }
+      },
     );
 
   return res.status(200).json({ message: "User updated successfully" });
@@ -138,7 +138,7 @@ async function refreshSession(session: any, user: any) {
   // Calculate the balance
   const balance = transactions.reduce(
     (acc, transaction) => acc + transaction.value,
-    0
+    0,
   );
 
   // Update user balance in the database
