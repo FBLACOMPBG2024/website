@@ -103,7 +103,7 @@ async function getTransactions(req: NextApiRequest, res: NextApiResponse) {
         ...dateFilter, // Apply the date filter if provided
         ...tagsFilter, // Apply the tags filter if provided
       })
-      .sort({ date: 1 }) // Sort by creation date, descending
+      .sort({ date: -1 })
       .limit(limitNumber) // Apply the limit
       .toArray();
 

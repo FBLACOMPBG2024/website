@@ -24,7 +24,7 @@ export default function Home() {
                 </p>
               </div>
             </div>
-            <div className="w-[50vh] h-[70vh] relative -rotate-12">
+            <div className="w-[50vw] h-[70vh] relative -rotate-12">
               <Image
                 src="/phone.png"
                 alt="Phone"

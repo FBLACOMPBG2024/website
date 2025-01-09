@@ -72,6 +72,7 @@ export default async function handler(
           balance: 0,
           preferences: {
             theme: "system",
+            accountId: "",
           },
         });
 
