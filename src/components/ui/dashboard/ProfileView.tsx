@@ -13,6 +13,10 @@ import { useEffect } from "react";
 interface ProfileViewProps {
   user: IUser;
 }
+interface BankAccount {
+  id: string;
+  name: string;
+}
 
 export default function ProfileView({ user }: ProfileViewProps) {
   // Hold the user's updated information
@@ -21,10 +25,6 @@ export default function ProfileView({ user }: ProfileViewProps) {
   const [email, setEmail] = useState(user.email);
   const [theme, setTheme] = useState(user.preferences.theme);
   const [accountId, setAccountId] = useState(user.preferences.accountId);
-  interface BankAccount {
-    id: string;
-    name: string;
-  }
 
   const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([]);
 
@@ -94,7 +94,7 @@ export default function ProfileView({ user }: ProfileViewProps) {
 
     // If the response is successful, update the user context by reloading the page
     if (response.status === 200) {
-      //Router.reload();
+      Router.reload();
     }
   }
 
