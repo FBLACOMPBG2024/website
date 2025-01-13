@@ -8,7 +8,7 @@ import { SessionData } from "@/utils/sessionData";
 // New endpoint to get weekly spending grouped by day of the week
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse,
+  res: NextApiResponse
 ) {
   if (req.method === "GET") {
     return await getWeeklySpending(req, res);
@@ -35,23 +35,18 @@ async function getWeeklySpending(req: NextApiRequest, res: NextApiResponse) {
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(now.getDate() - 7);
 
-    // We now want to get all transactions for the user in the last 7 days
+    // Query transactions directly for the last 7 days
     const transactions = await client
       .db()
       .collection("transactions")
       .find({
         userId: new ObjectId(userId),
+        date: { $gte: sevenDaysAgo },
       })
       .sort({ date: 1 })
       .toArray();
 
-    // Filter out transactions that are not in the last 7 days
-    const filteredTransactions = transactions.filter(
-      (transaction) => new Date(transaction.date) >= sevenDaysAgo,
-    );
-
-    // Group the transactions by day of the week
-    // Get every day of the week
+    // Define the days of the week
     const weekday = [
       "Sunday",
       "Monday",
@@ -61,17 +56,24 @@ async function getWeeklySpending(req: NextApiRequest, res: NextApiResponse) {
       "Friday",
       "Saturday",
     ];
+
+    // Group transactions by day of the week
     const weeklySpending = Array.from({ length: 7 }, (_, i) => {
       const day = new Date(sevenDaysAgo);
       day.setDate(day.getDate() + i);
+      const dayOfWeek = day.getDay();
+
+      // Calculate the total spending for the current day
+      const totalForDay = transactions.reduce((acc, transaction) => {
+        const transactionDay = new Date(transaction.date).getDay();
+        return transactionDay === dayOfWeek && transaction.value < 0
+          ? acc + Math.abs(transaction.value)
+          : acc;
+      }, 0);
+
       return {
-        day: weekday[day.getDay()],
-        total: filteredTransactions.reduce((acc, transaction) => {
-          const transactionDay = new Date(transaction.date).getDay();
-          return transactionDay === day.getDay()
-            ? acc + (transaction.value < 0 ? -transaction.value : 0)
-            : acc;
-        }, 0),
+        day: weekday[dayOfWeek],
+        total: totalForDay,
       };
     });
 

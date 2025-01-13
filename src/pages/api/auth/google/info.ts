@@ -1,24 +1,19 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import api from "@/utils/api";
-import Cors from "cors";
 
 // This file defines the API route that allows the user to get their profile information from Google
 // It uses the Google OAuth2 API to get the user's information
 
-// The below code is the CORS middleware
-// To be quite honest I'm not sure what it does and I struggle to understand it (As far as I know it isn't necessary for the code to work)
-// But until I understand it I'm going to leave it in the code
-
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse,
+  res: NextApiResponse
 ) {
   if (req.method === "GET") {
-    const access_token = req.query.access_token;
+    const access_token = req.query.access_token as string;
 
     // Check if the access token is present
     if (!access_token) {
-      res.status(400).json({ message: "No access token" });
+      return res.status(400).json({ message: "No access token provided" });
     }
 
     try {
@@ -27,14 +22,16 @@ export default async function handler(
         .get("https://www.googleapis.com/oauth2/v3/userinfo", {
           headers: { Authorization: `Bearer ${access_token}` },
         })
-        .then((res) => res.data);
+        .then((response) => response.data);
 
       // Return the user's information
-      res.status(200).json(userInfo);
+      return res.status(200).json(userInfo);
     } catch (error: any) {
       // Log the error and return an error message
-      console.error(error);
-      return res.status(500).json({ message: "Invalid Credentials" });
+      console.error("Error fetching user info from Google:", error);
+      return res
+        .status(500)
+        .json({ message: "Unable to fetch user information" });
     }
   } else {
     res.setHeader("Allow", ["GET"]);

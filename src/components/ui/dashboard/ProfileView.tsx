@@ -1,102 +1,98 @@
 import { IUser } from "@/components/context/UserContext";
+import { useTellerConnect } from "teller-connect-react";
 import TextInput from "@/components/ui/TextInput";
+import { useEffect, useState } from "react";
 import Card from "@/components/ui/Card";
-import { useState } from "react";
 import Router from "next/router";
 import api from "@/utils/api";
-import { useTellerConnect } from "teller-connect-react";
-import { useEffect } from "react";
-
-// This is the profile view component
-// It allows the user to view and update their profile information
 
 interface ProfileViewProps {
   user: IUser;
 }
+
 interface BankAccount {
   id: string;
   name: string;
 }
 
 export default function ProfileView({ user }: ProfileViewProps) {
-  // Hold the user's updated information
   const [firstName, setFirstName] = useState(user.firstName);
   const [lastName, setLastName] = useState(user.lastName);
   const [email, setEmail] = useState(user.email);
   const [theme, setTheme] = useState(user.preferences.theme);
   const [accountId, setAccountId] = useState(user.preferences.accountId);
-
   const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // Initialize Teller Connect
   const { open, ready } = useTellerConnect({
     applicationId: "app_p8gs0depa90f4sgbou000",
     appearance: "dark",
     environment:
-      process.env.NODE_ENV === "development" ? "sandbox" : "development",
-    onSuccess: (authorization) => {
-      console.log("Authorization success:", authorization);
-      // Handle the access token (e.g., send it to your API for storage)
-      api.post("/api/user/bank-connect", {
-        accessToken: authorization.accessToken,
-      });
+      process.env.NODE_ENV === "development" ? "sandbox" : "development", // This is a little weird but we don't have access to tellers production
+    // environment but development is the same as production for teller (Just limmited to 100 users)
+    onSuccess: async (authorization) => {
+      try {
+        await api.post("/api/user/bank-connect", {
+          accessToken: authorization.accessToken,
+        });
+        Router.reload();
+      } catch (err) {
+        console.error("Failed to connect bank account:", err);
+        setError("Unable to connect bank account. Please try again.");
+      }
     },
   });
 
-  // Use effect to get the user's accounts
   useEffect(() => {
-    async function getAccounts() {
-      if (user.bankAccessToken === "" || user.bankAccessToken === null) {
-        return;
-      }
+    async function fetchBankAccounts() {
+      if (!user.bankAccessToken) return;
 
-      const response = await api.get("/api/user/bank/accounts");
-      if (response.status === 200) {
+      try {
+        const response = await api.get("/api/user/bank/accounts");
         setBankAccounts(response.data);
+      } catch (err) {
+        console.error("Error fetching bank accounts:", err);
+        setError("Unable to fetch bank accounts. Please try again.");
       }
     }
 
-    if (user.preferences.accountId !== "") {
-      setAccountId(user.preferences.accountId);
-    }
+    fetchBankAccounts();
+  }, [user.bankAccessToken]);
 
-    getAccounts();
-  }, []); // Empty dependency array ensures it runs only once when the component mounts
+  const updateUserProfile = async () => {
+    if (loading) return;
 
-  // Make a function to update the user's profile
-  async function updateUserProfile() {
-    // Check the accountId has changed
-    if (accountId !== user.preferences.accountId) {
-      // Warn the user changing this will remove the current account's transactions
-      const confirm = window.confirm(
-        "Changing your account will remove your current account's transactions. Are you sure you want to continue?",
-      );
+    setLoading(true);
+    try {
+      if (accountId !== user.preferences.accountId) {
+        const confirmChange = window.confirm(
+          "Changing your account will remove the current account's transactions. Proceed?"
+        );
 
-      // If the user cancels the change, return
-      if (!confirm) {
-        return;
+        if (!confirmChange) {
+          setLoading(false);
+          return;
+        }
+
+        await api.delete("/api/transaction/bulk-delete");
       }
 
-      // If the user confirms the change, remove the transactions
-      api.delete("/api/transaction/bulk-delete");
-    }
+      await api.post("/api/user/info", {
+        firstName,
+        lastName,
+        email,
+        preferences: { theme, accountId },
+      });
 
-    // Make a POST request to the API updating the user's information
-    const response = await api.post("/api/user/info", {
-      firstName,
-      lastName,
-      email,
-      preferences: {
-        theme,
-        accountId,
-      },
-    });
-
-    // If the response is successful, update the user context by reloading the page
-    if (response.status === 200) {
       Router.reload();
+    } catch (err) {
+      console.error("Failed to update profile:", err);
+      setError("Unable to save profile. Please try again.");
+    } finally {
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <Card className="h-full w-full">
@@ -130,10 +126,10 @@ export default function ProfileView({ user }: ProfileViewProps) {
           onChange={(e) => setEmail(e.target.value)}
         />
       </div>
-      <div className="">
+      <div>
         <h2 className="text-lg font-bold text-text">Theme</h2>
         <select
-          className="bg-backgroundGrayLight border-none focus:text-white selection:bg-primary text-neutral-500 h-8 text-base rounded-md marker"
+          className="bg-backgroundGrayLight p-2 h-8 text-base rounded-md"
           value={theme}
           onChange={(e) => setTheme(e.target.value)}
         >
@@ -142,10 +138,10 @@ export default function ProfileView({ user }: ProfileViewProps) {
           <option value="light">Light</option>
         </select>
       </div>
-      <div className="">
+      <div>
         <h2 className="text-lg font-bold text-text">Account</h2>
         <select
-          className="bg-backgroundGrayLight border-none focus:text-white selection:bg-primary text-neutral-500 h-8 text-base rounded-md marker"
+          className="bg-backgroundGrayLight p-2 h-8 text-base rounded-md"
           value={accountId}
           onChange={(e) => setAccountId(e.target.value)}
         >
@@ -156,23 +152,25 @@ export default function ProfileView({ user }: ProfileViewProps) {
           ))}
         </select>
       </div>
-      <div className="pt-2 flex flex-row justify-between items-center">
-        {/* Teller Connect Button */}
+      <div className="pt-4 flex flex-row justify-between items-center">
         <button
-          className="text-lg bg-primary text-white rounded-md shadow-md py-1 px-10 disabled:opacity-40"
-          onClick={() => open()}
+          className="text-lg bg-primary text-white rounded-md shadow-md py-1 px-10 disabled:opacity-50"
+          onClick={open}
           disabled={!ready}
         >
-          Connect a Bank Account
+          Connect Bank Account
         </button>
-        {/* Save Button */}
         <button
-          className="text-lg bg-backgroundGrayLight rounded-md shadow-md py-1 px-10"
-          onClick={() => updateUserProfile()}
+          className={`text-lg ${
+            loading ? "bg-gray-500" : "bg-backgroundGrayLight"
+          } rounded-md shadow-md py-1 px-10`}
+          onClick={updateUserProfile}
+          disabled={loading}
         >
-          Save
+          {loading ? "Saving..." : "Save"}
         </button>
       </div>
+      {error && <p className="text-red-500 pt-2">{error}</p>}
     </Card>
   );
 }

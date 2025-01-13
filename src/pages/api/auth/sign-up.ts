@@ -11,10 +11,10 @@ import argon2 from "argon2";
 
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse,
+  res: NextApiResponse
 ) {
   if (req.method === "POST") {
-    // Get information from the request
+    // Get user details from request body
     const { firstName, lastName, email, password } = req.body;
 
     // Validate the input data
@@ -27,21 +27,21 @@ export default async function handler(
 
     const normalizedEmail = email.toString().toLowerCase();
 
-    // Check if the email is already in use
-    const existingUser = await client
-      .db()
-      .collection("users")
-      .findOne({ email: normalizedEmail });
-    if (existingUser) {
-      return res.status(400).json({ message: "Email already in use" });
-    }
+    try {
+      // Check if the email already exists in the database
+      const existingUser = await client
+        .db()
+        .collection("users")
+        .findOne({ email: normalizedEmail });
+      if (existingUser) {
+        return res.status(400).json({ message: "Email already in use" });
+      }
 
-    // Create the user in the database
-    const hashedPassword = await argon2.hash(password);
-    await client
-      .db()
-      .collection("users")
-      .insertOne({
+      // Hash the password
+      const hashedPassword = await argon2.hash(password);
+
+      // Create the user in the database
+      const newUser = {
         email: normalizedEmail,
         password: hashedPassword,
         firstName,
@@ -53,46 +53,70 @@ export default async function handler(
           theme: "system",
           accountId: "",
         },
-      });
+      };
 
-    // Prevent generating multiple verification links within 3 minutes
-    const threeMinutesAgo = new Date(Date.now() - 1000 * 60 * 3);
-    const existingLinks = await client
-      .db()
-      .collection("links")
-      .find({
-        targetEmail: normalizedEmail,
-        createdAt: { $gt: threeMinutesAgo },
-      })
-      .toArray();
+      // Start a database transaction (if needed for better consistency)
+      const session = client.startSession();
+      session.startTransaction();
 
-    if (existingLinks.length > 0) {
-      return res.status(400).json({
-        message: "Too many links generated recently, Try again later.",
-      });
-    }
-
-    // Generate and send the email verification link
-    const link = await generateLink(normalizedEmail, "email-verification");
-    const emailResponse = await sendEmailVerification(
-      firstName,
-      link,
-      normalizedEmail,
-    );
-
-    // If sending the email failed, delete the user and return an error
-    if (!emailResponse || emailResponse.error) {
-      console.error(emailResponse?.error || "Email failed to send");
-      await client
+      // Insert the user into the database
+      const userInsertResult = await client
         .db()
         .collection("users")
-        .deleteOne({ email: normalizedEmail });
-      return res.status(500).json({ message: "Failed to send email" });
-    }
+        .insertOne(newUser, { session });
 
-    res
-      .status(200)
-      .json({ message: "Sign up successful, awaiting email verification" });
+      // Prevent generating multiple verification links within 3 minutes
+      const threeMinutesAgo = new Date(Date.now() - 1000 * 60 * 3);
+      const existingLinks = await client
+        .db()
+        .collection("links")
+        .find({
+          targetEmail: normalizedEmail,
+          createdAt: { $gt: threeMinutesAgo },
+        })
+        .toArray();
+
+      if (existingLinks.length > 0) {
+        await session.abortTransaction(); // Rollback if too many links generated
+        return res.status(400).json({
+          message: "Too many links generated recently, try again later.",
+        });
+      }
+
+      // Generate the verification link
+      const link = await generateLink(normalizedEmail, "email-verification");
+
+      // Send the verification email
+      const emailResponse = await sendEmailVerification(
+        firstName,
+        link,
+        normalizedEmail
+      );
+
+      // If sending the email failed, roll back the user insertion
+      if (!emailResponse || emailResponse.error) {
+        console.error(
+          "Email failed to send:",
+          emailResponse?.error || "Unknown"
+        );
+        await client
+          .db()
+          .collection("users")
+          .deleteOne({ email: normalizedEmail }, { session });
+        await session.commitTransaction(); // Commit rollback
+        return res.status(500).json({ message: "Failed to send email" });
+      }
+
+      // Commit the transaction
+      await session.commitTransaction();
+
+      res
+        .status(200)
+        .json({ message: "Sign up successful, awaiting email verification" });
+    } catch (error) {
+      console.error("Error during signup:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
   } else {
     res.setHeader("Allow", ["POST"]);
     return res.status(405).end(`Method ${req.method} Not Allowed`);

@@ -8,7 +8,7 @@ import { SessionData } from "@/utils/sessionData";
 // Main handler function for the API route
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse,
+  res: NextApiResponse
 ) {
   if (req.method === "GET") {
     return await getTransactions(req, res);
@@ -43,7 +43,7 @@ async function getTransactions(req: NextApiRequest, res: NextApiResponse) {
     }
 
     // Parse query parameters
-    const { limit, startDate, endDate, filter } = req.query;
+    const { limit = 10, startDate, endDate, filter } = req.query;
 
     // Convert `limit` to a number and validate
     const limitNumber = parseInt(limit as string, 10);
@@ -65,7 +65,6 @@ async function getTransactions(req: NextApiRequest, res: NextApiResponse) {
       if (isNaN(parsedEndDate.getTime())) {
         return res.status(400).json({ message: "Invalid endDate format" });
       }
-      // Make sure the end date is inclusive
       dateFilter.date = { ...dateFilter.date, $lte: parsedEndDate };
     }
 
@@ -83,7 +82,6 @@ async function getTransactions(req: NextApiRequest, res: NextApiResponse) {
             message: "Invalid filter format. Must be an array of strings.",
           });
         }
-        // If no tags are provided, do not filter by tags
         if (tags.length > 0) {
           tagsFilter.tags = { $all: tags }; // Match transactions containing all specified tags
         }

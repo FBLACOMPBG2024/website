@@ -31,14 +31,24 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!accountId || typeof accountId !== "string") {
     return res.status(400).json({
       message:
-        "Account ID is required, Set a preferred account in the profile tab",
+        "Account ID is required. Set a preferred account in the profile tab",
     });
   }
 
   try {
+    // Ensure certificate and key paths are provided
+    const certPath = process.env.CERT_PATH;
+    const keyPath = process.env.KEY_PATH;
+
+    if (!certPath || !keyPath) {
+      return res.status(500).json({
+        message: "Certificate or key path is not set in environment variables",
+      });
+    }
+
     const httpsAgent = new https.Agent({
-      cert: fs.readFileSync(process.env.CERT_PATH || "", "utf8"),
-      key: fs.readFileSync(process.env.KEY_PATH || "", "utf8"),
+      cert: fs.readFileSync(certPath, "utf8"),
+      key: fs.readFileSync(keyPath, "utf8"),
     });
 
     // Make a request to the Teller API's transactions endpoint
@@ -50,7 +60,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
           password: "", // Teller API requires only the token, so password can be empty
         },
         httpsAgent,
-      },
+      }
     );
 
     console.log("Teller response:", tellerResponse.data);
@@ -61,14 +71,15 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         _id: new ObjectId(),
         bankId: transaction.id,
         date: new Date(transaction.date),
-        value: Number.parseFloat(transaction.amount),
+        value: parseFloat(transaction.amount),
         name: transaction.description,
         imported: true, // Mark the transaction as imported
         tags: [transaction.details?.category, transaction.type],
         userId: user._id,
-        bankRunningBalance: Number.parseFloat(transaction.running_balance),
-      }),
+        bankRunningBalance: parseFloat(transaction.running_balance),
+      })
     );
+
     // Filter out transactions that already exist in the database
     const existingTransactionIds = (
       await client
@@ -76,22 +87,17 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         .collection("transactions")
         .find({
           userId: user._id,
-          bankId: {
-            $in: internalTransactions.map(
-              (transaction: any) => transaction.bankId,
-            ),
-          },
+          bankId: { $in: internalTransactions.map((t: any) => t.bankId) },
         })
         .toArray()
     ).map((transaction: any) => transaction.bankId);
 
-    // Filter internalTransactions to exclude the ones that already exist
+    // Filter out already existing transactions
     const newTransactions = internalTransactions.filter(
-      (transaction: any) =>
-        !existingTransactionIds.includes(transaction.bankId),
+      (transaction: any) => !existingTransactionIds.includes(transaction.bankId)
     );
 
-    // Insert only the new transactions that don't already exist in the database
+    // Insert only the new transactions
     if (newTransactions.length > 0) {
       await client.db().collection("transactions").insertMany(newTransactions);
     }
@@ -99,7 +105,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     // Add the new transaction IDs to the user's document if they don't already exist
     await client
       .db()
-      .collection("users") // Add the correct type here
+      .collection("users")
       .updateOne(
         { _id: new ObjectId(session.user._id) },
         {
@@ -108,7 +114,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
               $each: newTransactions.map((transaction: any) => transaction._id),
             },
           },
-        },
+        }
       );
 
     // Respond with the transactions data from the Teller API
@@ -117,12 +123,18 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       transactions: internalTransactions,
     });
   } catch (error: any) {
+    // Log the error and provide more detailed error information
     console.error(
       "Error fetching transactions:",
-      error.response?.data || error.message,
+      error.response?.data || error.message
     );
+    const errorMessage =
+      error?.response?.data?.message ||
+      error?.message ||
+      "Internal Server Error";
+
     return res.status(error.response?.status || 500).json({
-      message: error?.message || "Internal Server Error",
+      message: errorMessage,
     });
   }
 }

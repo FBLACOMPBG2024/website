@@ -31,36 +31,56 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!accountId || typeof accountId !== "string") {
     return res.status(400).json({
       message:
-        "Account ID is required, Set a preferred account in the profile tab",
+        "Account ID is required. Set a preferred account in the profile tab",
     });
   }
 
   try {
+    // Ensure that certificate and key paths are present
+    const certPath = process.env.CERT_PATH;
+    const keyPath = process.env.KEY_PATH;
+
+    if (!certPath || !keyPath) {
+      return res.status(500).json({
+        message: "Certificate or key path is not set in environment variables",
+      });
+    }
+
     const httpsAgent = new https.Agent({
-      cert: fs.readFileSync(process.env.CERT_PATH || "", "utf8"),
-      key: fs.readFileSync(process.env.KEY_PATH || "", "utf8"),
+      cert: fs.readFileSync(certPath, "utf8"),
+      key: fs.readFileSync(keyPath, "utf8"),
     });
 
-    // Make a request to the Teller API's accounts endpoint
+    // Make a request to the Teller API's accounts balances endpoint
     const tellerResponse = await axios.get(
       `https://api.teller.io/accounts/${accountId}/balances`,
       {
         auth: {
           username: user.bankAccessToken,
-          password: "", // Teller API requires only the token, so password can be empty
+          password: "", // Teller API requires only the token, so password is empty
         },
         httpsAgent,
-      },
+      }
     );
+
     // Respond with the balance data from the Teller API
     return res.status(200).json(tellerResponse.data);
   } catch (error: any) {
     console.error(
       "Error fetching balance:",
-      error.response?.data || error.message,
+      error.response?.data || error.message
     );
-    return res.status(error.response?.status || 500).json({
-      message: error?.message || "Internal Server Error",
+
+    // If error response from the Teller API exists, return that error
+    if (error.response) {
+      return res.status(error.response.status).json({
+        message: error.response.data.message || "Error fetching balance",
+      });
+    }
+
+    // Handle network or other internal errors
+    return res.status(500).json({
+      message: error.message || "Internal Server Error",
     });
   }
 }

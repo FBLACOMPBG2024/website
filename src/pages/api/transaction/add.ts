@@ -1,6 +1,8 @@
-import TransactionSchema from "@/schemas/transactionSchema";
 import { NextApiRequest, NextApiResponse } from "next";
+import TransactionSchema from "@/schemas/transactionSchema";
+import { sendEmailVerification } from "@/utils/email";
 import client from "@/lib/mongodb";
+import argon2 from "argon2";
 import { ObjectId } from "mongodb";
 import { getIronSession } from "iron-session";
 import { sessionOptions } from "@/utils/sessionConfig";
@@ -11,7 +13,7 @@ import { SessionData } from "@/utils/sessionData";
 
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse,
+  res: NextApiResponse
 ) {
   if (req.method === "POST") {
     // Get session
@@ -38,7 +40,7 @@ export default async function handler(
       const parsedBody = TransactionSchema.parse(req.body);
       const { value, tags, name, description, date } = parsedBody;
 
-      // Make sure the date is not in the future and is valid
+      // Ensure the date is valid and not in the future
       if (date && new Date(date) > new Date()) {
         return res.status(400).json({ message: "Invalid date" });
       }
@@ -54,13 +56,16 @@ export default async function handler(
         date: date ? new Date(date) : new Date(),
       };
 
-      // Use a transaction to ensure atomicity
+      // Start a database session for atomicity
       const sessionDb = client.startSession();
       sessionDb.startTransaction();
 
       try {
         // Insert the transaction into the database
-        await client.db().collection("transactions").insertOne(transaction);
+        await client
+          .db()
+          .collection("transactions")
+          .insertOne(transaction, { session: sessionDb });
 
         // Update user transaction list
         await client
@@ -69,6 +74,7 @@ export default async function handler(
           .updateOne(
             { _id: user._id },
             { $addToSet: { transactions: transaction._id } },
+            { session: sessionDb }
           );
 
         // Recalculate balance
@@ -80,14 +86,18 @@ export default async function handler(
 
         const balance = transactions.reduce(
           (acc, transaction) => acc + transaction.value,
-          0,
+          0
         );
 
         // Update user balance
         await client
           .db()
           .collection("users")
-          .updateOne({ _id: user._id }, { $set: { balance: balance } });
+          .updateOne(
+            { _id: user._id },
+            { $set: { balance: balance } },
+            { session: sessionDb }
+          );
 
         // Commit the transaction
         await sessionDb.commitTransaction();
@@ -96,9 +106,10 @@ export default async function handler(
         // Respond with the created transaction
         return res.status(201).json(transaction);
       } catch (err) {
-        // If any error occurs, abort the transaction
+        // If an error occurs, abort the transaction
         await sessionDb.abortTransaction();
         sessionDb.endSession();
+        console.error("Transaction creation failed:", err);
         throw err;
       }
     } catch (error: any) {
@@ -110,7 +121,7 @@ export default async function handler(
         });
       }
 
-      console.error(error); // Log any unexpected errors
+      console.error("Unexpected error:", error); // Log unexpected errors
       return res.status(500).json({ message: "Internal Server Error" });
     }
   } else {

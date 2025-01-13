@@ -1,10 +1,5 @@
 import { IUser } from "@/components/context/UserContext";
-import TextInput from "@/components/ui/TextInput";
 import Card from "@/components/ui/Card";
-import { useState } from "react";
-import api from "@/utils/api";
-import { useTellerConnect } from "teller-connect-react";
-import { useEffect } from "react";
 
 interface HelpViewProps {
   user: IUser;

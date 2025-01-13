@@ -10,7 +10,7 @@ import { SessionData } from "@/utils/sessionData";
 
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse,
+  res: NextApiResponse
 ) {
   if (req.method === "DELETE") {
     try {
@@ -18,21 +18,23 @@ export default async function handler(
       const session = await getIronSession<SessionData>(
         req,
         res,
-        sessionOptions,
+        sessionOptions
       );
 
       if (!session.user?._id) {
         return res.status(401).json({ message: "Unauthorized" });
       }
+
       // Get the user from the database
       const user = await client
         .db()
         .collection("users")
-        .findOne({ _id: new ObjectId(session.user?._id) });
+        .findOne({ _id: new ObjectId(session.user._id) });
 
       if (!user) {
         return res.status(401).json({ message: "Unauthorized" });
       }
+
       // Get the transaction ID from the request body
       const { _id } = req.body;
 
@@ -40,7 +42,7 @@ export default async function handler(
         return res.status(400).json({ message: "Invalid transaction ID" });
       }
 
-      // Delete the transaction from the database
+      // Find the transaction in the database
       const transaction = await client
         .db()
         .collection("transactions")
@@ -50,40 +52,62 @@ export default async function handler(
         return res.status(404).json({ message: "Transaction not found" });
       }
 
-      const result = await client
-        .db()
-        .collection("transactions")
-        .deleteOne({ _id: new ObjectId(_id), userId: user._id });
+      // Start a session for the transaction to ensure atomicity
+      const sessionDb = client.startSession();
+      sessionDb.startTransaction();
 
-      if (result.deletedCount === 0) {
-        return res.status(404).json({ message: "Transaction not found" });
-      }
+      try {
+        // Delete the transaction from the transactions collection
+        const result = await client
+          .db()
+          .collection("transactions")
+          .deleteOne({ _id: new ObjectId(_id), userId: user._id });
 
-      await client
-        .db()
-        .collection("users")
-        .updateOne(
-          { _id: user._id },
-          {
-            $pull: {
-              transactions: _id,
-            },
-          },
+        if (result.deletedCount === 0) {
+          await sessionDb.abortTransaction();
+          return res.status(404).json({ message: "Transaction not found" });
+        }
+
+        // Remove the transaction ID from the user's transactions array
+        await client
+          .db()
+          .collection("users")
+          .updateOne({ _id: user._id }, {
+            $pull: { transactions: new ObjectId(_id) },
+          } as any);
+
+        // Recalculate the user's balance by fetching remaining transactions
+        const remainingTransactions = await client
+          .db()
+          .collection("transactions")
+          .find({ userId: user._id })
+          .toArray();
+
+        const newBalance = remainingTransactions.reduce(
+          (acc, transaction) => acc + transaction.value,
+          0
         );
 
-      // Update the balance by subtracting the value of the deleted transaction
-      const newBalance = user.balance - transaction.value;
+        // Update the user's balance
+        await client
+          .db()
+          .collection("users")
+          .updateOne({ _id: user._id }, { $set: { balance: newBalance } });
 
-      // Update user balance
-      await client
-        .db()
-        .collection("users")
-        .updateOne({ _id: user._id }, { $set: { balance: newBalance } });
+        // Commit the transaction
+        await sessionDb.commitTransaction();
+        sessionDb.endSession();
 
-      return res
-        .status(200)
-        .json({ message: "Transaction deleted successfully" });
-    } catch (error: any) {
+        return res
+          .status(200)
+          .json({ message: "Transaction deleted successfully" });
+      } catch (error) {
+        await sessionDb.abortTransaction();
+        sessionDb.endSession();
+        console.error(error); // Log the error
+        return res.status(500).json({ message: "Internal Server Error" });
+      }
+    } catch (error) {
       console.error(error); // Log any unexpected errors
       return res.status(500).json({ message: "Internal Server Error" });
     }

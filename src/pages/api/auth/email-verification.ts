@@ -9,49 +9,66 @@ import client from "@/lib/mongodb";
 
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse,
+  res: NextApiResponse
 ) {
   if (req.method === "GET") {
-    // Check if the token is present
-    const link = await client
-      .db()
-      .collection("links")
-      .findOne({ token: req.query.token });
+    try {
+      const { token } = req.query;
 
-    // Check if the link is valid
-    if (!link || link.type !== "email-verification") {
-      res.status(404).json({ message: "Invalid link" });
-      return;
+      // Check if the token is present
+      if (!token || typeof token !== "string") {
+        return res.status(400).json({ message: "Missing or invalid token" });
+      }
+
+      // Fetch the link data from the database
+      const link = await client.db().collection("links").findOne({ token });
+
+      // Check if the link is valid
+      if (!link || link.type !== "email-verification") {
+        return res.status(404).json({ message: "Invalid link" });
+      }
+
+      // Check if the link is expired
+      if (link.expires < new Date()) {
+        return res.status(400).json({ message: "Link has expired" });
+      }
+
+      // Mark the user's email as verified
+      const updateUserResult = await client
+        .db()
+        .collection("users")
+        .updateOne(
+          { email: link.targetEmail },
+          { $set: { emailVerified: true } }
+        );
+
+      if (updateUserResult.modifiedCount === 0) {
+        return res.status(500).json({ message: "Failed to update user" });
+      }
+
+      // Mark the link as used
+      const updateLinkResult = await client
+        .db()
+        .collection("links")
+        .updateOne(
+          { token },
+          { $set: { used: true, usedAt: new Date(Date.now()) } }
+        );
+
+      if (updateLinkResult.modifiedCount === 0) {
+        return res.status(500).json({ message: "Failed to mark link as used" });
+      }
+
+      // Redirect the user to the email verified page
+      res.status(200).redirect(process.env.URL + "/email/verified");
+    } catch (error: any) {
+      console.error("Error in email verification:", error.message);
+      res
+        .status(500)
+        .json({ message: "An error occurred during verification" });
     }
-
-    // Check if the link is expired
-    if (link.expires < new Date()) {
-      res.status(404).json({ message: "Link expired" });
-      return;
-    }
-
-    // Mark the user's email as verified
-    await client
-      .db()
-      .collection("users")
-      .updateOne(
-        { email: link.targetEmail },
-        { $set: { emailVerified: true } },
-      );
-
-    // Mark the link as used
-    await client
-      .db()
-      .collection("links")
-      .updateOne(
-        { token: req.query.token },
-        { $set: { used: true, usedAt: new Date(Date.now()) } },
-      );
-
-    // Redirect the user to the email verified page
-    res.status(200).redirect(process.env.URL + "/email/verified");
   } else {
     res.setHeader("Allow", ["GET"]);
-    res.status(405).end(`Method ${req.method} Not Allowed`);
+    return res.status(405).end(`Method ${req.method} Not Allowed`);
   }
 }

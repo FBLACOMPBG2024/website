@@ -10,7 +10,7 @@ import { SessionData } from "@/utils/sessionData";
 
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse,
+  res: NextApiResponse
 ) {
   if (req.method !== "DELETE") {
     res.setHeader("Allow", ["DELETE"]);
@@ -24,6 +24,7 @@ export default async function handler(
     if (!session.user?._id) {
       return res.status(401).json({ message: "Unauthorized" });
     }
+
     // Get the user from the database
     const user = await client
       .db()
@@ -49,7 +50,7 @@ export default async function handler(
         .collection("users")
         .updateOne({ _id: user._id }, { $set: { transactions: [] } });
 
-      // Update the user's balance
+      // Reset the user's balance to 0
       await client
         .db()
         .collection("users")
@@ -83,19 +84,19 @@ export default async function handler(
       .collection("users")
       .updateOne(
         { _id: user._id },
-        { $addToSet: { transactions: { $in: objectIds } } },
+        { $pull: { transactions: { $in: objectIds } } } as any // Cast to any to bypass type errors
       );
 
     // Recalculate the user's balance after deletion
     const remainingTransactions = await client
       .db()
       .collection("transactions")
-      .find({ _id: { $in: user.transactions } })
+      .find({ userId: user._id })
       .toArray();
 
     const newBalance = remainingTransactions.reduce(
       (acc, transaction) => acc + transaction.value,
-      0,
+      0
     );
 
     // Update the user's balance

@@ -1,10 +1,8 @@
 import { Html, Head, Body, Tailwind } from "@react-email/components";
 
-// This is the reset password email template
-// It is used to send an email to the user with a link to reset their password
-// It includes the user's name and the reset password link
-// The user can click the link to reset their password
-// This is basically the same as the email verification template, but with a different message
+// Reset password email template
+// Sends a password reset link to the user, with a message and the user's name.
+// Similar to the email verification template, but for resetting passwords.
 
 interface ResetPasswordEmailTemplateProps {
   name: string;

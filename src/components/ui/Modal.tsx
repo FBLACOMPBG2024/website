@@ -3,21 +3,19 @@ import { motion } from "framer-motion";
 import { IconX } from "@tabler/icons-react";
 import { AnimatePresence } from "framer-motion";
 
-// This is a reusable modal component
-// It displays content in a modal dialog
-// It's used to display additional information or actions
-// It's a simple modal with a close button and a backdrop
+// Reusable modal component
+// Displays content in a modal dialog with a backdrop and a close button.
 
 interface ModalProps {
   open: boolean;
   onClose: () => void;
 }
 
-export default function Modal({
+const Modal: React.FC<React.PropsWithChildren<ModalProps>> = ({
   open,
   onClose,
   children,
-}: React.PropsWithChildren<ModalProps>) {
+}) => {
   return (
     <AnimatePresence>
       {open && (
@@ -29,7 +27,11 @@ export default function Modal({
           className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center min-h-[91vh]"
         >
           <div className="relative bg-background p-4 rounded-md">
-            <button className="absolute top-2 right-2" onClick={onClose}>
+            <button
+              className="absolute top-2 right-2"
+              onClick={onClose}
+              aria-label="Close modal"
+            >
               <IconX />
             </button>
             {children}
@@ -38,4 +40,6 @@ export default function Modal({
       )}
     </AnimatePresence>
   );
-}
+};
+
+export default Modal;

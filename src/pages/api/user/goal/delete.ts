@@ -16,48 +16,53 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   const userId = session.user._id;
 
   try {
-    // Handle POST request to save bank account connection
-    if (req.method === "POST") {
-      const { accessToken } = req.body;
+    if (req.method === "DELETE") {
+      const { goalId } = req.body;
 
-      // Validate input
-      if (
-        !accessToken ||
-        typeof accessToken !== "string" ||
-        accessToken.trim().length === 0
-      ) {
-        return res
-          .status(400)
-          .json({ message: "Valid access token is required" });
+      // Validate the goalId
+      if (!goalId) {
+        return res.status(400).json({ message: "Goal ID is required" });
       }
 
-      // Save the accessToken to the user's record in the database
+      // Check if the goalId is a valid ObjectId
+      let parsedGoalId;
+      try {
+        parsedGoalId = new ObjectId(goalId);
+      } catch (error) {
+        return res.status(400).json({ message: "Invalid Goal ID format" });
+      }
+
+      // Remove the goal from the user's document in the database
       const result = await client
         .db()
         .collection("users")
         .updateOne(
           { _id: new ObjectId(userId) },
           {
-            $set: { bankAccessToken: accessToken },
+            $set: {
+              goals: {
+                $filter: {
+                  input: "$goals",
+                  as: "goal",
+                  cond: { $ne: ["$$goal._id", parsedGoalId] },
+                },
+              },
+            },
           }
         );
 
-      if (result.modifiedCount === 0) {
-        return res
-          .status(400)
-          .json({ message: "No changes made to the user's record" });
+      if (result.modifiedCount > 0) {
+        return res.status(200).json({ message: "Goal deleted successfully" });
       }
 
-      return res
-        .status(200)
-        .json({ message: "Bank account connected successfully" });
+      return res.status(404).json({ message: "Goal not found" });
     }
 
     // Handle unsupported methods
-    res.setHeader("Allow", ["POST"]);
+    res.setHeader("Allow", ["DELETE"]);
     return res.status(405).end(`Method ${req.method} Not Allowed`);
   } catch (error) {
-    console.error("Error connecting bank account:", error);
+    console.error("Error deleting goal:", error);
     return res.status(500).json({ message: "Internal Server Error" });
   }
 }

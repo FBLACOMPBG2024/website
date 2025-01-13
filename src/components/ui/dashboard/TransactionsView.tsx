@@ -2,8 +2,9 @@ import TextInput from "@/components/ui/TextInput";
 import { useState, useEffect } from "react";
 import Modal from "@/components/ui/Modal";
 import Card from "@/components/ui/Card";
-import api from "@/utils/api";
 import { motion } from "framer-motion";
+import api from "@/utils/api";
+import Papa from "papaparse";
 import {
   IconPencil,
   IconTrash,
@@ -14,7 +15,6 @@ import {
   IconSortAscending,
   IconRefresh,
 } from "@tabler/icons-react";
-import Papa from "papaparse"; // Import PapaParse for CSV parsing
 
 interface Transaction {
   _id: string;
@@ -31,11 +31,11 @@ export default function TransactionsView() {
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [editTransaction, setEditTransaction] = useState<Transaction | null>(
-    null,
+    null
   );
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [transactionToDelete, setTransactionToDelete] = useState<string | null>(
-    null,
+    null
   );
 
   // Individual state variables for each input
@@ -44,7 +44,7 @@ export default function TransactionsView() {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [dateTime, setDateTime] = useState(
-    new Date().toISOString().slice(0, 16),
+    new Date().toISOString().slice(0, 16)
   ); // Default to now
 
   const [sortKey, setSortKey] = useState<keyof Transaction | null>(null);
@@ -53,8 +53,13 @@ export default function TransactionsView() {
   // Filters
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  const [limit, setLimit] = useState("200"); // Default to 20
+  const [limit, setLimit] = useState("200");
   const [tagFilter, setTagFilter] = useState("");
+
+  // UseEffect for filters
+  useEffect(() => {
+    fetchTransactions(); // Fetch transactions when filters change
+  }, [tagFilter, startDate, endDate, limit]);
 
   // Extract the fetchTransactions function for reusability
   const fetchTransactions = async () => {
@@ -74,11 +79,6 @@ export default function TransactionsView() {
       console.error("Failed to fetch transactions", error);
     }
   };
-
-  // UseEffect for filters
-  useEffect(() => {
-    fetchTransactions(); // Fetch transactions when filters change
-  }, [tagFilter, startDate, endDate, limit]);
 
   const handleSync = async () => {
     try {
@@ -175,7 +175,7 @@ export default function TransactionsView() {
   const handleBulkUpload = async (e: React.FormEvent) => {
     e.preventDefault();
     const fileInput = document.getElementById(
-      "csvFileInput",
+      "csvFileInput"
     ) as HTMLInputElement;
     if (fileInput.files && fileInput.files[0]) {
       Papa.parse(fileInput.files[0], {
@@ -196,7 +196,7 @@ export default function TransactionsView() {
 
             const response = await api.post(
               "/api/transaction/bulk-add",
-              finalTransactions,
+              finalTransactions
             );
             if (response.status === 201) {
               setIsBulkUploadModalOpen(false);
@@ -217,7 +217,7 @@ export default function TransactionsView() {
         tagFilter
           .split(" ")
           .filter((t) => t !== tag)
-          .join(" "),
+          .join(" ")
       );
     } else {
       setTagFilter((tagFilter + " " + tag).trim());
@@ -248,10 +248,9 @@ export default function TransactionsView() {
     <div className="h-full w-full">
       <Card className="min-h-[90vh] w-full">
         <h1 className="text-4xl font-black text-text">Transactions</h1>
-
-        <div className="absolute top-0 right-0 mt-4 mr-4 flex space-x-2">
+        <div className="mt-4 gap-2 flex flex-row sm:flex-row sm:absolute sm:top-0 sm:right-0 sm:mt-4 sm:mr-4 space-y-2 sm:space-y-0 sm:space-x-2">
           <button
-            className="sm:max-h-10 max-h-10 transition-all duration-200 hover:opacity-80 sm:text-lg text-sm px-2 py-1 bg-primary text-white rounded flex items-center"
+            className="sm:max-h-10 max-h-8 sm:mt-0 mt-2 transition-all duration-200 hover:opacity-80 sm:text-lg text-sm px-2 py-1 bg-primary text-white rounded flex items-center"
             onClick={() => handleSync()}
           >
             <IconRefresh className="mr-1" />
@@ -279,8 +278,6 @@ export default function TransactionsView() {
             <p className="hidden sm:block">Bulk Upload</p>
           </button>
         </div>
-
-        {/* Table Wrapper for Responsiveness */}
         <div className="overflow-x-auto overflow-y-auto max-h-[80vh] mt-8">
           {transactions.length > 0 ? (
             <table className="min-w-full bg-backgroundGray">

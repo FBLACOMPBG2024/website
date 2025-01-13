@@ -27,9 +27,19 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   }
 
   try {
+    // Check if certificate and key paths are available
+    const certPath = process.env.CERT_PATH;
+    const keyPath = process.env.KEY_PATH;
+
+    if (!certPath || !keyPath) {
+      return res.status(500).json({
+        message: "Certificate or key path not set in environment variables",
+      });
+    }
+
     const httpsAgent = new https.Agent({
-      cert: fs.readFileSync(process.env.CERT_PATH || "", "utf8"),
-      key: fs.readFileSync(process.env.KEY_PATH || "", "utf8"),
+      cert: fs.readFileSync(certPath, "utf8"),
+      key: fs.readFileSync(keyPath, "utf8"),
     });
 
     // Make a request to the Teller API's accounts endpoint
@@ -46,10 +56,19 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   } catch (error: any) {
     console.error(
       "Error fetching account:",
-      error.response?.data || error.message,
+      error.response?.data || error.message
     );
-    return res.status(error.response?.status || 500).json({
-      message: error?.message || "Internal Server Error",
+
+    if (error.response) {
+      // If it's an error from the API, return that specific status and message
+      return res.status(error.response.status).json({
+        message: error.response.data.message || "Error fetching account",
+      });
+    }
+
+    // Handle case for network issues or unexpected errors
+    return res.status(500).json({
+      message: error.message || "Internal Server Error",
     });
   }
 }

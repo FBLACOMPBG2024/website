@@ -22,19 +22,63 @@ interface Transaction {
 
 export default function DashboardView({ user }: DashboardViewProps) {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [chartData, setChartData] = useState<number[]>([]);
+  const [chartLabels, setChartLabels] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
-  const [chartData, setChartData] = useState<string[]>([]);
-  const [chartLabels, setChartLabels] = useState<string[]>([]);
 
-  const option = {
+  const fetchTransactions = async () => {
+    try {
+      setLoading(true);
+      const response = await api.get("/api/transaction/get", {
+        params: { limit: 6 },
+      });
+      setTransactions(response.data);
+    } catch (error) {
+      console.error("Error fetching transactions:", error);
+      setError("Failed to fetch transactions.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchChartData = async () => {
+    try {
+      setLoading(true);
+      const response = await api.get("/api/transaction/summary");
+      if (response.status === 200) {
+        const { labels, data } = response.data;
+        setChartLabels(labels);
+        setChartData(data);
+      }
+    } catch (error) {
+      console.error("Error fetching chart data:", error);
+      setError("Failed to fetch chart data.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (user) {
+      fetchTransactions();
+      fetchChartData();
+    } else {
+      router.reload();
+    }
+  }, [user]);
+
+  const balance = (user?.balance || 0).toLocaleString("en-US", {
+    style: "currency",
+    currency: "USD",
+  });
+
+  const chartOptions = {
     tooltip: {
       trigger: "axis",
       axisPointer: {
         type: "cross",
-        label: {
-          backgroundColor: "#171717",
-        },
+        label: { backgroundColor: "#171717" },
       },
     },
     grid: {
@@ -47,17 +91,12 @@ export default function DashboardView({ user }: DashboardViewProps) {
     xAxis: [
       {
         type: "category",
-        data:
-          chartLabels.length > 0
-            ? chartLabels
-            : ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+        data: chartLabels.length
+          ? chartLabels
+          : ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
       },
     ],
-    yAxis: [
-      {
-        type: "value",
-      },
-    ],
+    yAxis: [{ type: "value" }],
     series: [
       {
         color: "#31D88A",
@@ -65,73 +104,25 @@ export default function DashboardView({ user }: DashboardViewProps) {
         type: "line",
         stack: "Total",
         areaStyle: {},
-        emphasis: {
-          focus: "series",
-        },
-        data:
-          chartData.length > 0 ? chartData : [120, 132, 101, 134, 90, 230, 210],
+        emphasis: { focus: "series" },
+        data: chartData.length ? chartData : [120, 132, 101, 134, 90, 230, 210],
       },
     ],
   };
-  const fetchTransactions = async () => {
-    try {
-      const queryParams: any = {
-        limit: 6, // Fetch the last 3 transactions
-      };
-
-      const response = await api.get("/api/transaction/get", {
-        params: queryParams,
-      });
-      setTransactions(response.data);
-    } catch (error) {
-      console.error("Failed to fetch transactions", error);
-    }
-  };
-
-  useEffect(() => {
-    async function fetchChartData() {
-      try {
-        const response = await api
-          .get("api/transaction/summary")
-          .catch((error) => {
-            console.error(error);
-            setError("Failed to fetch chart data.");
-          });
-
-        if (response?.status === 200) {
-          const summaryData = response.data;
-          setChartLabels(summaryData.labels);
-          setChartData(summaryData.data);
-        }
-      } catch (error: any) {
-        console.error("Error fetching chart data:", error);
-        setError("An error occurred while fetching chart data.");
-      }
-    }
-
-    fetchTransactions();
-    fetchChartData();
-  }, [user]);
-
-  if (!user || typeof user.balance === "undefined") {
-    router.reload();
-  }
 
   if (loading) {
     return <div>Loading...</div>;
   }
 
-  const balance = (user.balance || 0).toLocaleString("en-US", {
-    style: "currency",
-    currency: "USD",
-  });
+  if (error) {
+    return <div className="text-red-500">Error: {error}</div>;
+  }
 
   return (
     <div className="gap-4">
       <Card>
         <div className="flex gap-4 items-center justify-between">
           <h1 className="text-4xl font-black text-text">Dashboard</h1>
-
           <motion.h1
             key={balance}
             initial={{ y: 0 }}
@@ -148,7 +139,7 @@ export default function DashboardView({ user }: DashboardViewProps) {
                 transition={{ duration: 0.1, delay: index * 0.1 }}
               >
                 <span
-                  className={`font-bold ${user.balance < 0 ? "text-red-500" : ""}`}
+                  className={`font-bold ${user?.balance < 0 ? "text-red-500" : ""}`}
                 >
                   {char}
                 </span>
@@ -157,54 +148,50 @@ export default function DashboardView({ user }: DashboardViewProps) {
           </motion.h1>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="w-full h-full">
+          <div>
             <h2 className="text-2xl font-bold text-text pb-3">
               Spending Summary
             </h2>
-            <ReactECharts className="w-full" option={option} />
+            <ReactECharts className="w-full" option={chartOptions} />
           </div>
-
-          <div className="w-full h-full">
+          <div>
             <h2 className="text-2xl font-bold text-text pb-3">
               Latest Transactions
             </h2>
-
-            {transactions.length === 0 && (
+            {transactions.length === 0 ? (
               <div className="text-text">No transactions found.</div>
-            )}
-            <ul>
-              {transactions.map((transaction: Transaction, index: number) => (
-                <motion.li
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }} // Adjust exit animation to slide out
-                  transition={{ duration: 0.4, delay: index * 0.1 }}
-                  key={index}
-                  className="py-2 border-b border-backgroundGrayLight"
-                >
-                  <div className="flex justify-between">
-                    <div>
-                      <span className="font-medium text-text">
-                        {transaction.name}
+            ) : (
+              <ul>
+                {transactions.map((transaction, index) => (
+                  <motion.li
+                    key={transaction._id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.4, delay: index * 0.1 }}
+                    className="py-2 border-b border-backgroundGrayLight"
+                  >
+                    <div className="flex justify-between">
+                      <div>
+                        <span className="font-medium text-text">
+                          {transaction.name}
+                        </span>
+                      </div>
+                      <span
+                        className={
+                          transaction.value > 0 ? "text-green-500" : "text-text"
+                        }
+                      >
+                        {transaction.value.toLocaleString("en-US", {
+                          style: "currency",
+                          currency: "USD",
+                        })}
                       </span>
-                      {/* <span className="text-ellipsis text-neutral-500 text-sm text-left pl-2 align-middle">
-                        {transaction.description}
-                      </span> */}
                     </div>
-                    <span
-                      className={
-                        transaction.value > 0 ? "text-green-500" : "text-text"
-                      }
-                    >
-                      {transaction.value.toLocaleString("en-US", {
-                        style: "currency",
-                        currency: "USD",
-                      })}
-                    </span>
-                  </div>
-                </motion.li>
-              ))}
-            </ul>
+                  </motion.li>
+                ))}
+              </ul>
+            )}
           </div>
         </div>
       </Card>

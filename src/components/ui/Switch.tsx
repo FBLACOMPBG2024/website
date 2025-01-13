@@ -2,9 +2,8 @@ import React, { useState } from "react";
 import clsx from "clsx";
 import { motion } from "framer-motion";
 
-// This is a reusable switch component
-// It's used to toggle between two states
-// It's a simple switch with a circle that moves from left to right
+// This is a reusable switch component.
+// It toggles between two states with an animated circle.
 
 interface SwitchProps {
   checked?: boolean;
@@ -12,23 +11,25 @@ interface SwitchProps {
 }
 
 export default function Switch({
-  checked: initialChecked,
+  checked: initialChecked = false, // Default to false if no 'checked' prop is provided
   onCheckedChange,
 }: SwitchProps) {
   const [checked, setChecked] = useState(initialChecked);
 
+  // Handle checkbox state change
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setChecked(e.target.checked);
     onCheckedChange(e.target.checked);
   };
 
+  // Handle the switch circle click
   const handleCircleClick = () => {
-    setChecked(!checked);
+    setChecked((prevChecked) => !prevChecked);
     onCheckedChange(!checked);
   };
 
   return (
-    <div className="flex rounded-full bg-backgroundGrayLight w-fit">
+    <div className="flex items-center rounded-full bg-backgroundGrayLight w-fit">
       <input
         className="hidden"
         type="checkbox"
@@ -41,7 +42,7 @@ export default function Switch({
       >
         <motion.div
           className={clsx(
-            "h-full w-1/2 rounded-full bg-primary absolute left-0 top-0 -translate-y-1/2",
+            "h-full w-1/2 rounded-full bg-primary absolute left-0 top-0 -translate-y-1/2"
           )}
           animate={{ x: checked ? "100%" : "0%" }}
           transition={{ duration: 0.2 }}

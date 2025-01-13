@@ -11,7 +11,7 @@ import { SessionData } from "@/utils/sessionData";
 
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse,
+  res: NextApiResponse
 ) {
   if (req.method !== "POST") {
     res.setHeader("Allow", ["POST"]);
@@ -25,6 +25,7 @@ export default async function handler(
     if (!session.user?._id) {
       return res.status(401).json({ message: "Unauthorized" });
     }
+
     // Get the user from the database
     const user = await client
       .db()
@@ -41,12 +42,20 @@ export default async function handler(
       return res.status(400).json({ message: "Invalid data format" });
     }
 
-    const formattedTransactions = transactions.map((transaction) => {
+    const formattedTransactions = [];
+
+    // Loop through transactions and validate them
+    for (const [index, transaction] of transactions.entries()) {
       try {
         const parsedTransaction = TransactionSchema.parse(transaction);
-        return {
+        const value = parseFloat(parsedTransaction.value.toString());
+        if (isNaN(value)) {
+          throw new Error(`Invalid transaction value at index ${index}`);
+        }
+
+        formattedTransactions.push({
           _id: new ObjectId(),
-          value: parseFloat(parsedTransaction.value.toString()) || 0,
+          value,
           tags: parsedTransaction.tags,
           name: parsedTransaction.name,
           description: parsedTransaction.description,
@@ -54,49 +63,74 @@ export default async function handler(
           date: parsedTransaction.date
             ? new Date(parsedTransaction.date)
             : new Date(),
-        };
+        });
       } catch (error: any) {
-        // If any single transaction fails validation, we return an error
-        throw new Error(`Invalid transaction data: ${error.message}`);
+        // Include index in the error message for better debugging
+        console.error(`Error in transaction at index ${index}:`, error.message);
+        return res.status(400).json({
+          message: `Invalid transaction data at index ${index}`,
+          error: error.message,
+        });
       }
-    });
+    }
 
-    // Insert the transactions into the database
-    const result = await client
-      .db()
-      .collection("transactions")
-      .insertMany(formattedTransactions);
+    // Use a transaction to ensure atomicity
+    const sessionDb = client.startSession();
+    sessionDb.startTransaction();
 
-    // Update user transaction list
-    const transactionIds = formattedTransactions.map(
-      (transaction) => transaction._id,
-    );
-    await client
-      .db()
-      .collection("users")
-      .updateOne(
-        { _id: user._id },
-        { $addToSet: { transactions: { $each: transactionIds } } },
+    try {
+      // Insert the transactions into the database
+      const result = await client
+        .db()
+        .collection("transactions")
+        .insertMany(formattedTransactions, { session: sessionDb });
+
+      // Update user transaction list
+      const transactionIds = formattedTransactions.map(
+        (transaction) => transaction._id
+      );
+      await client
+        .db()
+        .collection("users")
+        .updateOne(
+          { _id: user._id },
+          { $addToSet: { transactions: { $each: transactionIds } } },
+          { session: sessionDb }
+        );
+
+      // Calculate new balance
+      const newBalance = formattedTransactions.reduce(
+        (acc, transaction) => acc + transaction.value,
+        user.balance
       );
 
-    // Calculate new balance
-    const newBalance = formattedTransactions.reduce(
-      (acc, transaction) => acc + transaction.value,
-      user.balance,
-    );
+      // Update the user's balance
+      await client
+        .db()
+        .collection("users")
+        .updateOne(
+          { _id: user._id },
+          { $set: { balance: newBalance } },
+          { session: sessionDb }
+        );
 
-    // Update the user's balance
-    await client
-      .db()
-      .collection("users")
-      .updateOne({ _id: user._id }, { $set: { balance: newBalance } });
+      // Commit the transaction
+      await sessionDb.commitTransaction();
+      sessionDb.endSession();
 
-    return res.status(201).json({
-      message: "Transactions added successfully",
-      insertedCount: result.insertedCount,
-    });
+      return res.status(201).json({
+        message: "Transactions added successfully",
+        insertedCount: result.insertedCount,
+      });
+    } catch (error) {
+      // If an error occurs, abort the transaction
+      await sessionDb.abortTransaction();
+      sessionDb.endSession();
+      console.error("Failed to add transactions:", error);
+      return res.status(500).json({ message: "Internal server error" });
+    }
   } catch (error) {
-    console.error("Failed to add transactions:", error);
+    console.error("Unexpected error:", error);
     return res.status(500).json({ message: "Internal server error" });
   }
 }

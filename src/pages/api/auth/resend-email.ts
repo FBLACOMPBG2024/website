@@ -9,10 +9,9 @@ import client from "@/lib/mongodb";
 
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse,
+  res: NextApiResponse
 ) {
   if (req.method === "POST") {
-    // Get the email from the request body
     const { email } = req.body;
 
     if (!email) {
@@ -20,57 +19,64 @@ export default async function handler(
       return;
     }
 
-    // Check if the user exists
-    const user = await client
-      .db()
-      .collection("users")
-      .findOne({ email: email });
-    if (!user) {
-      res.status(400).json({ message: "User not found" });
-      return;
-    }
-
-    // Check if the user has already verified their email
-    if (user.emailVerified) {
-      res.status(400).json({ message: "Email already verified" });
-      return;
-    }
-
-    if (process.env.NODE_ENV !== "development") {
-      // Check if the users old links are less than 3 minutes old,
-      // If they are, do not generate a new link
-      const threeMinutesAgo = new Date(Date.now() - 1000 * 60 * 3);
-      const links = await client
+    try {
+      // Check if the user exists
+      const user = await client
         .db()
-        .collection("links")
-        .find({ targetEmail: email, createdAt: { $gt: threeMinutesAgo } })
-        .toArray();
-      if (links.length > 0) {
-        res
-          .status(400)
-          .json({ message: "Too many emails sent recently, Try again later." });
+        .collection("users")
+        .findOne({ email: email });
+      if (!user) {
+        res.status(400).json({ message: "User not found" });
         return;
       }
+
+      // Check if the user has already verified their email
+      if (user.emailVerified) {
+        res.status(400).json({ message: "Email already verified" });
+        return;
+      }
+
+      if (process.env.NODE_ENV !== "development") {
+        // Check if the users old links are less than 3 minutes old,
+        // If they are, do not generate a new link
+        const threeMinutesAgo = new Date(Date.now() - 1000 * 60 * 3);
+        const links = await client
+          .db()
+          .collection("links")
+          .find({ targetEmail: email, createdAt: { $gt: threeMinutesAgo } })
+          .toArray();
+        if (links.length > 0) {
+          res.status(400).json({
+            message: "Too many emails sent recently, Try again later.",
+          });
+          return;
+        }
+      }
+
+      // Generate a new link
+      const link = await generateLink(email, "email-verification");
+      console.log(`Generated email verification link for: ${email}`);
+
+      // Send the email
+      const emailResponse = await sendEmailVerification(
+        user.firstName,
+        link,
+        email
+      );
+
+      // If the email failed to send, return an error
+      if (!emailResponse) {
+        console.error(`Failed to send email to: ${email}`);
+        res.status(500).json({ message: "Failed to send email" });
+        return;
+      }
+
+      // Return a success message
+      res.status(200).json({ message: "Email sent" });
+    } catch (error: any) {
+      console.error("Error during email verification resend:", error.message);
+      res.status(500).json({ message: "Internal server error" });
     }
-
-    // Generate a new link
-    const link = await generateLink(email, "email-verification");
-
-    // Send the email
-    const emailResponse = await sendEmailVerification(
-      user.firstName,
-      link,
-      email,
-    );
-
-    // If the email failed to send, return an error
-    if (!emailResponse) {
-      res.status(500).json({ message: "Failed to send email" });
-      return;
-    }
-
-    // Return a success message
-    res.status(200).json({ message: "Email sent" });
   } else {
     res.setHeader("Allow", ["POST"]);
     res.status(405).end(`Method ${req.method} Not Allowed`);

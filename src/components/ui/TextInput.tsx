@@ -1,9 +1,8 @@
 import React, { ReactNode } from "react";
 import clsx from "clsx";
 
-// This is a reusable text input component
-// It's used to get user input
-// It's a simple text input with a border and a placeholder
+// A reusable text input component.
+// It allows user input with customizable properties like placeholder, value, and description.
 
 interface TextInputProps {
   children?: ReactNode;
@@ -21,28 +20,32 @@ interface TextInputProps {
 export default function TextInput({
   children,
   className,
-  type,
+  type = "text", // Default to 'text' type if not provided
   placeholder,
   value,
   onChange,
   onKeyDown,
   name,
   description,
-  required,
+  required = false, // Default to false if 'required' is not provided
 }: TextInputProps) {
   return (
     <div
       className={clsx(
-        "transition-colors duration-500 text-lg bg-backgroundGrayLight p-2 rounded-md shadow-md text-neutral-500 outline-none border-b border-b-backgroundGrayLight focus-within:border-b-primary ",
-        className,
+        "transition-colors duration-500 text-lg bg-backgroundGrayLight p-2 rounded-md shadow-md text-neutral-500 outline-none border-b border-b-backgroundGrayLight focus-within:border-b-primary",
+        className
       )}
     >
       {name && (
-        <label className="block text-sm font-medium text-neutral-700">
+        <label
+          htmlFor={name}
+          className="block text-sm font-medium text-neutral-700"
+        >
           {name}
         </label>
       )}
       <input
+        id={name}
         type={type}
         placeholder={placeholder}
         value={value}

@@ -6,28 +6,48 @@ import { NextApiRequest, NextApiResponse } from "next";
 
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse,
+  res: NextApiResponse
 ) {
   if (req.method === "POST") {
-    // Check if the refresh token is present
-    if (!req.body.refresh_token) {
-      return res.status(400).json({ message: "No refresh token" });
+    const { refresh_token } = req.body;
+
+    // Check if the refresh token is provided
+    if (!refresh_token) {
+      return res.status(400).json({ message: "No refresh token provided" });
     }
 
     try {
-      // Create a new user client with the refresh token
-      const user = new UserRefreshClient(
-        process.env.CLIENT_ID,
-        process.env.CLIENT_SECRET,
-        req.body.refresh_token,
-      );
+      // Ensure client ID and secret are available in the environment variables
+      const clientId = process.env.CLIENT_ID;
+      const clientSecret = process.env.CLIENT_SECRET;
 
-      // TODO: Actually catch the specific error instead of assuming it's invalid credentials
+      if (!clientId || !clientSecret) {
+        return res
+          .status(500)
+          .json({ message: "Client credentials are missing" });
+      }
+
+      // Create a new user client with the refresh token
+      const user = new UserRefreshClient(clientId, clientSecret, refresh_token);
+
+      // Attempt to refresh the access token
       const { credentials } = await user.refreshAccessToken();
+
+      // Return the new credentials (access token)
       res.json(credentials);
-    } catch (error: unknown) {
-      console.error(error);
-      return res.status(400).json({ message: "Invalid Credentials" });
+    } catch (error: any) {
+      console.error("Error refreshing access token:", error);
+
+      // Handle specific error types based on error response from Google
+      if (error.code === 400) {
+        return res
+          .status(400)
+          .json({ message: "Invalid or expired refresh token" });
+      }
+
+      return res
+        .status(500)
+        .json({ message: "Internal Server Error: Unable to refresh token" });
     }
   } else {
     res.setHeader("Allow", ["POST"]);
