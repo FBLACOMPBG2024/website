@@ -30,7 +30,7 @@ export default function ProfileView({ user }: ProfileViewProps) {
     appearance: "dark",
     environment:
       process.env.NODE_ENV === "development" ? "sandbox" : "development", // This is a little weird but we don't have access to tellers production
-    // environment but development is the same as production for teller (Just limmited to 100 users)
+    // environment but development is the same as production for teller (Just limited to 100 users)
     onSuccess: async (authorization) => {
       try {
         await api.post("/api/user/bank-connect", {
@@ -154,20 +154,20 @@ export default function ProfileView({ user }: ProfileViewProps) {
       </div>
       <div className="pt-4 flex flex-row justify-between items-center">
         <button
-          className="text-lg bg-primary text-white rounded-md shadow-md py-1 px-10 disabled:opacity-50"
+          className="text-lg bg-primary text-white rounded-md shadow-md py-1 px-3 disabled:opacity-50"
           onClick={open}
           disabled={!ready}
         >
           Connect Bank Account
         </button>
         <button
-          className={`text-lg ${
-            loading ? "bg-gray-500" : "bg-backgroundGrayLight"
-          } rounded-md shadow-md py-1 px-10`}
+          className={`transition-all text-lg rounded-md shadow-md py-1 px-10 ${
+            loading ? "bg-backgroundGray" : "bg-backgroundGrayLight"
+          }`}
           onClick={updateUserProfile}
           disabled={loading}
         >
-          {loading ? "Saving..." : "Save"}
+          {loading ? "Saving" : "Save"}
         </button>
       </div>
       {error && <p className="text-red-500 pt-2">{error}</p>}

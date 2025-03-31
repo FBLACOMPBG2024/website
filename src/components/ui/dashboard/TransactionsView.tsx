@@ -437,7 +437,6 @@ export default function TransactionsView() {
                 type="text"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                required
               />
             </label>
           </div>

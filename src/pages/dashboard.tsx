@@ -18,7 +18,6 @@ import LogoutView from "@/components/ui/dashboard/LogoutView";
 import router from "next/router";
 import TransactionsView from "@/components/ui/dashboard/TransactionsView";
 import HelpView from "@/components/ui/dashboard/HelpView";
-import GoalView from "@/components/ui/dashboard/GoalView";
 
 export default function Dashboard() {
   const [open, setOpen] = useState(false);
@@ -41,11 +40,11 @@ export default function Dashboard() {
       href: "#profile",
       icon: <IconUser className="text-text h-5 w-5 flex-shrink-0" />,
     },
-    {
-      label: "Goals",
-      href: "#goals",
-      icon: <IconTargetArrow className="text-text h-5 w-5 flex-shrink-0" />,
-    },
+    // {
+    //   label: "Goals",
+    //   href: "#goals",
+    //   icon: <IconTargetArrow className="text-text h-5 w-5 flex-shrink-0" />,
+    // },
     // {
     //   label: "Settings",
     //   href: "#settings",
@@ -86,8 +85,8 @@ export default function Dashboard() {
         return <ProfileView user={user} />;
       // case "Settings":
       //   return <SettingsView />;
-      case "Goals":
-        return <GoalView user={user} />;
+      //case "Goals":
+      //  return <GoalView user={user} />;
       case "Help":
         return <HelpView user={user} />;
       case "Logout":

@@ -179,7 +179,9 @@ export default function DashboardView({ user }: DashboardViewProps) {
                       </div>
                       <span
                         className={
-                          transaction.value > 0 ? "text-green-500" : "text-text"
+                          transaction.value > 0
+                            ? "text-green-500"
+                            : "text-neutral-500"
                         }
                       >
                         {transaction.value.toLocaleString("en-US", {

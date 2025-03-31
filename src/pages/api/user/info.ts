@@ -4,6 +4,7 @@ import { ObjectId } from "mongodb";
 import { getIronSession } from "iron-session";
 import { sessionOptions } from "@/utils/sessionConfig";
 import { SessionData } from "@/utils/sessionData";
+import api from "@/utils/api";
 
 // Helper function to validate email format
 const validateEmail = (email: string): boolean =>
@@ -18,6 +19,55 @@ const isSessionExpiring = (session: any): boolean => {
 
 // Helper function to refresh the session
 const refreshSession = async (session: any, user: any) => {
+  // If we have a bank access token, we can grab the balance from the database
+  if (user.bankAccessToken && user.preferences?.accountId) {
+    // Send a get request to the Teller API to get the user's balance
+    // /accounts/:account_id/balances
+    const accountId = user.preferences.accountId;
+    if (!accountId || typeof accountId !== "string") {
+      throw new Error(
+        "Account ID is required. Set a preferred account in the profile tab"
+      );
+    }
+    const tellerResponse = await api.get(
+      `https://api.teller.io/accounts/${accountId}/balances`,
+      {
+        auth: {
+          username: user.bankAccessToken,
+          password: "", // Teller API requires only the token, so password can be empty
+        },
+      }
+    );
+
+    if (tellerResponse.status !== 200) {
+      throw new Error("Failed to fetch account balances");
+    }
+
+    const balances = tellerResponse.data;
+    if (!balances) {
+      throw new Error("No balances found");
+    }
+    const balance = balances.available || 0;
+
+    console.log("Fetched balance from Teller API:", balance);
+
+    // Convert the balance to a number
+    const parsedBalance = parseFloat(balance);
+    if (isNaN(parsedBalance)) {
+      throw new Error("Invalid balance format");
+    }
+
+    // Update the user's balance in the database
+    await client
+      .db()
+      .collection("users")
+      .updateOne({ _id: user._id }, { $set: { balance } });
+    // Update the session with the new balance
+    session.user = { ...session.user, balance };
+    await session.save();
+    return balance;
+  }
+
   const transactions = await client
     .db()
     .collection("transactions")

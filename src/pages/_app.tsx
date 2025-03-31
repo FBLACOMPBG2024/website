@@ -44,6 +44,7 @@ export default function App({
     }
 
     if (user.preferences.theme !== "system") {
+      // If the user has a theme set, apply it
       document.body.classList.add(user.preferences.theme);
     }
   }, [user]);

@@ -27,23 +27,26 @@ export default async function handler(
         return res.status(404).json({ message: "User not found" });
       }
 
-      // Check if the user already has a reset password link that is less than 3 minutes old
-      const threeMinutesAgo = new Date(Date.now() - 1000 * 60 * 3);
-      const links = await client
-        .db()
-        .collection("links")
-        .find({
-          type: "reset-password",
-          targetEmail: email,
-          createdAt: { $gt: threeMinutesAgo },
-        })
-        .toArray();
+      if (process.env.NODE_ENV !== "development") {
+        // Only check in production
+        // Check if the user already has a reset password link that is less than 3 minutes old
+        const threeMinutesAgo = new Date(Date.now() - 1000 * 60 * 3);
+        const links = await client
+          .db()
+          .collection("links")
+          .find({
+            type: "reset-password",
+            targetEmail: email,
+            createdAt: { $gt: threeMinutesAgo },
+          })
+          .toArray();
 
-      // If there are any links that are less than 3 minutes old, do not generate a new link
-      if (links.length > 0) {
-        return res
-          .status(400)
-          .json({ message: "Too many emails sent recently, Try again later." });
+        // If there are any links that are less than 3 minutes old, do not generate a new link
+        if (links.length > 0) {
+          return res.status(400).json({
+            message: "Too many emails sent recently, Try again later.",
+          });
+        }
       }
 
       // Generate a new reset password link

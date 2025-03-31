@@ -3,9 +3,10 @@ import Image from "next/image";
 
 export default function Home() {
   return (
-    <div className="flex flex-col h-screen w-screen">
+    <div className="flex flex-col h-screen w-screen overflow-clip">
       {/* Topbar */}
       <Topbar />
+
       {/* Gradient background that fills the remaining screen space */}
       <div className="flex-1 bg-gradient-to-bl from-background via-background to-backgroundGreen">
         <div className="h-full w-full flex justify-center items-center">
@@ -24,12 +25,15 @@ export default function Home() {
                 </p>
               </div>
             </div>
-            <div className="w-[50vw] h-[70vh] relative -rotate-12">
+
+            {/* Image container */}
+            <div className="w-full max-w-xs sm:max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl h-auto relative flex justify-center">
               <Image
+                className="-rotate-12"
                 src="/phone.png"
                 alt="Phone"
-                layout="fill"
-                objectFit="contain"
+                width={500}
+                height={700}
                 quality={100}
               />
             </div>

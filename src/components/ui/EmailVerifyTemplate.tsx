@@ -1,5 +1,3 @@
-import { Html, Head, Body, Tailwind } from "@react-email/components";
-
 // Email verification template to send a verification link to the user
 // The template includes the user's name and the verification link.
 // The user clicks the link to verify their email address.
