@@ -64,8 +64,8 @@ export default function HelpView({ user }: HelpViewProps) {
         <h2 className="text-xl font-bold mb-2">Support</h2>
         <p>
           If you need assistance, please contact us at:
-          <a href="mailto:support@smartspend.com" className="text-primary ml-1">
-            support@smartspend.com
+          <a href="mailto:support@smartspend.online" className="text-primary ml-1">
+            support@smartspend.online
           </a>
         </p>
       </div>
