@@ -19,7 +19,7 @@ export default function ProfileView({ user }: ProfileViewProps) {
   const [firstName, setFirstName] = useState(user.firstName);
   const [lastName, setLastName] = useState(user.lastName);
   const [email, setEmail] = useState(user.email);
-  const [theme, setTheme] = useState(user.preferences.theme);
+  const [theme, setTheme] = useState(user.preferences.theme || "system");
   const [accountId, setAccountId] = useState(user.preferences.accountId);
   const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([]);
   const [loading, setLoading] = useState(false);
@@ -161,9 +161,8 @@ export default function ProfileView({ user }: ProfileViewProps) {
           Connect Bank Account
         </button>
         <button
-          className={`transition-all text-lg rounded-md shadow-md py-1 px-10 ${
-            loading ? "bg-backgroundGray" : "bg-backgroundGrayLight"
-          }`}
+          className={`transition-all text-lg rounded-md shadow-md py-1 px-10 ${loading ? "bg-backgroundGray" : "bg-backgroundGrayLight"
+            }`}
           onClick={updateUserProfile}
           disabled={loading}
         >
