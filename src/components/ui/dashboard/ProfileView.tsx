@@ -3,8 +3,13 @@ import { useTellerConnect } from "teller-connect-react";
 import TextInput from "@/components/ui/TextInput";
 import { useEffect, useState } from "react";
 import Card from "@/components/ui/Card";
-import Router from "next/router";
 import api from "@/utils/api";
+import {
+  connectBankAccount,
+  fetchBankAccounts,
+  updateUserProfile,
+} from "@/utils/apiHelpers";
+import { showWarning } from "@/utils/toast";
 
 interface ProfileViewProps {
   user: IUser;
@@ -29,68 +34,59 @@ export default function ProfileView({ user }: ProfileViewProps) {
     applicationId: "app_p8gs0depa90f4sgbou000",
     appearance: "dark",
     environment:
-      process.env.NODE_ENV === "development" ? "sandbox" : "development", // This is a little weird but we don't have access to tellers production
-    // environment but development is the same as production for teller (Just limited to 100 users)
+      process.env.NODE_ENV === "development" ? "sandbox" : "development",
     onSuccess: async (authorization) => {
       try {
-        await api.post("/api/user/bank-connect", {
-          accessToken: authorization.accessToken,
-        });
-        Router.reload();
-      } catch (err) {
-        console.error("Failed to connect bank account:", err);
-        setError("Unable to connect bank account. Please try again.");
+        await connectBankAccount(authorization.accessToken);
+      } catch (err: any) {
+        setError(err.message);
+        console.error(err);
       }
     },
   });
 
   useEffect(() => {
-    async function fetchBankAccounts() {
-      if (!user.bankAccessToken) return;
-
+    async function loadBankAccounts() {
       try {
-        const response = await api.get("/api/user/bank/accounts");
-        setBankAccounts(response.data);
-      } catch (err) {
-        console.error("Error fetching bank accounts:", err);
-        setError("Unable to fetch bank accounts. Please try again.");
+        const accounts = await fetchBankAccounts(user);
+        setBankAccounts(accounts);
+      } catch (err: any) {
+        setError(err.message);
       }
     }
 
-    fetchBankAccounts();
-  }, [user.bankAccessToken]);
+    if (user.bankAccessToken) loadBankAccounts();
+  }, [user]);
 
-  const updateUserProfile = async () => {
+  const handleSave = async () => {
     if (loading) return;
 
-    setLoading(true);
+    const updatedUser: IUser = {
+      ...user,
+      firstName,
+      lastName,
+      email,
+      preferences: {
+        ...user.preferences,
+        theme,
+        accountId,
+      },
+    };
+
     try {
+      // If the user has changed their accountId
       if (accountId !== user.preferences.accountId) {
         const confirmChange = window.confirm(
           "Changing your account will remove the current account's transactions. Proceed?"
         );
-
-        if (!confirmChange) {
-          setLoading(false);
-          return;
-        }
-
+        if (!confirmChange) return;
         await api.delete("/api/transaction/bulk-delete");
+        showWarning("Transactions deleted");
       }
 
-      await api.post("/api/user/info", {
-        firstName,
-        lastName,
-        email,
-        preferences: { theme, accountId },
-      });
-
-      Router.reload();
-    } catch (err) {
-      console.error("Failed to update profile:", err);
-      setError("Unable to save profile. Please try again.");
-    } finally {
-      setLoading(false);
+      await updateUserProfile(updatedUser, setLoading);
+    } catch (err: any) {
+      setError(err.message);
     }
   };
 
@@ -163,7 +159,7 @@ export default function ProfileView({ user }: ProfileViewProps) {
         <button
           className={`transition-all text-lg rounded-md shadow-md py-1 px-10 ${loading ? "bg-backgroundGray" : "bg-backgroundGrayLight"
             }`}
-          onClick={updateUserProfile}
+          onClick={handleSave}
           disabled={loading}
         >
           {loading ? "Saving" : "Save"}

@@ -4,6 +4,7 @@ import Modal from "@/components/ui/Modal";
 import Card from "@/components/ui/Card";
 import { motion } from "framer-motion";
 import api from "@/utils/api";
+import { Transaction } from "@/schemas/transactionSchema";
 import Papa from "papaparse";
 import {
   IconPencil,
@@ -15,15 +16,8 @@ import {
   IconSortAscending,
   IconRefresh,
 } from "@tabler/icons-react";
+import { showError, showSuccess } from "@/utils/toast";
 
-interface Transaction {
-  _id: string;
-  value: number;
-  tags: string[];
-  name: string;
-  description: string;
-  date: string;
-}
 
 export default function TransactionsView() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -115,6 +109,7 @@ export default function TransactionsView() {
         // Edit existing transaction
         const response = await api.put(`/api/transaction/edit`, payload);
         if (response.status === 200) {
+
           setIsModalOpen(false);
           setEditTransaction(null);
         }
@@ -145,7 +140,7 @@ export default function TransactionsView() {
     setValue(transaction.value.toString());
     setTags(transaction.tags.join(" "));
     setName(transaction.name);
-    setDescription(transaction.description);
+    setDescription(transaction.description || "");
     setDateTime(new Date(transaction.date).toISOString().slice(0, 16));
     setIsModalOpen(true);
   };
@@ -158,11 +153,13 @@ export default function TransactionsView() {
         data: { _id: transactionToDelete },
       });
       if (response.status === 200) {
+        showSuccess("Transaction deleted");
         fetchTransactions(); // Refresh transactions after deletion
         setIsConfirmModalOpen(false);
         setTransactionToDelete(null);
       }
     } catch (error) {
+      showError("Failed to delete transaction");
       console.error("Failed to delete transaction", error);
     }
   };
@@ -199,10 +196,12 @@ export default function TransactionsView() {
               finalTransactions
             );
             if (response.status === 201) {
+              showSuccess("Transactions added");
               setIsBulkUploadModalOpen(false);
               fetchTransactions(); // Refresh transactions after bulk upload
             }
           } catch (error) {
+            showError("Failed to bulk upload transactions");
             console.error("Failed to bulk upload transactions", error);
           }
         },
@@ -302,9 +301,8 @@ export default function TransactionsView() {
                         {label}
                         {sortKey === key && (
                           <IconSortAscending
-                            className={`w-4 h-auto transition-transform ${
-                              sortDirection == "asc" ? "rotate-0" : "rotate-180"
-                            }`}
+                            className={`w-4 h-auto transition-transform ${sortDirection == "asc" ? "rotate-0" : "rotate-180"
+                              }`}
                           />
                         )}
                       </span>
@@ -344,9 +342,8 @@ export default function TransactionsView() {
                           {transaction.tags.map((tag, tagIndex) => (
                             <span
                               key={tagIndex}
-                              className={`sm:text-base text-xs transition-all duration-200 relative select-none bg-primary hover:opacity-80 text-white px-2 py-1 rounded flex items-center ${
-                                tagFilter.includes(tag) ? "bg-accent" : ""
-                              }`}
+                              className={`sm:text-base text-xs transition-all duration-200 relative select-none bg-primary hover:opacity-80 text-white px-2 py-1 rounded flex items-center ${tagFilter.includes(tag) ? "bg-accent" : ""
+                                }`}
                               onClick={() => toggleTagFilter(tag)}
                             >
                               <span className="mr-1">{tag}</span>

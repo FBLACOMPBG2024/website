@@ -5,7 +5,8 @@ export const generateSecondTagChartData = (transactions: Transaction[]): { name:
     transactions.forEach(({ tags, value }) => {
         if (tags.length > 1) {
             const secondTag = tags[1];
-            secondTagData[secondTag] = (secondTagData[secondTag] || 0) + -value;
+            // Round value to 2 decimal places to avoid float precision issues
+            secondTagData[secondTag] = (secondTagData[secondTag] || 0) + Math.round(-value * 100) / 100;
         }
     });
     return Object.entries(secondTagData).map(([name, value]) => ({ name, value }));
