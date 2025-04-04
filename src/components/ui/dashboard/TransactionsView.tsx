@@ -18,7 +18,6 @@ import {
 } from "@tabler/icons-react";
 import { showError, showSuccess } from "@/utils/toast";
 
-
 export default function TransactionsView() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isBulkUploadModalOpen, setIsBulkUploadModalOpen] = useState(false);
@@ -37,9 +36,7 @@ export default function TransactionsView() {
   const [tags, setTags] = useState("");
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [dateTime, setDateTime] = useState(
-    new Date().toISOString().slice(0, 16)
-  ); // Default to now
+  const [dateTime, setDateTime] = useState(new Date()); // Default to now
 
   const [sortKey, setSortKey] = useState<keyof Transaction | null>(null);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
@@ -47,7 +44,7 @@ export default function TransactionsView() {
   // Filters
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  const [limit, setLimit] = useState("200");
+  const [limit, setLimit] = useState(200);
   const [tagFilter, setTagFilter] = useState("");
 
   // UseEffect for filters
@@ -59,7 +56,7 @@ export default function TransactionsView() {
   const fetchTransactions = async () => {
     try {
       const queryParams: any = {
-        limit,
+        ...(limit !== 0 && { limit }), // Include limit only if it's not 0
         startDate,
         endDate,
         filter: tagFilter ? JSON.stringify(tagFilter.split(" ")) : undefined, // Format tags as an array
@@ -109,7 +106,6 @@ export default function TransactionsView() {
         // Edit existing transaction
         const response = await api.put(`/api/transaction/edit`, payload);
         if (response.status === 200) {
-
           setIsModalOpen(false);
           setEditTransaction(null);
         }
@@ -126,7 +122,7 @@ export default function TransactionsView() {
       setTags("");
       setName("");
       setDescription("");
-      setDateTime(new Date().toISOString().slice(0, 16));
+      setDateTime(new Date());
 
       // Fetch updated transactions
       fetchTransactions();
@@ -141,7 +137,7 @@ export default function TransactionsView() {
     setTags(transaction.tags.join(" "));
     setName(transaction.name);
     setDescription(transaction.description || "");
-    setDateTime(new Date(transaction.date).toISOString().slice(0, 16));
+    setDateTime(new Date(transaction.date));
     setIsModalOpen(true);
   };
 
@@ -301,8 +297,9 @@ export default function TransactionsView() {
                         {label}
                         {sortKey === key && (
                           <IconSortAscending
-                            className={`w-4 h-auto transition-transform ${sortDirection == "asc" ? "rotate-0" : "rotate-180"
-                              }`}
+                            className={`w-4 h-auto transition-transform ${
+                              sortDirection == "asc" ? "rotate-0" : "rotate-180"
+                            }`}
                           />
                         )}
                       </span>
@@ -342,8 +339,9 @@ export default function TransactionsView() {
                           {transaction.tags.map((tag, tagIndex) => (
                             <span
                               key={tagIndex}
-                              className={`sm:text-base text-xs transition-all duration-200 relative select-none bg-primary hover:opacity-80 text-white px-2 py-1 rounded flex items-center ${tagFilter.includes(tag) ? "bg-accent" : ""
-                                }`}
+                              className={`sm:text-base text-xs transition-all duration-200 relative select-none bg-primary hover:opacity-80 text-white px-2 py-1 rounded flex items-center ${
+                                tagFilter.includes(tag) ? "bg-accent" : ""
+                              }`}
                               onClick={() => toggleTagFilter(tag)}
                             >
                               <span className="mr-1">{tag}</span>
@@ -371,7 +369,7 @@ export default function TransactionsView() {
                         <IconPencil className="stroke-text" />
                       </button>
                       <button
-                        onClick={() => confirmDelete(transaction._id)}
+                        onClick={() => confirmDelete(transaction._id || "")}
                         className="hover:text-red-500"
                       >
                         <IconTrash className="stroke-text transition-all duration-200" />
@@ -442,8 +440,8 @@ export default function TransactionsView() {
               Date and Time:
               <TextInput
                 type="datetime-local"
-                value={dateTime}
-                onChange={(e) => setDateTime(e.target.value)}
+                value={dateTime.toISOString().slice(0, 16)} // Format to YYYY-MM-DDTHH:MM
+                onChange={(e) => setDateTime(new Date(e.target.value))}
                 required
               />
             </label>
@@ -516,8 +514,9 @@ export default function TransactionsView() {
         onClose={() => setIsFilterModalOpen(false)}
       >
         {/* Filter Inputs */}
-        <div className="flex flex-col gap-4 mb-4">
+        <div className="flex flex-col gap-2 mb-4">
           <h2 className="text-xl font-bold text-text">Filter</h2>
+          <h1 className="text-md font-bold text-text">Tags</h1>
           <TextInput
             type="text"
             placeholder="Filter by tags (space separated)"
@@ -525,22 +524,25 @@ export default function TransactionsView() {
             onChange={(e) => setTagFilter(e.target.value)}
             className="w-full sm:w-auto"
           />
+          <h1 className="text-md font-bold text-text">Start Date</h1>
           <TextInput
             type="datetime-local"
             value={startDate}
             onChange={(e) => setStartDate(e.target.value)}
             className="w-full sm:w-auto"
           />
+          <h1 className="text-md font-bold text-text">End Date</h1>
           <TextInput
             type="datetime-local"
             value={endDate}
             onChange={(e) => setEndDate(e.target.value)}
             className="w-full sm:w-auto"
           />
+          <h1 className="text-md font-bold text-text">Limit</h1>
           <TextInput
             type="number"
-            value={limit}
-            onChange={(e) => setLimit(e.target.value)}
+            value={limit.toString()}
+            onChange={(e) => setLimit(Number.parseInt(e.target.value))}
             placeholder="Limit"
             className="w-full sm:w-auto"
           />
