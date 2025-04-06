@@ -18,10 +18,11 @@ import LogoutView from "@/components/ui/dashboard/LogoutView";
 import router from "next/router";
 import TransactionsView from "@/components/ui/dashboard/TransactionsView";
 import HelpView from "@/components/ui/dashboard/HelpView";
+import { showError } from "@/utils/toast";
 
 export default function Dashboard() {
   const [open, setOpen] = useState(false);
-  const [selectedLink, setSelectedLink] = useState("Dashboard");
+  const [selectedLink, setSelectedLink] = useState("");
   const { user, setUser } = useUser();
 
   const links = [
@@ -68,16 +69,19 @@ export default function Dashboard() {
     if (link) {
       setSelectedLink(link.label);
     }
-  }, [links]); // Include links in the dependency array if necessary.
+  }, [links]);
 
   if (!user) {
+    showError("No user found, You will have to sign in again");
     router.push("/login");
     return;
   }
 
   const renderContent = () => {
+
     switch (selectedLink) {
       case "Dashboard":
+        console.log(selectedLink);
         return <DashboardView user={user} />;
       case "Transactions":
         return <TransactionsView />;
@@ -92,7 +96,7 @@ export default function Dashboard() {
       case "Logout":
         return <LogoutView />;
       default:
-        return <DashboardView user={user} />;
+        return <></>
     }
   };
 

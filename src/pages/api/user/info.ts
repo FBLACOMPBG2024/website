@@ -5,6 +5,7 @@ import { getIronSession } from "iron-session";
 import { sessionOptions } from "@/utils/sessionConfig";
 import { SessionData } from "@/utils/sessionData";
 import api from "@/utils/api";
+import { showError } from "@/utils/toast";
 
 // Helper function to validate email format
 const validateEmail = (email: string): boolean =>
@@ -29,43 +30,49 @@ const refreshSession = async (session: any, user: any) => {
         "Account ID is required. Set a preferred account in the profile tab"
       );
     }
-    const tellerResponse = await api.get(
-      `https://api.teller.io/accounts/${accountId}/balances`,
-      {
-        auth: {
-          username: user.bankAccessToken,
-          password: "", // Teller API requires only the token, so password can be empty
-        },
+
+    try {
+
+      const tellerResponse = await api.get(
+        `https://api.teller.io/accounts/${accountId}/balances`,
+        {
+          auth: {
+            username: user.bankAccessToken,
+            password: "", // Teller API requires only the token, so password can be empty
+          },
+        }
+      );
+
+      if (tellerResponse.status !== 200) {
+        throw new Error("Failed to fetch account balances");
       }
-    );
 
-    if (tellerResponse.status !== 200) {
-      throw new Error("Failed to fetch account balances");
+      const balances = tellerResponse.data;
+      if (!balances) {
+        throw new Error("No balances found");
+      }
+      const balance = balances.available || 0;
+
+      // Convert the balance to a number
+      const parsedBalance = parseFloat(balance);
+      if (isNaN(parsedBalance)) {
+        throw new Error("Invalid balance format");
+      }
+
+      // Update the user's balance in the database
+      await client
+        .db()
+        .collection("users")
+        .updateOne({ _id: user._id }, { $set: { balance } });
+      // Update the session with the new balance
+      session.user = { ...session.user, balance };
+      await session.save();
+      return balance;
+    } catch (e) {
+      console.log(e);
+      showError("An error occured getting your balance, To fix this set a preferred account in your profile settings");
     }
 
-    const balances = tellerResponse.data;
-    if (!balances) {
-      throw new Error("No balances found");
-    }
-    const balance = balances.available || 0;
-
-    console.log("Fetched balance from Teller API:", balance);
-
-    // Convert the balance to a number
-    const parsedBalance = parseFloat(balance);
-    if (isNaN(parsedBalance)) {
-      throw new Error("Invalid balance format");
-    }
-
-    // Update the user's balance in the database
-    await client
-      .db()
-      .collection("users")
-      .updateOne({ _id: user._id }, { $set: { balance } });
-    // Update the session with the new balance
-    session.user = { ...session.user, balance };
-    await session.save();
-    return balance;
   }
 
   const transactions = await client
@@ -111,6 +118,7 @@ const updateUser = async (
   if (Object.keys(updatedFields).length === 0) {
     return res.status(400).json({ message: "No fields provided to update" });
   }
+
 
   await client
     .db()

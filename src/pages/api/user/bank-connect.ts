@@ -38,7 +38,9 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         .updateOne(
           { _id: new ObjectId(userId) },
           {
-            $set: { bankAccessToken: accessToken },
+            $set: {
+              bankAccessToken: accessToken, "preferences.accountId": null
+            },
           }
         );
 

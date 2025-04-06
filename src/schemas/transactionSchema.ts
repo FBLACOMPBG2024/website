@@ -1,14 +1,16 @@
+import { ObjectId } from "mongodb";
 import { z } from "zod";
 
 const TransactionSchema = z.object({
   _id: z
     .string()
     .length(24, "Invalid ObjectId") // ObjectId string length is 24
-    .optional(),
+    .optional()
+    .default(new ObjectId().toString()), // Default to current date
   value: z.number(),
   tags: z.array(z.string()).default([]), // Default to an empty array
   name: z.string().min(1, "Name is required"),
-  description: z.string().optional(),
+  description: z.string().default(""),
   date: z
     .string()
     .optional()
@@ -16,7 +18,7 @@ const TransactionSchema = z.object({
     .refine((date) => !date || !isNaN(new Date(date).getMilliseconds()), {
       message: "Invalid date format",
     }), // Ensure date is valid if provided
-  imported: z.boolean().optional(),
+  imported: z.boolean().default(false),
 });
 
 // Infer TypeScript type

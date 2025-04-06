@@ -8,6 +8,7 @@ import { fetchTransactions, fetchChartData } from "@/utils/apiHelpers";
 import { generateTreemapData, generateSecondTagChartData } from "@/utils/dataProcessing";
 import { lineChartOptions, pieChartOptions, treemapChartOptions } from "@/utils/chartOptions";
 import { Transaction } from "@/schemas/transactionSchema";
+import { showInfo, showSuccess } from "@/utils/toast";
 
 interface DashboardViewProps {
   user: IUser;
@@ -24,7 +25,10 @@ export default function DashboardView({ user }: DashboardViewProps) {
   const router = useRouter();
 
   useEffect(() => {
-    if (user) {
+    if (user.firstName) {
+      showSuccess(`Welcome, ${user.firstName}`);
+      showInfo(`Fetching Transactions...`);
+
       fetchTransactions(setTransactions, setError, setLoading);
       fetchChartData(setChartLabels, setChartData, setError, setLoading);
     } else {
