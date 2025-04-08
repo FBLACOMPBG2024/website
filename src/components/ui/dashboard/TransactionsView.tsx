@@ -43,9 +43,13 @@ export default function TransactionsView() {
   const [tags, setTags] = useState("");
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [dateTime, setDateTime] = useState(
-    new Date().toISOString().slice(0, 16)
-  ); // Default to now
+  const [dateTime, setDateTime] = useState(new Date()); // Default to now
+
+  const formatDateForInput = (date: Date) => {
+    const offset = date.getTimezoneOffset();
+    const localDate = new Date(date.getTime() - offset * 60 * 1000);
+    return localDate.toISOString().slice(0, 16);
+  };
 
   const [sortKey, setSortKey] = useState<keyof Transaction | null>(null);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
@@ -131,7 +135,7 @@ export default function TransactionsView() {
       setTags("");
       setName("");
       setDescription("");
-      setDateTime(new Date().toISOString().slice(0, 16));
+      setDateTime(new Date());
 
       // Fetch updated transactions
       fetchTransactions();
@@ -146,7 +150,7 @@ export default function TransactionsView() {
     setTags(transaction.tags.join(" "));
     setName(transaction.name);
     setDescription(transaction.description);
-    setDateTime(new Date(transaction.date).toISOString().slice(0, 16));
+    setDateTime(new Date(transaction.date));
     setIsModalOpen(true);
   };
 
@@ -445,8 +449,8 @@ export default function TransactionsView() {
               Date and Time:
               <TextInput
                 type="datetime-local"
-                value={dateTime}
-                onChange={(e) => setDateTime(e.target.value)}
+                value={formatDateForInput(dateTime)}
+                onChange={(e) => setDateTime(new Date(e.target.value))}
                 required
               />
             </label>
