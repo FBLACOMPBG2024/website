@@ -45,7 +45,7 @@ export const pieChartOptions = (data: { name: string; value: number }[]) => ({
     },
     series: [
         {
-            name: "Access From",
+            name: "Spending",
             type: "pie",
             radius: "55%",
             center: ["50%", "50%"],

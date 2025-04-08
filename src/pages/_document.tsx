@@ -1,5 +1,4 @@
 import { Html, Head, Main, NextScript } from "next/document";
-import { IconGraph } from "@tabler/icons-react"; // Import the Tabler icon
 
 export default function Document() {
   return (

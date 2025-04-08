@@ -1,6 +1,10 @@
 import { z } from "zod";
 
 const GoalSchema = z.object({
+  _id: z
+    .string()
+    .length(24, "Invalid ObjectId") // ObjectId string length is 24
+    .optional(),
   value: z.number().int().positive("Value must be a positive number"),
   targetDate: z
     .string()

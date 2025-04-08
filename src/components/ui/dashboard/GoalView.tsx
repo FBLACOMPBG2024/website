@@ -2,59 +2,15 @@ import { IUser } from "@/components/context/UserContext";
 import TextInput from "@/components/ui/TextInput";
 import Card from "@/components/ui/Card";
 import { useState } from "react";
-import api from "@/utils/api";
 import { useEffect } from "react";
 import Modal from "@/components/ui/Modal";
 import { IconEdit, IconPlus, IconTrash } from "@tabler/icons-react";
 import Router from "next/router";
+import { Goal } from "@/schemas/goalSchema";
+import { fetchGoals, deleteGoal, editGoal, createGoal } from "@/utils/apiHelpers";
 
 interface GoalViewProps {
   user: IUser;
-}
-async function getGoals() {
-  try {
-    const response = await api.get("/api/user/goal/get");
-    return response.data;
-  } catch (error) {
-    console.error("Error fetching goals:", error);
-    throw new Error("Failed to fetch goals. Please try again later.");
-  }
-}
-
-async function createGoal(goal: any) {
-  try {
-    const response = await api.post("/api/user/goal/create", goal);
-    return response.data;
-  } catch (error) {
-    console.error("Error creating goal:", error);
-    throw new Error("Failed to create goal. Please try again later.");
-  }
-}
-
-async function editGoal(goal: any) {
-  try {
-    const response = await api.put("/api/user/goal/edit", goal);
-    if (response.status === 200) {
-      // Refresh the page to reflect the changes
-      await Router.reload();
-    }
-    return response.data;
-  } catch (error) {
-    console.error("Error editing goal:", error);
-    throw new Error("Failed to edit goal. Please try again later.");
-  }
-}
-
-async function deleteGoal(goalId: string) {
-  try {
-    const response = await api.delete(`/api/user/goal/delete`, {
-      data: { goalId },
-    });
-    return response.data;
-  } catch (error) {
-    console.error("Error deleting goal:", error);
-    throw new Error("Failed to delete goal. Please try again later.");
-  }
 }
 
 export default function GoalView({ user }: GoalViewProps) {
@@ -67,7 +23,7 @@ export default function GoalView({ user }: GoalViewProps) {
   const [isEditGoal, setIsEditGoal] = useState<any>(false);
 
   useEffect(() => {
-    getGoals().then((data) => {
+    fetchGoals().then((data) => {
       setGoals(data.goals);
     });
   }, []);
@@ -144,12 +100,12 @@ export default function GoalView({ user }: GoalViewProps) {
         <form
           onSubmit={async (e) => {
             e.preventDefault();
-            const goal = {
-              goalId: isEditGoal?._id,
+            const goal: Goal = {
+              _id: isEditGoal?._id,
               name: goalName,
               description: goalDescription,
               value: goalValue,
-              targetDate: new Date(goalTargetDate) || undefined,
+              targetDate: new Date(goalTargetDate).toString() || undefined,
             };
 
             if (isEditGoal) {

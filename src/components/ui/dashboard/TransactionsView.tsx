@@ -4,6 +4,7 @@ import Modal from "@/components/ui/Modal";
 import Card from "@/components/ui/Card";
 import { motion } from "framer-motion";
 import api from "@/utils/api";
+import { Transaction } from "@/schemas/transactionSchema";
 import Papa from "papaparse";
 import {
   IconPencil,
@@ -15,15 +16,7 @@ import {
   IconSortAscending,
   IconRefresh,
 } from "@tabler/icons-react";
-
-interface Transaction {
-  _id: string;
-  value: number;
-  tags: string[];
-  name: string;
-  description: string;
-  date: string;
-}
+import { showError, showSuccess } from "@/utils/toast";
 
 export default function TransactionsView() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -57,7 +50,7 @@ export default function TransactionsView() {
   // Filters
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  const [limit, setLimit] = useState("200");
+  const [limit, setLimit] = useState(200);
   const [tagFilter, setTagFilter] = useState("");
 
   // UseEffect for filters
@@ -69,7 +62,7 @@ export default function TransactionsView() {
   const fetchTransactions = async () => {
     try {
       const queryParams: any = {
-        limit,
+        ...(limit !== 0 && { limit }), // Include limit only if it's not 0
         startDate,
         endDate,
         filter: tagFilter ? JSON.stringify(tagFilter.split(" ")) : undefined, // Format tags as an array
@@ -136,6 +129,7 @@ export default function TransactionsView() {
       setName("");
       setDescription("");
       setDateTime(new Date());
+      setDateTime(new Date());
 
       // Fetch updated transactions
       fetchTransactions();
@@ -162,11 +156,13 @@ export default function TransactionsView() {
         data: { _id: transactionToDelete },
       });
       if (response.status === 200) {
+        showSuccess("Transaction deleted");
         fetchTransactions(); // Refresh transactions after deletion
         setIsConfirmModalOpen(false);
         setTransactionToDelete(null);
       }
     } catch (error) {
+      showError("Failed to delete transaction");
       console.error("Failed to delete transaction", error);
     }
   };
@@ -203,10 +199,12 @@ export default function TransactionsView() {
               finalTransactions
             );
             if (response.status === 201) {
+              showSuccess("Transactions added");
               setIsBulkUploadModalOpen(false);
               fetchTransactions(); // Refresh transactions after bulk upload
             }
           } catch (error) {
+            showError("Failed to bulk upload transactions");
             console.error("Failed to bulk upload transactions", error);
           }
         },
@@ -378,7 +376,7 @@ export default function TransactionsView() {
                         <IconPencil className="stroke-text" />
                       </button>
                       <button
-                        onClick={() => confirmDelete(transaction._id)}
+                        onClick={() => confirmDelete(transaction._id || "")}
                         className="hover:text-red-500"
                       >
                         <IconTrash className="stroke-text transition-all duration-200" />
@@ -523,8 +521,9 @@ export default function TransactionsView() {
         onClose={() => setIsFilterModalOpen(false)}
       >
         {/* Filter Inputs */}
-        <div className="flex flex-col gap-4 mb-4">
+        <div className="flex flex-col gap-2 mb-4">
           <h2 className="text-xl font-bold text-text">Filter</h2>
+          <h1 className="text-md font-bold text-text">Tags</h1>
           <TextInput
             type="text"
             placeholder="Filter by tags (space separated)"
@@ -532,22 +531,25 @@ export default function TransactionsView() {
             onChange={(e) => setTagFilter(e.target.value)}
             className="w-full sm:w-auto"
           />
+          <h1 className="text-md font-bold text-text">Start Date</h1>
           <TextInput
             type="datetime-local"
             value={startDate}
             onChange={(e) => setStartDate(e.target.value)}
             className="w-full sm:w-auto"
           />
+          <h1 className="text-md font-bold text-text">End Date</h1>
           <TextInput
             type="datetime-local"
             value={endDate}
             onChange={(e) => setEndDate(e.target.value)}
             className="w-full sm:w-auto"
           />
+          <h1 className="text-md font-bold text-text">Limit</h1>
           <TextInput
             type="number"
-            value={limit}
-            onChange={(e) => setLimit(e.target.value)}
+            value={limit.toString()}
+            onChange={(e) => setLimit(Number.parseInt(e.target.value))}
             placeholder="Limit"
             className="w-full sm:w-auto"
           />

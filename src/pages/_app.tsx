@@ -6,6 +6,7 @@ import { IUser, UserProvider } from "@/components/context/UserContext";
 import api from "@/utils/api";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import PropagateLoader from "react-spinners/PropagateLoader";
+import { ToastContainer } from 'react-toastify';
 import Head from "next/head";
 // Load the Inter font with the Latin subset (The only one our site will require)
 const inter = Inter({ subsets: ["latin"] });
@@ -23,14 +24,19 @@ export default function App({
     const infoResponse = async () => {
       try {
         const response = await api.get("api/user/info");
-        if (response?.status == 200) {
+        if (response?.status === 200) {
           setUser(response.data.user);
         }
-      } catch (error) {
-        console.error(error);
+      } catch (error: any) {
+        if (error.response?.status !== 401) {
+          console.error(error);
+        }
+        // else: silently ignore 401
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
+
 
     if (!user) {
       infoResponse();
@@ -67,6 +73,7 @@ export default function App({
           <UserProvider value={{ user, setUser }}>
             <main className={inter.className}>
               <Component {...pageProps} />
+              <ToastContainer />
             </main>
           </UserProvider>
         </GoogleOAuthProvider>
