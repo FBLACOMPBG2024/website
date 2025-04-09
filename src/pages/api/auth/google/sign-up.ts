@@ -7,6 +7,7 @@ import argon2 from "argon2";
 import { ObjectId } from "mongodb";
 import { sendEmailVerification } from "@/utils/email";
 import { generateLink } from "@/utils/generateLink";
+import { captureEvent } from "@/utils/posthogHelper";
 
 // This file defines the API route that allows the user to log in with Google
 // It uses the Google OAuth2 API to authenticate the user
@@ -100,6 +101,12 @@ export default async function handler(
 
       // If sending the email failed, delete the user and return an error
       if (!emailResponse || emailResponse.error) {
+        captureEvent("Google sign-up email error", {
+          properties: {
+            error: emailResponse?.error,
+          },
+        });
+
         console.error(emailResponse?.error || "Email failed to send");
 
         // Clean up the user in case email verification fails
@@ -113,15 +120,20 @@ export default async function handler(
           .json({ message: "Failed to send verification email" });
       }
 
+      captureEvent("Google sign-up", {
+        properties: {
+          user: newUser,
+        },
+      });
+
       // Return a success response
       res.status(200).json({
         message: "Sign up successful, awaiting email verification",
       });
     } catch (error: any) {
-      console.error("Google login error:", error.message);
-
-      // Log more detailed error information for debugging
-      console.error("Stack trace:", error.stack);
+      captureEvent("Google sign-up error", {
+        properties: { error },
+      });
 
       return res.status(500).json({ message: "Authentication failed" });
     }

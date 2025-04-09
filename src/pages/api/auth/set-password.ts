@@ -1,6 +1,7 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import client from "@/lib/mongodb";
 import argon2 from "argon2";
+import { captureEvent } from "@/utils/posthogHelper";
 
 // This endpoint is used to set the user's password
 // It is called when the user submits the password reset form
@@ -12,7 +13,6 @@ export default async function handler(
 ) {
   if (req.method === "POST") {
     try {
-      // Get token and password from request body
       const { token, password } = req.body;
 
       if (!token || !password) {
@@ -21,38 +21,46 @@ export default async function handler(
           .json({ message: "Token and password are required" });
       }
 
-      // Find the link that matches the token
       const link = await client.db().collection("links").findOne({ token });
 
-      // Ensure the link exists and is of the type "reset-password"
       if (!link || link.type !== "reset-password") {
-        console.log(`Invalid link: ${token}`);
+        captureEvent("Invalid Password Reset Link", {
+          properties: {
+            reason: "Invalid link or incorrect type",
+            token,
+          },
+        });
         return res.status(404).json({ message: "Invalid link" });
       }
 
-      // Check if the link has expired
       if (link.expires < new Date()) {
-        console.log(`Link expired: ${token}`);
+        captureEvent("Expired Password Reset Link", {
+          properties: {
+            token,
+            expiredAt: link.expires,
+          },
+        });
         return res.status(404).json({ message: "Link expired" });
       }
 
-      // Check if the user has clicked the link before
       if (!link.used) {
-        console.log(`User has not clicked link: ${token}`);
+        captureEvent("Unclicked Password Reset Link", {
+          properties: {
+            token,
+            targetEmail: link.targetEmail,
+          },
+        });
         return res.status(400).json({ message: "User has not clicked link" });
       }
 
-      // Validate password length
       if (password.length < 8) {
         return res
           .status(400)
           .json({ message: "Password must be at least 8 characters" });
       }
 
-      // Hash the new password securely using Argon2
       const newPassword = await argon2.hash(password);
 
-      // Update the user's password in the database
       const result = await client
         .db()
         .collection("users")
@@ -62,19 +70,35 @@ export default async function handler(
         );
 
       if (result.modifiedCount === 0) {
-        console.log(`Failed to update password for user: ${link.targetEmail}`);
+        captureEvent("Password Update Failed", {
+          properties: {
+            token,
+            targetEmail: link.targetEmail,
+          },
+        });
         return res.status(500).json({ message: "Failed to update password" });
       }
 
-      // Mark the link as used
       await client
         .db()
         .collection("links")
         .updateOne({ token }, { $set: { used: true, usedAt: new Date() } });
 
+      captureEvent("Password Successfully Updated", {
+        properties: {
+          targetEmail: link.targetEmail,
+          token,
+        },
+      });
+
       res.status(200).json({ message: "Password updated successfully" });
     } catch (error: any) {
-      console.error("Error updating password:", error.message);
+      captureEvent("Password Update Error", {
+        properties: {
+          error,
+          token: req.body?.token,
+        },
+      });
       res.status(500).json({ message: "Internal server error" });
     }
   } else {

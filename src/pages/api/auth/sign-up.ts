@@ -4,6 +4,7 @@ import SignUpSchema from "@/schemas/signupSchema";
 import { sendEmailVerification } from "@/utils/email";
 import client from "@/lib/mongodb";
 import argon2 from "argon2";
+import { captureEvent } from "@/utils/posthogHelper";
 
 export default async function handler(
   req: NextApiRequest,
@@ -66,7 +67,12 @@ export default async function handler(
     }
 
     await users.insertOne(newUser);
-
+    captureEvent("User Signup Success", {
+      properties: {
+        email: normalizedEmail,
+        method: "email-password",
+      },
+    });
     const link = await generateLink(normalizedEmail, "email-verification");
     const emailResponse = await sendEmailVerification(
       firstName,

@@ -5,8 +5,9 @@ import argon2 from "argon2";
 import { getIronSession } from "iron-session";
 import { sessionOptions } from "@/utils/sessionConfig";
 import { SessionData } from "@/utils/sessionData";
+import { captureEvent } from "@/utils/posthogHelper";
 
-// TOOD: Make this a utility function
+// TODO: Make this a utility function
 async function createSession(
   user: any,
   req: NextApiRequest,
@@ -45,13 +46,6 @@ export default async function handler(
         return res.status(401).json({ message: "Invalid email or password" });
       }
 
-      // Account created via Google
-      if (user.password === "GOOGLE" || user.password === undefined) {
-        return res
-          .status(401)
-          .json({ message: "This account was created using Google" });
-      }
-
       // Check password hash
       const isPasswordValid = await argon2.verify(user.password, password);
       if (!isPasswordValid) {
@@ -66,6 +60,14 @@ export default async function handler(
       // Create session
       await createSession(user, req, res);
 
+      // Track successful login
+      captureEvent("User Login Success", {
+        properties: {
+          email: user.email,
+          userId: user._id.toString(),
+        },
+      });
+
       // Return user info
       return res.status(200).json({
         message: "Login successful",
@@ -75,7 +77,12 @@ export default async function handler(
         },
       });
     } catch (error: any) {
-      console.error("Login error:", error);
+      captureEvent("User Login Error", {
+        properties: {
+          error,
+        },
+      });
+
       return res.status(500).json({ message: "Internal server error" });
     }
   } else {

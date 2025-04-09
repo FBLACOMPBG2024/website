@@ -4,6 +4,7 @@ import api from "@/utils/api";
 import { getIronSession } from "iron-session";
 import { sessionOptions } from "@/utils/sessionConfig";
 import { SessionData } from "@/utils/sessionData";
+import { captureEvent } from "@/utils/posthogHelper";
 
 // This file defines the API route that allows the user to log in with Google
 // It uses the Google OAuth2 API to authenticate the user
@@ -41,7 +42,7 @@ export default async function handler(
       let user = await client.db().collection("users").findOne({ email });
 
       if (!user) {
-        return res.status(400).json({ message: "User does not exist" });
+        return res.status(400).json({ message: "User account does not exist" });
       }
 
       // Create or update session
@@ -56,6 +57,12 @@ export default async function handler(
       };
       await session.save();
 
+      captureEvent("Google Login", {
+        properties: {
+          user,
+        },
+      });
+
       // Return the user's information upon successful login
       res.status(200).json({
         message: "Login successful",
@@ -65,7 +72,13 @@ export default async function handler(
         },
       });
     } catch (error: any) {
-      console.error("Google login error:", error.message);
+      // Capture error event for debugging
+      captureEvent("Google Login Error", {
+        properties: {
+          error,
+        },
+      });
+
       return res
         .status(500)
         .json({ message: "Authentication failed. Please try again." });

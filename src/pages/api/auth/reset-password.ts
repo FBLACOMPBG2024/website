@@ -1,5 +1,6 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import client from "@/lib/mongodb";
+import { captureEvent } from "@/utils/posthogHelper";
 
 // This endpoint is used to reset the user's password
 // It sets the user's resetPassword flag to true
@@ -18,25 +19,36 @@ export default async function handler(
         .collection("links")
         .findOne({ token: token });
 
-      // Ensure the link exists and is of the type "reset-password"
       if (!link || link.type !== "reset-password") {
-        console.log(`Invalid link: ${token}`);
+        captureEvent("Invalid Password Reset Link", {
+          properties: {
+            reason: "Invalid link or incorrect type",
+            token,
+          },
+        });
         return res.status(404).json({ message: "Invalid link" });
       }
 
-      // Check if the link has expired
       if (link.expires < new Date()) {
-        console.log(`Link expired: ${token}`);
+        captureEvent("Expired Password Reset Link", {
+          properties: {
+            token,
+            expiredAt: link.expires,
+          },
+        });
         return res.status(404).json({ message: "Link expired" });
       }
 
-      // Check if the link has already been used
       if (link.used) {
-        console.log(`Link already used: ${token}`);
+        captureEvent("Used Password Reset Link", {
+          properties: {
+            token,
+            usedAt: link.usedAt,
+          },
+        });
         return res.status(400).json({ message: "Link already used" });
       }
 
-      // Set the user's flag to reset the password
       await client
         .db()
         .collection("users")
@@ -45,7 +57,6 @@ export default async function handler(
           { $set: { resetPassword: true } }
         );
 
-      // Mark the link as used
       await client
         .db()
         .collection("links")
@@ -54,12 +65,16 @@ export default async function handler(
           { $set: { used: true, usedAt: new Date(Date.now()) } }
         );
 
-      // Redirect the user to the reset password page
       const resetPasswordUrl = new URL("/password/set", process.env.URL);
       resetPasswordUrl.searchParams.set("token", token as string);
       res.status(200).redirect(resetPasswordUrl.toString());
     } catch (error: any) {
-      console.error("Error resetting password:", error.message);
+      captureEvent("Password Reset Error", {
+        properties: {
+          error,
+          token,
+        },
+      });
       res.status(500).json({ message: "Internal server error" });
     }
   } else {

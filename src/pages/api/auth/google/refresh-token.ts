@@ -1,3 +1,4 @@
+import { captureEvent } from "@/utils/posthogHelper";
 import { UserRefreshClient } from "google-auth-library";
 import { NextApiRequest, NextApiResponse } from "next";
 
@@ -33,10 +34,21 @@ export default async function handler(
       // Attempt to refresh the access token
       const { credentials } = await user.refreshAccessToken();
 
+      // Log the new access token to PostHog
+      captureEvent("Google Refresh Token", {
+        properties: {
+          clientId,
+        },
+      });
+
       // Return the new credentials (access token)
       res.json(credentials);
     } catch (error: any) {
-      console.error("Error refreshing access token:", error);
+      captureEvent("Google Refresh Token Error", {
+        properties: {
+          error,
+        },
+      });
 
       // Handle specific error types based on error response from Google
       if (error.code === 400) {
