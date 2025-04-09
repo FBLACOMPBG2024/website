@@ -5,82 +5,88 @@ import { getIronSession } from "iron-session";
 import { sessionOptions } from "@/utils/sessionConfig";
 import { SessionData } from "@/utils/sessionData";
 
-// New endpoint to get weekly spending grouped by day of the week
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
   if (req.method === "GET") {
-    return await getWeeklySpending(req, res);
+    return await getSpendingData(req, res);
   } else {
     res.setHeader("Allow", ["GET"]);
     return res.status(405).end(`Method ${req.method} Not Allowed`);
   }
 }
 
-// Get weekly spending grouped by day of the week
-async function getWeeklySpending(req: NextApiRequest, res: NextApiResponse) {
+async function getSpendingData(req: NextApiRequest, res: NextApiResponse) {
   try {
     const session = await getIronSession<SessionData>(req, res, sessionOptions);
-
-    // Ensure the user is authenticated
     if (!session.user?._id) {
       return res.status(401).json({ message: "Unauthorized" });
     }
 
     const userId = session.user._id;
+    const { range = "last7days" } = req.query;
 
-    // Define the date range: from 7 days ago to now
     const now = new Date();
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(now.getDate() - 7);
+    const startDate = new Date();
+    switch (range) {
+      case "last30days":
+        startDate.setDate(now.getDate() - 30);
+        break;
+      case "last90days":
+        startDate.setDate(now.getDate() - 90);
+        break;
+      default:
+        startDate.setDate(now.getDate() - 7);
+        break;
+    }
 
-    // Query transactions directly for the last 7 days
     const transactions = await client
       .db()
       .collection("transactions")
       .find({
         userId: new ObjectId(userId),
-        date: { $gte: sevenDaysAgo },
+        date: { $gte: startDate },
       })
       .sort({ date: 1 })
       .toArray();
 
-    // Define the days of the week
-    const weekday = [
-      "Sunday",
-      "Monday",
-      "Tuesday",
-      "Wednesday",
-      "Thursday",
-      "Friday",
-      "Saturday",
-    ];
+    // Handle last 7 days: group by weekday
+    if (range === "last7days") {
+      const weekday = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+      const spending = Array(7).fill(0);
 
-    // Group transactions by day of the week
-    const weeklySpending = Array.from({ length: 7 }, (_, i) => {
-      const day = new Date(sevenDaysAgo);
-      day.setDate(day.getDate() + i);
-      const dayOfWeek = day.getDay();
+      transactions.forEach((tx) => {
+        if (tx.value >= 0) return;
+        const day = new Date(tx.date).getDay();
+        spending[day] += Math.abs(tx.value);
+      });
 
-      // Calculate the total spending for the current day
-      const totalForDay = transactions.reduce((acc, transaction) => {
-        const transactionDay = new Date(transaction.date).getDay();
-        return transactionDay === dayOfWeek && transaction.value < 0
-          ? acc + Math.abs(transaction.value)
-          : acc;
-      }, 0);
+      return res.status(200).json({ labels: weekday, data: spending });
+    }
 
-      return {
-        day: weekday[dayOfWeek],
-        total: totalForDay,
-      };
+    // Group by week start date for last30days or last90days
+    const weekMap: Record<string, number> = {};
+
+    transactions.forEach((tx) => {
+      if (tx.value >= 0) return;
+      const d = new Date(tx.date);
+      const weekStart = new Date(d);
+      const day = weekStart.getDay();
+      weekStart.setDate(weekStart.getDate() - day); // go to previous Sunday
+      weekStart.setHours(0, 0, 0, 0);
+      const label = weekStart.toLocaleDateString("default", { month: "short", day: "numeric" });
+      weekMap[label] = (weekMap[label] || 0) + Math.abs(tx.value);
     });
 
-    const labels = weeklySpending.map((day) => day.day);
-    const data = weeklySpending.map((day) => day.total);
+    const labels = Object.keys(weekMap).sort((a, b) => {
+      return new Date(a).getTime() - new Date(b).getTime();
+    });
+
+    const data = labels.map((label) => weekMap[label]);
 
     return res.status(200).json({ labels, data });
+
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: "Internal Server Error" });

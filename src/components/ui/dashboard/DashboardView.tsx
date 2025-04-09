@@ -28,16 +28,19 @@ export default function DashboardView({ user }: DashboardViewProps) {
   const [pieChartData, setPieChartData] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
+  const [dateRange, setDateRange] = useState<string>("last7days");
+
+
+
   const router = useRouter();
 
   useEffect(() => {
     if (user.firstName) {
-      fetchTransactions(setTransactions, setError, setLoading);
-      fetchChartData(setChartLabels, setChartData, setError, setLoading);
-    } else {
-      router.reload();
+      fetchTransactions(setTransactions, setError, setLoading, dateRange);
+      fetchChartData(setChartLabels, setChartData, setError, setLoading, dateRange);
     }
-  }, [user]);
+  }, [user, dateRange]);
+
 
   useEffect(() => {
     if (transactions.length > 0) {
@@ -82,6 +85,18 @@ export default function DashboardView({ user }: DashboardViewProps) {
                 </span>
               </motion.span>
             ))}
+            <select
+              className="ml-5 bg-backgroundGrayLight p-2 text-base rounded-md"
+              value={dateRange}
+              onChange={(e) => {
+                const selectedDateRange = e.target.value;
+                setDateRange(selectedDateRange);
+              }}
+            >
+              <option value="last7days">Last Week</option>
+              <option value="last30days">Last Month</option>
+              <option value="last90days">Last 3 Months</option>
+            </select>
           </motion.h1>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
