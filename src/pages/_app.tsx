@@ -6,7 +6,10 @@ import { IUser, UserProvider } from "@/components/context/UserContext";
 import api from "@/utils/api";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import PropagateLoader from "react-spinners/PropagateLoader";
-import { ToastContainer } from 'react-toastify';
+import { ToastContainer } from "react-toastify";
+import Router from "next/router";
+import posthog from "posthog-js";
+import { PostHogProvider } from "posthog-js/react";
 import Head from "next/head";
 // Load the Inter font with the Latin subset (The only one our site will require)
 const inter = Inter({ subsets: ["latin"] });
@@ -17,8 +20,29 @@ export default function App({
   Component,
   pageProps: { ...pageProps },
 }: AppProps) {
-  const [user, setUser] = useState<IUser>(null as unknown as IUser);
+  const [user, setUser] = useState<IUser | null>(null);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    console.log(process.env.NEXT_PUBLIC_POSTHOG_KEY);
+    posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY as string, {
+      api_host:
+        process.env.NEXT_PUBLIC_POSTHOG_HOST || "https://us.i.posthog.com",
+      person_profiles: "identified_only", // or 'always' to create profiles for anonymous users as well
+      // Enable debug mode in development
+      loaded: (posthog) => {
+        if (process.env.NODE_ENV === "development") posthog.debug();
+      },
+    });
+
+    const handleRouteChange = () => posthog?.capture("$pageview");
+
+    Router.events.on("routeChangeComplete", handleRouteChange);
+
+    return () => {
+      Router.events.off("routeChangeComplete", handleRouteChange);
+    };
+  }, []);
 
   useEffect(() => {
     const infoResponse = async () => {
@@ -37,7 +61,6 @@ export default function App({
       }
     };
 
-
     if (!user) {
       infoResponse();
       return;
@@ -51,6 +74,7 @@ export default function App({
 
     if (user.preferences.theme !== "system") {
       // If the user has a theme set, apply it
+      document.body.classList.remove("light", "dark");
       document.body.classList.add(user.preferences.theme);
     }
   }, [user]);
@@ -69,14 +93,19 @@ export default function App({
           </div>
         </main>
       ) : (
-        <GoogleOAuthProvider clientId="50088023361-h8voq3f3kv7941obpmvjsckjcuqt2der.apps.googleusercontent.com">
-          <UserProvider value={{ user, setUser }}>
-            <main className={inter.className}>
-              <Component {...pageProps} />
-              <ToastContainer />
-            </main>
-          </UserProvider>
-        </GoogleOAuthProvider>
+        <PostHogProvider client={posthog}>
+          <GoogleOAuthProvider
+            clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID as string}
+          >
+            <UserProvider value={{ user: user!, setUser }}>
+              {/* This is bit of a hack with user!, but it works */}
+              <main className={inter.className}>
+                <Component {...pageProps} />
+                <ToastContainer />
+              </main>
+            </UserProvider>
+          </GoogleOAuthProvider>
+        </PostHogProvider>
       )}
     </>
   );

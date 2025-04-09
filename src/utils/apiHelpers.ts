@@ -8,11 +8,38 @@ import { showError, showSuccess } from "./toast";
 export const fetchTransactions = async (
     setTransactions: (transactions: Transaction[]) => void,
     setError: (error: string | null) => void,
-    setLoading: (loading: boolean) => void
+    setLoading: (loading: boolean) => void,
+    dateRange: string = "last7days"
 ): Promise<void> => {
     try {
         setLoading(true);
-        const response = await api.get("/api/transaction/get", { params: { limit: 100 } });
+
+        const endDate = new Date(); // now
+        const startDate = new Date();
+
+        switch (dateRange) {
+            case "last7days":
+                startDate.setDate(endDate.getDate() - 7);
+                break;
+            case "last30days":
+                startDate.setDate(endDate.getDate() - 30);
+                break;
+            case "last90days":
+                startDate.setDate(endDate.getDate() - 90);
+                break;
+            default:
+                startDate.setDate(endDate.getDate() - 7);
+                break;
+        }
+
+        const response = await api.get("/api/transaction/get", {
+            params: {
+                limit: 100,
+                startDate: startDate.toISOString(),
+                endDate: endDate.toISOString(),
+            },
+        });
+
         setTransactions(response.data);
     } catch (error) {
         console.error("Error fetching transactions:", error);
@@ -22,15 +49,19 @@ export const fetchTransactions = async (
     }
 };
 
+
 export const fetchChartData = async (
     setChartLabels: (labels: string[]) => void,
     setChartData: (data: number[]) => void,
     setError: (error: string | null) => void,
-    setLoading: (loading: boolean) => void
+    setLoading: (loading: boolean) => void,
+    dateRange: string = "last7days"
 ): Promise<void> => {
     try {
         setLoading(true);
-        const response = await api.get("/api/transaction/summary");
+        const response = await api.get("/api/transaction/summary", {
+            params: { range: dateRange },
+        });
         if (response.status === 200) {
             const { labels, data } = response.data;
             setChartLabels(labels);

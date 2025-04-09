@@ -2,6 +2,7 @@ import { NextApiRequest, NextApiResponse } from "next";
 import { generateLink } from "@/utils/generateLink";
 import { sendPasswordReset } from "@/utils/email";
 import client from "@/lib/mongodb";
+import { captureEvent } from "@/utils/posthogHelper";
 
 // This endpoint is used to request a password reset link
 // It is called when the user clicks the "forgot password" button
@@ -29,7 +30,6 @@ export default async function handler(
 
       if (process.env.NODE_ENV !== "development") {
         // Only check in production
-        // Check if the user already has a reset password link that is less than 3 minutes old
         const threeMinutesAgo = new Date(Date.now() - 1000 * 60 * 3);
         const links = await client
           .db()
@@ -41,7 +41,6 @@ export default async function handler(
           })
           .toArray();
 
-        // If there are any links that are less than 3 minutes old, do not generate a new link
         if (links.length > 0) {
           return res.status(400).json({
             message: "Too many emails sent recently, Try again later.",
@@ -59,16 +58,25 @@ export default async function handler(
         user.email
       );
 
-      // Check if email sending failed
       if (!emailResponse || emailResponse.error) {
-        console.error(emailResponse?.error || "Failed to send email");
+        captureEvent("Password Reset Email Error", {
+          properties: {
+            error: emailResponse?.error || "Failed to send email",
+            email: user.email,
+          },
+        });
         return res.status(500).json({ message: "Failed to send reset email" });
       }
 
       // Return a success message
       res.status(200).json({ message: "Email sent" });
     } catch (error: any) {
-      console.error("Error during password reset request:", error.message);
+      captureEvent("Password Reset Request Error", {
+        properties: {
+          error,
+          email,
+        },
+      });
       res.status(500).json({ message: "Internal server error" });
     }
   } else {

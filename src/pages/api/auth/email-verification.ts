@@ -1,5 +1,6 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import client from "@/lib/mongodb";
+import { captureEvent } from "@/utils/posthogHelper";
 
 // This file defines the API route that allows the user to verify their email
 // It checks if the link is valid and not expired
@@ -59,11 +60,24 @@ export default async function handler(
         return res.status(500).json({ message: "Failed to mark link as used" });
       }
 
+      // Track successful verification
+      captureEvent("Email Verified", {
+        properties: {
+          email: link.targetEmail,
+          tokenUsed: token,
+        },
+      });
+
       // Redirect the user to the email verified page
       res.status(200).redirect(process.env.URL + "/email/verified");
     } catch (error: any) {
-      console.error("Error in email verification:", error.message);
-      res
+      captureEvent("Email Verification Error", {
+        properties: {
+          error,
+        },
+      });
+
+      return res
         .status(500)
         .json({ message: "An error occurred during verification" });
     }

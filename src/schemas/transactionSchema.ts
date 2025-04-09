@@ -3,10 +3,9 @@ import { z } from "zod";
 
 const TransactionSchema = z.object({
   _id: z
-    .string()
-    .length(24, "Invalid ObjectId") // ObjectId string length is 24
+    .instanceof(ObjectId)
     .optional()
-    .default(new ObjectId().toString()), // Default to current date
+    .default(() => new ObjectId()), // Default to a new ObjectId
   value: z.number(),
   tags: z.array(z.string()).default([]), // Default to an empty array
   name: z.string().min(1, "Name is required"),

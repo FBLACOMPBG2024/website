@@ -1,5 +1,6 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import api from "@/utils/api";
+import { captureEvent } from "@/utils/posthogHelper";
 
 // This file defines the API route that allows the user to get their profile information from Google
 // It uses the Google OAuth2 API to get the user's information
@@ -24,9 +25,22 @@ export default async function handler(
         })
         .then((response) => response.data);
 
+      captureEvent("Google User Info", {
+        properties: {
+          userInfo,
+        },
+      });
+
       // Return the user's information
       return res.status(200).json(userInfo);
     } catch (error: any) {
+      // Log errors to posthog
+      captureEvent("Google User Info Error", {
+        properties: {
+          error,
+        },
+      });
+
       // Log the error and return an error message
       console.error("Error fetching user info from Google:", error);
       return res

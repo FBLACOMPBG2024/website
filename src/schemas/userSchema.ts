@@ -1,9 +1,13 @@
 import { z } from "zod";
+import { ObjectId } from "mongodb"; // Import ObjectId from mongodb
 import TransactionSchema from "./transactionSchema";
 import GoalSchema from "./goalSchema";
 
 const UserSchema = z.object({
-  _id: z.object({ $oid: z.string() }), // MongoDB ObjectId
+  _id: z
+    .instanceof(ObjectId)
+    .optional()
+    .default(() => new ObjectId()), // Default to a new ObjectId
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
   email: z.string().email("Invalid email address"),
@@ -16,7 +20,7 @@ const UserSchema = z.object({
       accountId: z.string().optional(),
     })
     .optional(),
-  transactions: z.array(TransactionSchema).default([]), // Default empty array
+  transactions: z.array(z.instanceof(ObjectId)).default([]), // Default empty array of ObjectId
   goals: z.array(GoalSchema).default([]), // Default empty array
 });
 

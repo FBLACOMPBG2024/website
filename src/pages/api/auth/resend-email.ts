@@ -2,6 +2,7 @@ import { NextApiRequest, NextApiResponse } from "next";
 import { generateLink } from "@/utils/generateLink";
 import { sendEmailVerification } from "@/utils/email";
 import client from "@/lib/mongodb";
+import { captureEvent } from "@/utils/posthogHelper";
 
 // This endpoint is used to resend the email verification link
 // It is called when the user clicks the "resend email" button
@@ -15,66 +16,64 @@ export default async function handler(
     const { email } = req.body;
 
     if (!email) {
-      res.status(400).json({ message: "Email is required" });
-      return;
+      return res.status(400).json({ message: "Email is required" });
     }
 
     try {
-      // Check if the user exists
       const user = await client
         .db()
         .collection("users")
         .findOne({ email: email });
+
       if (!user) {
-        res.status(400).json({ message: "User not found" });
-        return;
+        return res.status(400).json({ message: "User not found" });
       }
 
-      // Check if the user has already verified their email
       if (user.emailVerified) {
-        res.status(400).json({ message: "Email already verified" });
-        return;
+        return res.status(400).json({ message: "Email already verified" });
       }
 
       if (process.env.NODE_ENV !== "development") {
-        // Check if the users old links are less than 3 minutes old,
-        // If they are, do not generate a new link
         const threeMinutesAgo = new Date(Date.now() - 1000 * 60 * 3);
         const links = await client
           .db()
           .collection("links")
           .find({ targetEmail: email, createdAt: { $gt: threeMinutesAgo } })
           .toArray();
+
         if (links.length > 0) {
-          res.status(400).json({
+          return res.status(400).json({
             message: "Too many emails sent recently, Try again later.",
           });
-          return;
         }
       }
 
-      // Generate a new link
       const link = await generateLink(email, "email-verification");
-      console.log(`Generated email verification link for: ${email}`);
 
-      // Send the email
       const emailResponse = await sendEmailVerification(
         user.firstName,
         link,
         email
       );
 
-      // If the email failed to send, return an error
       if (!emailResponse) {
-        console.error(`Failed to send email to: ${email}`);
-        res.status(500).json({ message: "Failed to send email" });
-        return;
+        captureEvent("Email Verification Resend Error", {
+          properties: {
+            error: "Failed to send email",
+            email,
+          },
+        });
+        return res.status(500).json({ message: "Failed to send email" });
       }
 
-      // Return a success message
       res.status(200).json({ message: "Email sent" });
     } catch (error: any) {
-      console.error("Error during email verification resend:", error.message);
+      captureEvent("Email Verification Resend Exception", {
+        properties: {
+          error,
+          email,
+        },
+      });
       res.status(500).json({ message: "Internal server error" });
     }
   } else {

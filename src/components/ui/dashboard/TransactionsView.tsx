@@ -38,6 +38,12 @@ export default function TransactionsView() {
   const [description, setDescription] = useState("");
   const [dateTime, setDateTime] = useState(new Date()); // Default to now
 
+  const formatDateForInput = (date: Date) => {
+    const offset = date.getTimezoneOffset();
+    const localDate = new Date(date.getTime() - offset * 60 * 1000);
+    return localDate.toISOString().slice(0, 16);
+  };
+
   const [sortKey, setSortKey] = useState<keyof Transaction | null>(null);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
 
@@ -123,6 +129,7 @@ export default function TransactionsView() {
       setName("");
       setDescription("");
       setDateTime(new Date());
+      setDateTime(new Date());
 
       // Fetch updated transactions
       fetchTransactions();
@@ -136,7 +143,7 @@ export default function TransactionsView() {
     setValue(transaction.value.toString());
     setTags(transaction.tags.join(" "));
     setName(transaction.name);
-    setDescription(transaction.description || "");
+    setDescription(transaction.description);
     setDateTime(new Date(transaction.date));
     setIsModalOpen(true);
   };
@@ -369,7 +376,9 @@ export default function TransactionsView() {
                         <IconPencil className="stroke-text" />
                       </button>
                       <button
-                        onClick={() => confirmDelete(transaction._id || "")}
+                        onClick={() =>
+                          confirmDelete(transaction._id.toString() || "")
+                        }
                         className="hover:text-red-500"
                       >
                         <IconTrash className="stroke-text transition-all duration-200" />
@@ -440,7 +449,7 @@ export default function TransactionsView() {
               Date and Time:
               <TextInput
                 type="datetime-local"
-                value={dateTime.toISOString().slice(0, 16)} // Format to YYYY-MM-DDTHH:MM
+                value={formatDateForInput(dateTime)}
                 onChange={(e) => setDateTime(new Date(e.target.value))}
                 required
               />
