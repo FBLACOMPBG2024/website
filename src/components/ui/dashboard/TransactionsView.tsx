@@ -376,7 +376,9 @@ export default function TransactionsView() {
                         <IconPencil className="stroke-text" />
                       </button>
                       <button
-                        onClick={() => confirmDelete(transaction._id || "")}
+                        onClick={() =>
+                          confirmDelete(transaction._id.toString() || "")
+                        }
                         className="hover:text-red-500"
                       >
                         <IconTrash className="stroke-text transition-all duration-200" />

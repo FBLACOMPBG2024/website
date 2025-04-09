@@ -5,10 +5,16 @@ import ReactECharts from "echarts-for-react";
 import Card from "@/components/ui/Card";
 import { IUser } from "@/components/context/UserContext";
 import { fetchTransactions, fetchChartData } from "@/utils/apiHelpers";
-import { generateTreemapData, generateSecondTagChartData } from "@/utils/dataProcessing";
-import { lineChartOptions, pieChartOptions, treemapChartOptions } from "@/utils/chartOptions";
+import {
+  generateTreemapData,
+  generateSecondTagChartData,
+} from "@/utils/dataProcessing";
+import {
+  lineChartOptions,
+  pieChartOptions,
+  treemapChartOptions,
+} from "@/utils/chartOptions";
 import { Transaction } from "@/schemas/transactionSchema";
-import { showInfo, showSuccess } from "@/utils/toast";
 
 interface DashboardViewProps {
   user: IUser;
@@ -26,9 +32,6 @@ export default function DashboardView({ user }: DashboardViewProps) {
 
   useEffect(() => {
     if (user.firstName) {
-      showSuccess(`Welcome, ${user.firstName}`);
-      showInfo(`Fetching Transactions...`);
-
       fetchTransactions(setTransactions, setError, setLoading);
       fetchChartData(setChartLabels, setChartData, setError, setLoading);
     } else {
@@ -72,7 +75,9 @@ export default function DashboardView({ user }: DashboardViewProps) {
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.1, delay: index * 0.1 }}
               >
-                <span className={`font-bold ${user?.balance < 0 ? "text-red-500" : ""}`}>
+                <span
+                  className={`font-bold ${user?.balance < 0 ? "text-red-500" : ""}`}
+                >
                   {char}
                 </span>
               </motion.span>
@@ -81,27 +86,42 @@ export default function DashboardView({ user }: DashboardViewProps) {
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <div>
-            <h1 className="text-2xl font-black text-text">Spending Over Time</h1>
-            <ReactECharts className="w-full" option={lineChartOptions(chartLabels, chartData)} />
+            <h1 className="text-2xl font-black text-text">
+              Spending Over Time
+            </h1>
+            <ReactECharts
+              className="w-full"
+              option={lineChartOptions(chartLabels, chartData)}
+            />
           </div>
           <div>
             <h1 className="text-2xl font-black text-text">Spending</h1>
-            <ReactECharts className="w-full" option={pieChartOptions(pieChartData)} />
+            <ReactECharts
+              className="w-full"
+              option={pieChartOptions(pieChartData)}
+            />
           </div>
           <div>
-            <h1 className="text-2xl font-black text-text">Spending Distribution</h1>
-            <ReactECharts className="w-full" option={treemapChartOptions(treemapData)} />
+            <h1 className="text-2xl font-black text-text">
+              Spending Distribution
+            </h1>
+            <ReactECharts
+              className="w-full"
+              option={treemapChartOptions(treemapData)}
+            />
           </div>
         </div>
         <div>
-          <h2 className="text-2xl font-bold text-text pb-3">Latest Transactions</h2>
+          <h2 className="text-2xl font-bold text-text pb-3">
+            Latest Transactions
+          </h2>
           {transactions.length === 0 ? (
             <div className="text-text">No transactions found.</div>
           ) : (
             <ul>
               {transactions.slice(0, 6).map((transaction, index) => (
                 <motion.li
-                  key={transaction._id}
+                  key={transaction._id.toString()}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
@@ -110,10 +130,16 @@ export default function DashboardView({ user }: DashboardViewProps) {
                 >
                   <div className="flex justify-between">
                     <div>
-                      <span className="font-medium text-text">{transaction.name}</span>
+                      <span className="font-medium text-text">
+                        {transaction.name}
+                      </span>
                     </div>
                     <span
-                      className={transaction.value > 0 ? "text-green-500" : "text-neutral-500"}
+                      className={
+                        transaction.value > 0
+                          ? "text-green-500"
+                          : "text-neutral-500"
+                      }
                     >
                       {transaction.value.toLocaleString("en-US", {
                         style: "currency",
