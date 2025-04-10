@@ -3,10 +3,6 @@ import client from "@/lib/mongodb";
 import argon2 from "argon2";
 import { captureEvent } from "@/utils/posthogHelper";
 
-// This endpoint is used to set the user's password
-// It is called when the user submits the password reset form
-// It will update the user's password in the database
-
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse

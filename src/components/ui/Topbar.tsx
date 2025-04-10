@@ -2,7 +2,7 @@ import React from "react";
 import { useRouter } from "next/router";
 import { useUser } from "@/components/context/UserContext";
 
-// The Topbar component represents the header with the application logo and login/logout buttons.
+// Topbar - displays logo and auth navigation buttons
 
 export default function Topbar() {
   const router = useRouter();
@@ -10,29 +10,29 @@ export default function Topbar() {
 
   return (
     <header className="transition-colors duration-500 bg-background shadow-md shadow-primary border-b border-primary w-full">
-      <div className="flex justify-between items-center p-3 bg-background w-full">
-        {/* Logo / Title */}
+      <div className="flex justify-between items-center p-3 w-full">
+        {/* Logo / title */}
         <h1
-          className="transition-all font-bold text-2xl sm:text-3xl select-none whitespace-nowrap cursor-pointer"
+          className="font-bold text-2xl sm:text-3xl select-none whitespace-nowrap cursor-pointer"
           onClick={() => router.push("/")}
           aria-label="Go to home page"
         >
-          Smart Spend
+          SmartSpend
         </h1>
 
-        {/* Buttons */}
+        {/* Auth buttons */}
         <div className="flex space-x-4">
           {user?.email ? (
             <>
               <button
-                className="transition-all sm:pr-3 pr-0 text-lg sm:text-xl font-semibold whitespace-nowrap"
+                className="text-lg sm:text-xl font-semibold whitespace-nowrap"
                 onClick={() => router.push("/dashboard")}
                 aria-label="Go to dashboard"
               >
                 Dashboard
               </button>
               <button
-                className="transition-all sm:px-4 sm:py-1 sm:text-xl text-lg px-2 py-0.5 font-semibold rounded-md border-neutral-600 border-2 whitespace-nowrap"
+                className="px-2 sm:px-4 py-0.5 sm:py-1 text-lg sm:text-xl font-semibold rounded-md border-2 border-neutral-600 whitespace-nowrap"
                 onClick={() => router.push("/logout")}
                 aria-label="Log out"
               >
@@ -42,14 +42,14 @@ export default function Topbar() {
           ) : (
             <>
               <button
-                className="transition-all px-4 text-lg sm:text-xl font-semibold whitespace-nowrap"
+                className="px-4 text-lg sm:text-xl font-semibold whitespace-nowrap"
                 onClick={() => router.push("/login")}
                 aria-label="Go to login page"
               >
                 Login
               </button>
               <button
-                className="transition-all px-4 py-1 text-lg sm:text-xl font-semibold rounded-md border-neutral-600 border-2 whitespace-nowrap"
+                className="px-4 py-1 text-lg sm:text-xl font-semibold rounded-md border-2 border-neutral-600 whitespace-nowrap"
                 onClick={() => router.push("/sign-up")}
                 aria-label="Go to sign up page"
               >

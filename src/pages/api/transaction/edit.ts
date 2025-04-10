@@ -5,19 +5,20 @@ import { getIronSession } from "iron-session";
 import { sessionOptions } from "@/utils/sessionConfig";
 import { SessionData } from "@/utils/sessionData";
 import TransactionSchema from "@/schemas/transactionSchema";
+import { captureEvent } from "@/utils/posthogHelper";
 
+// Utility to pull user info from session
 async function getUserFromSession(req: NextApiRequest, res: NextApiResponse) {
   const session = await getIronSession<SessionData>(req, res, sessionOptions);
   if (!session.user?._id) return null;
 
-  const user = await client
+  return await client
     .db()
     .collection("users")
     .findOne({ _id: new ObjectId(session.user._id) });
-
-  return user;
 }
 
+// Route handler entry point
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
@@ -32,6 +33,7 @@ export default async function handler(
   }
 }
 
+// POST: create a new transaction and update user balance
 async function createTransaction(req: NextApiRequest, res: NextApiResponse) {
   const user = await getUserFromSession(req, res);
   if (!user) return res.status(401).json({ message: "Unauthorized" });
@@ -62,12 +64,18 @@ async function createTransaction(req: NextApiRequest, res: NextApiResponse) {
     return res.status(201).json(transaction);
   } catch (error: any) {
     console.error("Create error:", error);
+    captureEvent("Transaction Create Failed", {
+      error: error?.message,
+      stack: error?.stack,
+      issues: error?.errors || null,
+    });
     return res
       .status(400)
       .json({ message: "Invalid request data", errors: error.errors });
   }
 }
 
+// PUT: update an existing transaction and adjust balance accordingly
 async function editTransaction(req: NextApiRequest, res: NextApiResponse) {
   const user = await getUserFromSession(req, res);
   if (!user) return res.status(401).json({ message: "Unauthorized" });
@@ -93,7 +101,7 @@ async function editTransaction(req: NextApiRequest, res: NextApiResponse) {
 
     const balanceDelta = value - existingTx.value;
 
-    const updateFields: any = {
+    const updateFields = {
       value,
       tags,
       name,
@@ -116,6 +124,9 @@ async function editTransaction(req: NextApiRequest, res: NextApiResponse) {
     return res.status(200).json({ ...existingTx, ...updateFields });
   } catch (error: any) {
     console.error("Edit error:", error);
+    captureEvent("Transaction Edit Failed", {
+      error,
+    });
     return res
       .status(400)
       .json({ message: "Invalid request data", errors: error.errors });

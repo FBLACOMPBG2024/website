@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { useRouter } from "next/router";
 import ReactECharts from "echarts-for-react";
 import Card from "@/components/ui/Card";
 import { IUser } from "@/components/context/UserContext";
@@ -16,6 +15,8 @@ import {
 } from "@/utils/chartOptions";
 import { Transaction } from "@/schemas/transactionSchema";
 
+// DashboardView renders the user's financial overview including charts and recent transactions.
+
 interface DashboardViewProps {
   user: IUser;
 }
@@ -30,18 +31,21 @@ export default function DashboardView({ user }: DashboardViewProps) {
   const [loading, setLoading] = useState<boolean>(false);
   const [dateRange, setDateRange] = useState<string>("last7days");
 
-
-
-  const router = useRouter();
-
+  // Fetch transactions and chart data whenever user or date range changes
   useEffect(() => {
     if (user.firstName) {
       fetchTransactions(setTransactions, setError, setLoading, dateRange);
-      fetchChartData(setChartLabels, setChartData, setError, setLoading, dateRange);
+      fetchChartData(
+        setChartLabels,
+        setChartData,
+        setError,
+        setLoading,
+        dateRange
+      );
     }
   }, [user, dateRange]);
 
-
+  // Update chart-specific data once transactions are loaded
   useEffect(() => {
     if (transactions.length > 0) {
       setTreemapData(generateTreemapData(transactions));
@@ -60,6 +64,7 @@ export default function DashboardView({ user }: DashboardViewProps) {
   return (
     <div className="gap-4">
       <Card>
+        {/* Header with balance and date range filter */}
         <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
           <h1 className="text-4xl font-black text-text">Dashboard</h1>
           <motion.h1
@@ -88,10 +93,7 @@ export default function DashboardView({ user }: DashboardViewProps) {
             <select
               className="ml-5 bg-backgroundGrayLight p-2 text-base rounded-md"
               value={dateRange}
-              onChange={(e) => {
-                const selectedDateRange = e.target.value;
-                setDateRange(selectedDateRange);
-              }}
+              onChange={(e) => setDateRange(e.target.value)}
             >
               <option value="last7days">Last Week</option>
               <option value="last30days">Last Month</option>
@@ -99,6 +101,8 @@ export default function DashboardView({ user }: DashboardViewProps) {
             </select>
           </motion.h1>
         </div>
+
+        {/* Chart Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <div>
             <h1 className="text-2xl font-black text-text">
@@ -126,6 +130,8 @@ export default function DashboardView({ user }: DashboardViewProps) {
             />
           </div>
         </div>
+
+        {/* Transactions List */}
         <div>
           <h2 className="text-2xl font-bold text-text pb-3">
             Latest Transactions
@@ -144,11 +150,9 @@ export default function DashboardView({ user }: DashboardViewProps) {
                   className="py-2 border-b border-backgroundGrayLight"
                 >
                   <div className="flex justify-between">
-                    <div>
-                      <span className="font-medium text-text">
-                        {transaction.name}
-                      </span>
-                    </div>
+                    <span className="font-medium text-text">
+                      {transaction.name}
+                    </span>
                     <span
                       className={
                         transaction.value > 0

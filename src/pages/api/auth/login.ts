@@ -7,7 +7,6 @@ import { sessionOptions } from "@/utils/sessionConfig";
 import { SessionData } from "@/utils/sessionData";
 import { captureEvent } from "@/utils/posthogHelper";
 
-// TODO: Make this a utility function
 async function createSession(
   user: any,
   req: NextApiRequest,
@@ -28,7 +27,6 @@ export default async function handler(
   if (req.method === "POST") {
     const inputData = req.body;
 
-    // Parse login data using Zod
     const result = LoginSchema.safeParse(inputData);
     if (!result.success) {
       return res
@@ -39,28 +37,23 @@ export default async function handler(
     const { email, password } = inputData;
 
     try {
-      // Get the user from the database
       const user = await client.db().collection("users").findOne({ email });
 
       if (!user) {
         return res.status(401).json({ message: "Invalid email or password" });
       }
 
-      // Check password hash
       const isPasswordValid = await argon2.verify(user.password, password);
       if (!isPasswordValid) {
         return res.status(401).json({ message: "Invalid email or password" });
       }
 
-      // Check email verification
       if (!user.emailVerified) {
         return res.status(401).json({ message: "Awaiting email verification" });
       }
 
-      // Create session
       await createSession(user, req, res);
 
-      // Track successful login
       captureEvent("User Login Success", {
         properties: {
           email: user.email,
@@ -68,7 +61,6 @@ export default async function handler(
         },
       });
 
-      // Return user info
       return res.status(200).json({
         message: "Login successful",
         user: {

@@ -7,14 +7,11 @@ import { showSuccess } from "@/utils/toast";
 
 export default function LogoutView() {
   useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
+    if (typeof window === "undefined") return;
 
-    showSuccess("Logging out...")
-    // Redirect the user to the logout page
+    showSuccess("Logging out...");
     router.push("/logout");
-  });
+  }, []);
 
   // Just return an empty fragment
   return <></>;

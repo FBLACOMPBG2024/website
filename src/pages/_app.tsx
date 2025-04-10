@@ -82,8 +82,8 @@ export default function App({
   return (
     <>
       <Head>
-        <title>Smart Spend</title>
-        <meta name="description" content="Smart Spend" />
+        <title>SmartSpend</title>
+        <meta name="description" content="SmartSpend" />
       </Head>
 
       {loading ? (

@@ -5,10 +5,6 @@ import React, { useState, createContext, useContext } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { IconMenu2, IconX } from "@tabler/icons-react";
 
-// Sidebar component for both desktop and mobile views.
-// Modified from the original code by Trent.
-// https://ui.aceternity.com/components/sidebar
-
 interface Links {
   label: string;
   href: string;
@@ -44,9 +40,10 @@ export const SidebarProvider = ({
   setOpen?: React.Dispatch<React.SetStateAction<boolean>>;
   animate?: boolean;
 }) => {
-  const [openState, setOpenState] = useState(false);
-  const open = openProp !== undefined ? openProp : openState;
-  const setOpen = setOpenProp !== undefined ? setOpenProp : setOpenState;
+  const isControlled = openProp !== undefined && setOpenProp !== undefined;
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = isControlled ? openProp! : internalOpen;
+  const setOpen = isControlled ? setOpenProp! : setInternalOpen;
 
   return (
     <SidebarContext.Provider value={{ open, setOpen, animate }}>
@@ -90,6 +87,8 @@ export const DesktopSidebar = ({
   const { open, setOpen, animate } = useSidebar();
   return (
     <motion.div
+      role="navigation"
+      aria-label="Sidebar"
       className={cn(
         "h-full px-4 py-4 hidden md:flex md:flex-col bg-backgroundGray w-[300px] flex-shrink-0",
         className
@@ -120,7 +119,13 @@ export const MobileSidebar = ({
       {...props}
     >
       <div className="flex justify-end z-20 w-full">
-        <IconMenu2 className="text-text" onClick={() => setOpen(!open)} />
+        <button
+          className="text-text"
+          onClick={() => setOpen(!open)}
+          aria-label="Open sidebar"
+        >
+          <IconMenu2 />
+        </button>
       </div>
       <AnimatePresence>
         {open && (
@@ -137,12 +142,13 @@ export const MobileSidebar = ({
               className
             )}
           >
-            <div
+            <button
               className="absolute right-10 top-10 z-50 text-text"
               onClick={() => setOpen(!open)}
+              aria-label="Close sidebar"
             >
               <IconX />
-            </div>
+            </button>
             {children}
           </motion.div>
         )}
@@ -159,13 +165,11 @@ export const SidebarLink = ({
 }: {
   link: Links;
   className?: string;
-  props?: LinkProps;
   onClick?: () => void;
-}) => {
+} & LinkProps) => {
   const { open, setOpen, animate } = useSidebar();
   return (
     <Link
-      href={link.href}
       className={cn(
         "flex items-center justify-start gap-2 group/sidebar py-2",
         className

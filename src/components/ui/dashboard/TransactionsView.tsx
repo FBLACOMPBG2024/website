@@ -18,54 +18,60 @@ import {
 } from "@tabler/icons-react";
 import { showError, showSuccess } from "@/utils/toast";
 
+// Component to view, add, edit, delete, sync, filter and bulk upload transactions.
 export default function TransactionsView() {
+  // Modal visibility states
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isBulkUploadModalOpen, setIsBulkUploadModalOpen] = useState(false);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+
+  // Transactions and editing states
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [editTransaction, setEditTransaction] = useState<Transaction | null>(
     null
   );
-  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [transactionToDelete, setTransactionToDelete] = useState<string | null>(
     null
   );
 
-  // Individual state variables for each input
+  // Form input states for transaction edit/create
   const [value, setValue] = useState("0.0");
   const [tags, setTags] = useState("");
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [dateTime, setDateTime] = useState(new Date()); // Default to now
+  const [dateTime, setDateTime] = useState(new Date()); // Default to current time
 
+  // Sorting states
+  const [sortKey, setSortKey] = useState<keyof Transaction | null>(null);
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+
+  // Filter states
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [limit, setLimit] = useState(200);
+  const [tagFilter, setTagFilter] = useState("");
+
+  // Function to format Date for the datetime-local input
   const formatDateForInput = (date: Date) => {
     const offset = date.getTimezoneOffset();
     const localDate = new Date(date.getTime() - offset * 60 * 1000);
     return localDate.toISOString().slice(0, 16);
   };
 
-  const [sortKey, setSortKey] = useState<keyof Transaction | null>(null);
-  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
-
-  // Filters
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
-  const [limit, setLimit] = useState(200);
-  const [tagFilter, setTagFilter] = useState("");
-
-  // UseEffect for filters
+  // Fetch transactions when filter values update
   useEffect(() => {
-    fetchTransactions(); // Fetch transactions when filters change
+    fetchTransactions();
   }, [tagFilter, startDate, endDate, limit]);
 
-  // Extract the fetchTransactions function for reusability
+  // Function to fetch transactions from the API
   const fetchTransactions = async () => {
     try {
       const queryParams: any = {
-        ...(limit !== 0 && { limit }), // Include limit only if it's not 0
+        ...(limit !== 0 && { limit }), // only include limit if not 0
         startDate,
         endDate,
-        filter: tagFilter ? JSON.stringify(tagFilter.split(" ")) : undefined, // Format tags as an array
+        filter: tagFilter ? JSON.stringify(tagFilter.split(" ")) : undefined, // format tag filter as an array
       };
 
       const response = await api.get("/api/transaction/get", {
@@ -77,27 +83,28 @@ export default function TransactionsView() {
     }
   };
 
+  // Sync transactions with bank data and refresh list
   const handleSync = async () => {
     try {
       const response = await api.post("/api/user/bank/sync");
       if (response.status === 200) {
-        fetchTransactions(); // Refresh transactions after sync
+        fetchTransactions();
       }
     } catch (error) {
       console.error("Failed to sync transactions", error);
     }
   };
 
+  // Handle creating or editing a transaction
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Parse tags into an array
+    // Convert tags string into an array, trimming whitespace
     const tagsArray = tags
       .trim()
       .split(" ")
       .map((tag) => tag.trim());
 
-    // Prepare payload
     const payload = {
       _id: editTransaction?._id || undefined,
       value: parseFloat(value) || 0,
@@ -109,7 +116,7 @@ export default function TransactionsView() {
 
     try {
       if (editTransaction) {
-        // Edit existing transaction
+        // Update existing transaction
         const response = await api.put(`/api/transaction/edit`, payload);
         if (response.status === 200) {
           setIsModalOpen(false);
@@ -123,21 +130,20 @@ export default function TransactionsView() {
         }
       }
 
-      // Reset form fields
+      // Clear form inputs
       setValue("0.0");
       setTags("");
       setName("");
       setDescription("");
       setDateTime(new Date());
-      setDateTime(new Date());
 
-      // Fetch updated transactions
       fetchTransactions();
     } catch (error) {
       console.error("Failed to create or edit transaction", error);
     }
   };
 
+  // Prepare form fields for editing a transaction
   const handleEdit = (transaction: Transaction) => {
     setEditTransaction(transaction);
     setValue(transaction.value.toString());
@@ -148,6 +154,7 @@ export default function TransactionsView() {
     setIsModalOpen(true);
   };
 
+  // Delete a transaction after user confirmation
   const handleDelete = async () => {
     if (!transactionToDelete) return;
 
@@ -157,7 +164,7 @@ export default function TransactionsView() {
       });
       if (response.status === 200) {
         showSuccess("Transaction deleted");
-        fetchTransactions(); // Refresh transactions after deletion
+        fetchTransactions();
         setIsConfirmModalOpen(false);
         setTransactionToDelete(null);
       }
@@ -167,11 +174,13 @@ export default function TransactionsView() {
     }
   };
 
+  // Set up confirmation before deleting a transaction
   const confirmDelete = (transactionId: string) => {
     setTransactionToDelete(transactionId);
     setIsConfirmModalOpen(true);
   };
 
+  // Handle bulk upload from a CSV file using PapaParse
   const handleBulkUpload = async (e: React.FormEvent) => {
     e.preventDefault();
     const fileInput = document.getElementById(
@@ -201,20 +210,20 @@ export default function TransactionsView() {
             if (response.status === 201) {
               showSuccess("Transactions added");
               setIsBulkUploadModalOpen(false);
-              fetchTransactions(); // Refresh transactions after bulk upload
+              fetchTransactions();
             }
           } catch (error) {
             showError("Failed to bulk upload transactions");
-            console.error("Failed to bulk upload transactions", error);
+            console.error("Bulk upload error", error);
           }
         },
       });
     }
   };
 
-  // Function to handle tag filter toggling
+  // Toggle tag filter on or off
   const toggleTagFilter = (tag: string) => {
-    if (tagFilter.includes(tag)) {
+    if (tagFilter.split(" ").includes(tag)) {
       setTagFilter(
         tagFilter
           .split(" ")
@@ -226,21 +235,19 @@ export default function TransactionsView() {
     }
   };
 
+  // Sort transactions by a specific key, toggling the sort direction if same key
   const sortTransactionsByKey = (key: keyof Transaction) => {
-    // Determine the new sorting direction
     let direction: "asc" | "desc" = "asc";
     if (key === sortKey) {
       direction = sortDirection === "asc" ? "desc" : "asc";
     }
 
-    // Sort the transactions
     const sorted = [...transactions].sort((a, b) => {
       if (a[key] > b[key]) return direction === "asc" ? 1 : -1;
       if (a[key] < b[key]) return direction === "asc" ? -1 : 1;
       return 0;
     });
 
-    // Update state
     setTransactions(sorted);
     setSortKey(key);
     setSortDirection(direction);
@@ -250,9 +257,9 @@ export default function TransactionsView() {
     <div className="h-full w-full">
       <Card className="min-h-[90vh] w-full">
         <h1 className="text-4xl font-black text-text">Transactions</h1>
-        <div className="mt-4 gap-2 flex flex-row sm:flex-row sm:absolute sm:top-0 sm:right-0 sm:mt-4 sm:mr-4 space-y-2 sm:space-y-0 sm:space-x-2">
+        <div className="mt-4 gap-2 flex flex-row sm:absolute sm:top-0 sm:right-0 sm:mt-4 sm:mr-4 space-y-2 sm:space-y-0 sm:space-x-2">
           <button
-            className="sm:max-h-10 max-h-8 sm:mt-0 mt-2 transition-all duration-200 hover:opacity-80 sm:text-lg text-sm px-2 py-1 bg-primary text-white rounded flex items-center"
+            className="sm:max-h-10 max-h-8 mt-2 transition-all duration-200 hover:opacity-80 sm:text-lg text-sm px-2 py-1 bg-primary text-white rounded flex items-center"
             onClick={() => handleSync()}
           >
             <IconRefresh className="mr-1" />
@@ -280,6 +287,7 @@ export default function TransactionsView() {
             <p className="hidden sm:block">Bulk Upload</p>
           </button>
         </div>
+
         <div className="overflow-x-auto overflow-y-auto max-h-[80vh] mt-8">
           {transactions.length > 0 ? (
             <table className="min-w-full bg-backgroundGray">
@@ -304,9 +312,7 @@ export default function TransactionsView() {
                         {label}
                         {sortKey === key && (
                           <IconSortAscending
-                            className={`w-4 h-auto transition-transform ${
-                              sortDirection == "asc" ? "rotate-0" : "rotate-180"
-                            }`}
+                            className={`w-4 h-auto transition-transform ${sortDirection === "asc" ? "rotate-0" : "rotate-180"}`}
                           />
                         )}
                       </span>
@@ -323,7 +329,7 @@ export default function TransactionsView() {
                     key={index}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }} // Adjust exit animation to slide out
+                    exit={{ opacity: 0, y: -10 }}
                     transition={{ duration: 0.2, delay: index * 0.05 }}
                     className={
                       index < transactions.length - 1
@@ -346,9 +352,7 @@ export default function TransactionsView() {
                           {transaction.tags.map((tag, tagIndex) => (
                             <span
                               key={tagIndex}
-                              className={`sm:text-base text-xs transition-all duration-200 relative select-none bg-primary hover:opacity-80 text-white px-2 py-1 rounded flex items-center ${
-                                tagFilter.includes(tag) ? "bg-accent" : ""
-                              }`}
+                              className={`sm:text-base text-xs transition-all duration-200 relative select-none bg-primary hover:opacity-80 text-white px-2 py-1 rounded flex items-center ${tagFilter.includes(tag) ? "bg-accent" : ""}`}
                               onClick={() => toggleTagFilter(tag)}
                             >
                               <span className="mr-1">{tag}</span>
@@ -390,7 +394,7 @@ export default function TransactionsView() {
             </table>
           ) : (
             <div className="text-center text-gray-500 py-4">
-              No transactions found. Add some to get started
+              No transactions found. Add some to get started.
             </div>
           )}
         </div>
@@ -522,7 +526,6 @@ export default function TransactionsView() {
         open={isFilterModalOpen}
         onClose={() => setIsFilterModalOpen(false)}
       >
-        {/* Filter Inputs */}
         <div className="flex flex-col gap-2 mb-4">
           <h2 className="text-xl font-bold text-text">Filter</h2>
           <h1 className="text-md font-bold text-text">Tags</h1>

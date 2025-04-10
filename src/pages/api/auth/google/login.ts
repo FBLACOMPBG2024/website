@@ -6,8 +6,8 @@ import { sessionOptions } from "@/utils/sessionConfig";
 import { SessionData } from "@/utils/sessionData";
 import { captureEvent } from "@/utils/posthogHelper";
 
-// This file defines the API route that allows the user to log in with Google
-// It uses the Google OAuth2 API to authenticate the user
+// Handles user login via Google OAuth by verifying the access token,
+// fetching user info from Google, and creating a session if the user exists.
 
 export default async function handler(
   req: NextApiRequest,
@@ -17,12 +17,24 @@ export default async function handler(
     try {
       const { access_token } = req.body;
 
-      // Check if the access token is provided
       if (!access_token) {
+        captureEvent("Login Error - Missing Token", {
+          properties: {
+            method: req.method,
+            endpoint: "/api/login",
+          },
+        });
+
         return res.status(400).json({ message: "Access token is missing" });
       }
 
-      // Get the user's information from Google using the access token
+      captureEvent("Google Login Attempt", {
+        properties: {
+          endpoint: "/api/login",
+        },
+      });
+
+      // Get user info from Google using the token
       const userInfo = await api
         .get("https://www.googleapis.com/oauth2/v3/userinfo", {
           headers: { Authorization: `Bearer ${access_token}` },
@@ -31,21 +43,31 @@ export default async function handler(
 
       const { email } = userInfo;
 
-      // Ensure the email exists in the userInfo object
       if (!email) {
+        captureEvent("Login Error - Missing Email in Google Info", {
+          properties: {
+            userInfo,
+          },
+        });
+
         return res
           .status(400)
           .json({ message: "No email associated with this Google account" });
       }
 
-      // Check if the user exists in the database
-      let user = await client.db().collection("users").findOne({ email });
+      const user = await client.db().collection("users").findOne({ email });
 
       if (!user) {
+        captureEvent("Login Error - User Not Found", {
+          properties: {
+            email,
+          },
+        });
+
         return res.status(400).json({ message: "User account does not exist" });
       }
 
-      // Create or update session
+      // Set up session data
       const session = await getIronSession<SessionData>(
         req,
         res,
@@ -57,14 +79,14 @@ export default async function handler(
       };
       await session.save();
 
-      captureEvent("Google Login", {
+      captureEvent("Google Login Success", {
         properties: {
-          user,
+          email,
+          userId: user._id.toString(),
         },
       });
 
-      // Return the user's information upon successful login
-      res.status(200).json({
+      return res.status(200).json({
         message: "Login successful",
         user: {
           id: user._id.toString(),
@@ -72,10 +94,9 @@ export default async function handler(
         },
       });
     } catch (error: any) {
-      // Capture error event for debugging
       captureEvent("Google Login Error", {
         properties: {
-          error,
+          error: error?.toString(),
         },
       });
 

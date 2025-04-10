@@ -18,10 +18,10 @@ export default function Home() {
                   Manage your expenses with
                 </span>
                 <span className="block text-4xl font-bold text-shadow-xxl shadow-primary text-primary">
-                  Smart Spend
+                  SmartSpend
                 </span>
                 <p className="text-xl font-bold mt-4">
-                  Smart Spend allows users to manage their expenses with ease.
+                  SmartSpend allows users to manage their expenses with ease.
                 </p>
               </div>
             </div>
