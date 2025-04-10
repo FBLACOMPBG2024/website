@@ -2,11 +2,7 @@ import { NextApiRequest, NextApiResponse } from "next";
 import client from "@/lib/mongodb";
 import { captureEvent } from "@/utils/posthogHelper";
 
-// This file defines the API route that allows the user to verify their email
-// It checks if the link is valid and not expired
-// It marks the user's email as verified
-// And marks the link as used
-// It then redirects the user to the email verified page
+// Handles email verification when user clicks the link sent to their inbox
 
 export default async function handler(
   req: NextApiRequest,
@@ -16,25 +12,29 @@ export default async function handler(
     try {
       const { token } = req.query;
 
-      // Check if the token is present
       if (!token || typeof token !== "string") {
+        captureEvent("Email Verification Error - Missing Token", {
+          properties: { token },
+        });
         return res.status(400).json({ message: "Missing or invalid token" });
       }
 
-      // Fetch the link data from the database
       const link = await client.db().collection("links").findOne({ token });
 
-      // Check if the link is valid
       if (!link || link.type !== "email-verification") {
+        captureEvent("Email Verification Error - Invalid Link", {
+          properties: { token },
+        });
         return res.status(404).json({ message: "Invalid link" });
       }
 
-      // Check if the link is expired
       if (link.expires < new Date()) {
+        captureEvent("Email Verification Error - Expired Link", {
+          properties: { token, expires: link.expires },
+        });
         return res.status(400).json({ message: "Link has expired" });
       }
 
-      // Mark the user's email as verified
       const updateUserResult = await client
         .db()
         .collection("users")
@@ -44,23 +44,24 @@ export default async function handler(
         );
 
       if (updateUserResult.modifiedCount === 0) {
+        captureEvent("Email Verification Error - User Update Failed", {
+          properties: { email: link.targetEmail },
+        });
         return res.status(500).json({ message: "Failed to update user" });
       }
 
-      // Mark the link as used
       const updateLinkResult = await client
         .db()
         .collection("links")
-        .updateOne(
-          { token },
-          { $set: { used: true, usedAt: new Date(Date.now()) } }
-        );
+        .updateOne({ token }, { $set: { used: true, usedAt: new Date() } });
 
       if (updateLinkResult.modifiedCount === 0) {
+        captureEvent("Email Verification Error - Link Update Failed", {
+          properties: { token },
+        });
         return res.status(500).json({ message: "Failed to mark link as used" });
       }
 
-      // Track successful verification
       captureEvent("Email Verified", {
         properties: {
           email: link.targetEmail,
@@ -68,13 +69,14 @@ export default async function handler(
         },
       });
 
-      // Redirect the user to the email verified page
-      res.status(200).redirect(process.env.URL + "/email/verified");
+      const redirectUrl = process.env.URL
+        ? `${process.env.URL}/email/verified`
+        : "/email/verified"; // fallback just in case
+
+      return res.status(200).redirect(redirectUrl);
     } catch (error: any) {
-      captureEvent("Email Verification Error", {
-        properties: {
-          error,
-        },
+      captureEvent("Email Verification Error - Unknown", {
+        properties: { error: error?.toString() },
       });
 
       return res

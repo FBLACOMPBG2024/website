@@ -4,10 +4,6 @@ import { sendEmailVerification } from "@/utils/email";
 import client from "@/lib/mongodb";
 import { captureEvent } from "@/utils/posthogHelper";
 
-// This endpoint is used to resend the email verification link
-// It is called when the user clicks the "resend email" button
-// It will generate a new link and send it to the user's email
-
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
@@ -20,10 +16,7 @@ export default async function handler(
     }
 
     try {
-      const user = await client
-        .db()
-        .collection("users")
-        .findOne({ email: email });
+      const user = await client.db().collection("users").findOne({ email });
 
       if (!user) {
         return res.status(400).json({ message: "User not found" });

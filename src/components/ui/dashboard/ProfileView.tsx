@@ -44,18 +44,17 @@ export default function ProfileView({ user }: ProfileViewProps) {
       }
     },
   });
-
   useEffect(() => {
-    async function loadBankAccounts() {
+    if (!user.bankAccessToken) return;
+
+    (async () => {
       try {
         const accounts = await fetchBankAccounts(user);
         setBankAccounts(accounts);
       } catch (err: any) {
         setError(err.message);
       }
-    }
-
-    if (user.bankAccessToken) loadBankAccounts();
+    })();
   }, [user]);
 
   const handleSave = async () => {
@@ -75,7 +74,7 @@ export default function ProfileView({ user }: ProfileViewProps) {
 
     try {
       // If the user has changed their accountId
-      if (accountId !== user.preferences.accountId) {
+      if ((accountId || "") !== (user.preferences.accountId || "")) {
         const confirmChange = window.confirm(
           "Changing your account will remove the current account's transactions. Proceed?"
         );
@@ -138,7 +137,7 @@ export default function ProfileView({ user }: ProfileViewProps) {
         <h2 className="text-lg font-bold text-text">Account</h2>
         <select
           className="bg-backgroundGrayLight p-2 h-8 text-base rounded-md"
-          value={accountId}
+          value={accountId || ""}
           onChange={(e) => setAccountId(e.target.value)}
         >
           {bankAccounts.map((account) => (
@@ -157,8 +156,9 @@ export default function ProfileView({ user }: ProfileViewProps) {
           Connect Bank Account
         </button>
         <button
-          className={`transition-all text-lg rounded-md shadow-md py-1 px-10 ${loading ? "bg-backgroundGray" : "bg-backgroundGrayLight"
-            }`}
+          className={`transition-all text-lg rounded-md shadow-md py-1 px-10 ${
+            loading ? "bg-backgroundGray" : "bg-backgroundGrayLight"
+          }`}
           onClick={handleSave}
           disabled={loading}
         >

@@ -2,8 +2,7 @@ import { captureEvent } from "@/utils/posthogHelper";
 import { UserRefreshClient } from "google-auth-library";
 import { NextApiRequest, NextApiResponse } from "next";
 
-// This file defines the API route that allows the user to refresh their access token
-// It uses the Google OAuth2 API to refresh the user's access token
+// API route to refresh a Google access token using a refresh token.
 
 export default async function handler(
   req: NextApiRequest,
@@ -12,45 +11,51 @@ export default async function handler(
   if (req.method === "POST") {
     const { refresh_token } = req.body;
 
-    // Check if the refresh token is provided
     if (!refresh_token) {
+      captureEvent("Refresh Token Error - Missing Token", {
+        properties: {
+          method: req.method,
+          endpoint: "/api/refresh-token",
+        },
+      });
+
       return res.status(400).json({ message: "No refresh token provided" });
     }
 
     try {
-      // Ensure client ID and secret are available in the environment variables
       const clientId = process.env.CLIENT_ID;
       const clientSecret = process.env.CLIENT_SECRET;
 
       if (!clientId || !clientSecret) {
+        captureEvent("Refresh Token Error - Missing Client Credentials", {
+          properties: {
+            hasClientId: !!clientId,
+            hasClientSecret: !!clientSecret,
+          },
+        });
+
         return res
           .status(500)
           .json({ message: "Client credentials are missing" });
       }
 
-      // Create a new user client with the refresh token
       const user = new UserRefreshClient(clientId, clientSecret, refresh_token);
-
-      // Attempt to refresh the access token
       const { credentials } = await user.refreshAccessToken();
 
-      // Log the new access token to PostHog
-      captureEvent("Google Refresh Token", {
+      captureEvent("Google Refresh Token Success", {
         properties: {
           clientId,
         },
       });
 
-      // Return the new credentials (access token)
-      res.json(credentials);
+      return res.json(credentials);
     } catch (error: any) {
       captureEvent("Google Refresh Token Error", {
         properties: {
-          error,
+          error: error?.toString(),
         },
       });
 
-      // Handle specific error types based on error response from Google
       if (error.code === 400) {
         return res
           .status(400)

@@ -1,5 +1,5 @@
 {
-  "name": "Smart Spend",
+  "name": "SmartSpend",
   "short_name": "SmartSpend",
   "theme_color": "#101010",
   "background_color": "#101010",
@@ -7,7 +7,7 @@
   "display": "standalone",
   "orientation": "portrait",
   "id": "smartspend",
-  "description": "Smart Spend allows users to manage their expenses with ease.",
+  "description": "SmartSpend allows users to manage their expenses with ease.",
   "dir": "ltr",
   "lang": "en",
   "categories": ["finance"],

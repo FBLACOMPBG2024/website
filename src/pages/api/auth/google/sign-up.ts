@@ -9,8 +9,7 @@ import { sendEmailVerification } from "@/utils/email";
 import { generateLink } from "@/utils/generateLink";
 import { captureEvent } from "@/utils/posthogHelper";
 
-// This file defines the API route that allows the user to log in with Google
-// It uses the Google OAuth2 API to authenticate the user
+// Handles sign-up via Google OAuth and creates a user record if they don't exist.
 
 export default async function handler(
   req: NextApiRequest,
@@ -20,19 +19,19 @@ export default async function handler(
     try {
       const { access_token } = req.body;
 
-      // Check if the access token is present
       if (!access_token) {
+        captureEvent("Google Sign-Up Error - Missing Token", {
+          properties: { method: req.method },
+        });
+
         return res.status(400).json({ message: "Access token is missing" });
       }
 
-      // Get the user's information from Google
       const userInfo = await api
         .get("https://www.googleapis.com/oauth2/v3/userinfo", {
           headers: { Authorization: `Bearer ${access_token}` },
         })
         .then((res) => res.data);
-
-      console.log("Google user info:", userInfo);
 
       const {
         email,
@@ -42,25 +41,33 @@ export default async function handler(
         sub: googleId,
       } = userInfo;
 
-      // Ensure email exists in response
       if (!email) {
+        captureEvent("Google Sign-Up Error - No Email", {
+          properties: { userInfo },
+        });
+
         return res
           .status(400)
           .json({ message: "No email associated with this account" });
       }
 
-      // Check if the user already exists in the database
-      let user = await client.db().collection("users").findOne({ email });
+      const existingUser = await client
+        .db()
+        .collection("users")
+        .findOne({ email });
 
-      if (user) {
-        // Inform the user the email is already in use
+      if (existingUser) {
+        captureEvent("Google Sign-Up Error - Email Exists", {
+          properties: { email },
+        });
+
         return res.status(400).json({ message: "Email already in use" });
       }
 
-      // Create a new user if one does not exist
+      // Generate a hashed password (not used directly but required for schema consistency)
       const hashedPassword = await argon2.hash(
         "google-" + googleId + Date.now()
-      ); // Adding timestamp for randomness
+      );
 
       const newUser = {
         email: email.toLowerCase(),
@@ -76,19 +83,22 @@ export default async function handler(
         },
       };
 
-      // Insert the new user into the database
       const insertResult = await client
         .db()
         .collection("users")
         .insertOne(newUser);
 
       if (!insertResult.acknowledged) {
+        captureEvent("Google Sign-Up Error - Insert Failed", {
+          properties: { user: newUser },
+        });
+
         return res
           .status(500)
           .json({ message: "Failed to create user in the database" });
       }
 
-      // Generate and send the email verification link
+      // Send verification email
       const link = await generateLink(
         email.toLowerCase(),
         "email-verification"
@@ -99,17 +109,11 @@ export default async function handler(
         email.toLowerCase()
       );
 
-      // If sending the email failed, delete the user and return an error
       if (!emailResponse || emailResponse.error) {
-        captureEvent("Google sign-up email error", {
-          properties: {
-            error: emailResponse?.error,
-          },
+        captureEvent("Google Sign-Up Email Error", {
+          properties: { error: emailResponse?.error },
         });
 
-        console.error(emailResponse?.error || "Email failed to send");
-
-        // Clean up the user in case email verification fails
         await client
           .db()
           .collection("users")
@@ -120,25 +124,24 @@ export default async function handler(
           .json({ message: "Failed to send verification email" });
       }
 
-      captureEvent("Google sign-up", {
+      captureEvent("Google Sign-Up Success", {
         properties: {
-          user: newUser,
+          email: newUser.email,
+          userId: insertResult.insertedId.toString(),
         },
       });
 
-      // Return a success response
       res.status(200).json({
         message: "Sign up successful, awaiting email verification",
       });
     } catch (error: any) {
-      captureEvent("Google sign-up error", {
-        properties: { error },
+      captureEvent("Google Sign-Up Fatal Error", {
+        properties: { error: error?.toString() },
       });
 
       return res.status(500).json({ message: "Authentication failed" });
     }
   } else {
-    // Handle unsupported HTTP methods
     res.setHeader("Allow", ["POST"]);
     return res.status(405).end(`Method ${req.method} Not Allowed`);
   }

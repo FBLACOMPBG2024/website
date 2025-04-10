@@ -17,6 +17,7 @@ export default async function handler(
 
   const { firstName, lastName, email, password } = req.body;
 
+  // Validate input data against the signup schema
   const result = SignUpSchema.safeParse(req.body);
   if (!result.success) {
     return res
@@ -31,11 +32,13 @@ export default async function handler(
     const users = db.collection("users");
     const links = db.collection("links");
 
+    // Bail if there's already a user with this email
     const existingUser = await users.findOne({ email: normalizedEmail });
     if (existingUser) {
       return res.status(400).json({ message: "Email already in use" });
     }
 
+    // Hash the password before saving anything
     const hashedPassword = await argon2.hash(password);
 
     const newUser = {
@@ -52,6 +55,7 @@ export default async function handler(
       },
     };
 
+    // Prevent spamming by checking for recent verification links
     const threeMinutesAgo = new Date(Date.now() - 1000 * 60 * 3);
     const existingLinks = await links
       .find({
@@ -66,13 +70,17 @@ export default async function handler(
       });
     }
 
+    // Create the user
     await users.insertOne(newUser);
+
     captureEvent("User Signup Success", {
       properties: {
         email: normalizedEmail,
         method: "email-password",
       },
     });
+
+    // Generate email verification link and send it
     const link = await generateLink(normalizedEmail, "email-verification");
     const emailResponse = await sendEmailVerification(
       firstName,
@@ -80,8 +88,8 @@ export default async function handler(
       normalizedEmail
     );
 
+    // If email fails to send, roll back user creation
     if (!emailResponse || emailResponse.error) {
-      // Roll back user creation manually
       await users.deleteOne({ email: normalizedEmail });
       return res.status(500).json({ message: "Failed to send email" });
     }
@@ -90,7 +98,13 @@ export default async function handler(
       message: "Sign up successful, awaiting email verification",
     });
   } catch (error) {
-    console.error("Error during signup:", error);
+    captureEvent("User Signup Error", {
+      properties: {
+        error,
+        email,
+      },
+    });
+
     return res.status(500).json({ message: "Internal server error" });
   }
 }

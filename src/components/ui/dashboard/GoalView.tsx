@@ -7,7 +7,12 @@ import Modal from "@/components/ui/Modal";
 import { IconEdit, IconPlus, IconTrash } from "@tabler/icons-react";
 import Router from "next/router";
 import { Goal } from "@/schemas/goalSchema";
-import { fetchGoals, deleteGoal, editGoal, createGoal } from "@/utils/apiHelpers";
+import {
+  fetchGoals,
+  deleteGoal,
+  editGoal,
+  createGoal,
+} from "@/utils/apiHelpers";
 
 interface GoalViewProps {
   user: IUser;
@@ -85,7 +90,7 @@ export default function GoalView({ user }: GoalViewProps) {
                 <div
                   className="h-full bg-primary rounded-full"
                   style={{
-                    width: `${(1 / goal.value) * 100}%`,
+                    width: `${Math.min((user.balance / goal.value) * 100, 100)}%`,
                   }}
                 ></div>
               </div>
@@ -115,8 +120,16 @@ export default function GoalView({ user }: GoalViewProps) {
             }
 
             setIsModalOpen(false);
-            // Refresh the page to reflect the changes
-            await Router.reload();
+
+            const updatedGoals = await fetchGoals();
+            setGoals(updatedGoals.goals);
+
+            // Reset form fields
+            setGoalName("");
+            setGoalDescription("");
+            setGoalValue(0);
+            setGoalTargetDate("");
+            setIsEditGoal(false);
           }}
         >
           <h1 className="text-2xl font-bold text-text">

@@ -9,15 +9,11 @@ interface CardProps {
   className?: string;
 }
 
+const baseCardStyles =
+  "transition-colors duration-500 bg-backgroundGray p-4 rounded-lg shadow-md text-2xl";
+
 const Card: React.FC<CardProps> = ({ children, className }) => (
-  <div
-    className={clsx(
-      "transition-colors duration-500 bg-backgroundGray p-4 rounded-lg shadow-md text-2xl",
-      className
-    )}
-  >
-    {children}
-  </div>
+  <div className={clsx(baseCardStyles, className)}>{children}</div>
 );
 
 export default Card;

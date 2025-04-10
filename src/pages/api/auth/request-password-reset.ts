@@ -4,10 +4,6 @@ import { sendPasswordReset } from "@/utils/email";
 import client from "@/lib/mongodb";
 import { captureEvent } from "@/utils/posthogHelper";
 
-// This endpoint is used to request a password reset link
-// It is called when the user clicks the "forgot password" button
-// It will generate a new link and send it to the user's email
-
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
@@ -17,19 +13,13 @@ export default async function handler(
     email = email.toLowerCase();
 
     try {
-      // Get the user from the database
-      const user = await client
-        .db()
-        .collection("users")
-        .findOne({ email: email });
+      const user = await client.db().collection("users").findOne({ email });
 
-      // If the user does not exist, return an error
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
 
       if (process.env.NODE_ENV !== "development") {
-        // Only check in production
         const threeMinutesAgo = new Date(Date.now() - 1000 * 60 * 3);
         const links = await client
           .db()
@@ -48,10 +38,8 @@ export default async function handler(
         }
       }
 
-      // Generate a new reset password link
       const link = await generateLink(user.email, "reset-password");
 
-      // Send the link to the user's email
       const emailResponse = await sendPasswordReset(
         user.firstName,
         link,
@@ -68,7 +56,6 @@ export default async function handler(
         return res.status(500).json({ message: "Failed to send reset email" });
       }
 
-      // Return a success message
       res.status(200).json({ message: "Email sent" });
     } catch (error: any) {
       captureEvent("Password Reset Request Error", {

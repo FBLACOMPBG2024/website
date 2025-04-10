@@ -6,6 +6,7 @@ import { sessionOptions } from "@/utils/sessionConfig";
 import { SessionData } from "@/utils/sessionData";
 import { Transaction } from "@/schemas/transactionSchema";
 import { User } from "@/schemas/userSchema";
+import { captureEvent } from "@/utils/posthogHelper";
 
 export default async function handler(
   req: NextApiRequest,
@@ -17,6 +18,7 @@ export default async function handler(
   }
 
   try {
+    // Grab the user's session and verify it's valid
     const session = await getIronSession<SessionData>(req, res, sessionOptions);
     if (!session.user?._id) {
       return res.status(401).json({ message: "Unauthorized" });
@@ -30,9 +32,10 @@ export default async function handler(
     }
 
     const db = client.db();
-    const users = client.db().collection<User>("users");
+    const users = db.collection<User>("users");
     const transactions = db.collection<Transaction>("transactions");
 
+    // Make sure the user exists in the DB
     const user = await users.findOne({ _id: userId });
     if (!user) {
       return res.status(401).json({ message: "Unauthorized" });
@@ -40,29 +43,28 @@ export default async function handler(
 
     const txId = new ObjectId(_id);
 
+    // Make sure the transaction exists and belongs to the user
     const foundTx = await transactions.findOne({
-      _id: new ObjectId(txId),
+      _id: txId,
       userId,
     });
     if (!foundTx) {
       return res.status(404).json({ message: "Transaction not found" });
     }
 
-    // Delete transaction
+    // Proceed to delete the transaction
     const deleteResult = await transactions.deleteOne({
-      _id: new ObjectId(txId),
+      _id: txId,
       userId,
     });
     if (deleteResult.deletedCount === 0) {
       return res.status(404).json({ message: "Transaction not found" });
     }
 
-    await users.updateOne(
-      { _id: userId },
-      { $pull: { transactions: new ObjectId(txId) } }
-    );
+    // Remove the transaction ID from the user's list
+    await users.updateOne({ _id: userId }, { $pull: { transactions: txId } });
 
-    // Recalculate balance
+    // Recalculate balance based on remaining transactions
     const remaining = await transactions.find({ userId }).toArray();
     const newBalance = remaining.reduce((acc, tx) => acc + tx.value, 0);
 
@@ -71,8 +73,12 @@ export default async function handler(
     return res
       .status(200)
       .json({ message: "Transaction deleted successfully" });
-  } catch (err) {
+  } catch (err: any) {
     console.error("Delete error:", err);
+    captureEvent("Transaction Delete Failed", {
+      error: err?.message || "Unknown error",
+      stack: err?.stack || null,
+    });
     return res.status(500).json({ message: "Internal server error" });
   }
 }

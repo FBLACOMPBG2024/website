@@ -1,7 +1,6 @@
 import { useContext, createContext, ReactNode } from "react";
 
-// This file defines the UserContext, which is used to store the user data
-// and provide it to the rest of the application.
+// Context provider for managing and sharing user data across the app
 
 export interface IUser {
   _id: string;
@@ -23,7 +22,7 @@ interface IUserContext {
   setUser(user: IUser): void;
 }
 
-const defaultvalues: IUserContext = {
+const defaultValues: IUserContext = {
   user: {
     _id: "",
     firstName: "",
@@ -38,12 +37,15 @@ const defaultvalues: IUserContext = {
       accountId: "",
     },
   },
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  setUser(user: IUser): void {},
+  setUser: (user: IUser) => {
+    // Placeholder setter – this should be overridden by the provider
+    console.warn("setUser called outside of UserProvider");
+  },
 };
 
-const UserContext = createContext(defaultvalues);
+const UserContext = createContext(defaultValues);
 
+// Wraps children with the UserContext provider to pass down user state
 export const UserProvider = ({
   value,
   children,
@@ -54,4 +56,5 @@ export const UserProvider = ({
   return <UserContext.Provider value={value}>{children}</UserContext.Provider>;
 };
 
+// Hook to access the user context
 export const useUser = () => useContext<IUserContext>(UserContext);

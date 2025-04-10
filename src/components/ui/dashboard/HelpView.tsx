@@ -64,7 +64,10 @@ export default function HelpView({ user }: HelpViewProps) {
         <h2 className="text-xl font-bold mb-2">Support</h2>
         <p>
           If you need assistance, please contact us at:
-          <a href="mailto:support@smartspend.online" className="text-primary ml-1">
+          <a
+            href="mailto:support@smartspend.online"
+            className="text-primary ml-1"
+          >
             support@smartspend.online
           </a>
         </p>
@@ -82,6 +85,7 @@ export default function HelpView({ user }: HelpViewProps) {
               <button
                 className="w-full text-left font-medium flex justify-between"
                 onClick={() => toggleFAQ(index)}
+                aria-expanded={openIndex === index}
               >
                 {faq.question}
                 <span
@@ -95,7 +99,9 @@ export default function HelpView({ user }: HelpViewProps) {
                 </span>
               </button>
               <div
-                className={`overflow-hidden transition-max-height duration-300 ${openIndex === index ? "max-h-40" : "max-h-0"}`}
+                className={`overflow-hidden transition-all ease-in-out duration-300 ${
+                  openIndex === index ? "max-h-[999px]" : "max-h-0"
+                }`}
               >
                 <p className="mt-2 text-text">{faq.answer}</p>
               </div>

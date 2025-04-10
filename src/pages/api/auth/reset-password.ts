@@ -2,10 +2,6 @@ import { NextApiRequest, NextApiResponse } from "next";
 import client from "@/lib/mongodb";
 import { captureEvent } from "@/utils/posthogHelper";
 
-// This endpoint is used to reset the user's password
-// It sets the user's resetPassword flag to true
-// and redirects the user to the password reset page
-
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
@@ -17,7 +13,7 @@ export default async function handler(
       const link = await client
         .db()
         .collection("links")
-        .findOne({ token: token });
+        .findOne({ token });
 
       if (!link || link.type !== "reset-password") {
         captureEvent("Invalid Password Reset Link", {
@@ -61,8 +57,8 @@ export default async function handler(
         .db()
         .collection("links")
         .updateOne(
-          { token: token },
-          { $set: { used: true, usedAt: new Date(Date.now()) } }
+          { token },
+          { $set: { used: true, usedAt: new Date() } }
         );
 
       const resetPasswordUrl = new URL("/password/set", process.env.URL);
