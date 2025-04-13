@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import SummaryBox from "@/components/ui/SummaryCard";
+import ChartCard from "@/components/ui/ChartCard";
 import ReactECharts from "echarts-for-react";
 import Card from "@/components/ui/Card";
 import { IUser } from "@/components/context/UserContext";
-import { fetchTransactions, fetchChartData } from "@/utils/apiHelpers";
+import { fetchTransactions, fetchDashboardData } from "@/utils/apiHelpers";
 import {
   generateTreemapData,
   generateSecondTagChartData,
@@ -15,8 +17,6 @@ import {
 } from "@/utils/chartOptions";
 import { Transaction } from "@/schemas/transactionSchema";
 
-// DashboardView renders the user's financial overview including charts and recent transactions.
-
 interface DashboardViewProps {
   user: IUser;
 }
@@ -27,25 +27,30 @@ export default function DashboardView({ user }: DashboardViewProps) {
   const [chartLabels, setChartLabels] = useState<string[]>([]);
   const [treemapData, setTreemapData] = useState<any[]>([]);
   const [pieChartData, setPieChartData] = useState<any[]>([]);
+  const [summary, setSummary] = useState<{
+    today: number;
+    last7days: number;
+    last30days: number;
+    balance: number;
+  } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [dateRange, setDateRange] = useState<string>("last7days");
 
-  // Fetch transactions and chart data whenever user or date range changes
   useEffect(() => {
     if (user.firstName) {
       fetchTransactions(setTransactions, setError, setLoading, dateRange);
-      fetchChartData(
+      fetchDashboardData(
         setChartLabels,
         setChartData,
         setError,
         setLoading,
-        dateRange
+        dateRange,
+        setSummary
       );
     }
   }, [user, dateRange]);
 
-  // Update chart-specific data once transactions are loaded
   useEffect(() => {
     if (transactions.length > 0) {
       setTreemapData(generateTreemapData(transactions));
@@ -53,86 +58,62 @@ export default function DashboardView({ user }: DashboardViewProps) {
     }
   }, [transactions]);
 
-  const balance = (user?.balance || 0).toLocaleString("en-US", {
-    style: "currency",
-    currency: "USD",
-  });
-
   if (loading) return <div>Loading...</div>;
   if (error) return <div className="text-red-500">Error: {error}</div>;
 
   return (
     <div className="gap-4">
       <Card>
-        {/* Header with balance and date range filter */}
+        {/* Dashboard Header */}
         <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
           <h1 className="text-4xl font-black text-text">Dashboard</h1>
-          <motion.h1
-            key={balance}
-            initial={{ y: 0 }}
-            animate={{ y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="text-center md:text-right"
+          <select
+            className="bg-backgroundGrayLight p-2 text-base rounded-md"
+            value={dateRange}
+            onChange={(e) => setDateRange(e.target.value)}
           >
-            <span className="font-bold">Balance: </span>
-            {balance.split("").map((char, index) => (
-              <motion.span
-                key={index}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.1, delay: index * 0.1 }}
-              >
-                <span
-                  className={`font-bold ${user?.balance < 0 ? "text-red-500" : ""}`}
-                >
-                  {char}
-                </span>
-              </motion.span>
-            ))}
-            <select
-              className="ml-5 bg-backgroundGrayLight p-2 text-base rounded-md"
-              value={dateRange}
-              onChange={(e) => setDateRange(e.target.value)}
-            >
-              <option value="last7days">Last Week</option>
-              <option value="last30days">Last Month</option>
-              <option value="last90days">Last 3 Months</option>
-            </select>
-          </motion.h1>
+            <option value="last7days">Last Week</option>
+            <option value="last30days">Last Month</option>
+            <option value="last90days">Last 3 Months</option>
+          </select>
+        </div>
+
+        {/* Summary Panel */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 my-4">
+          <SummaryBox title="Today" amount={summary?.today ?? 0} />
+          <SummaryBox title="Last 7 Days" amount={summary?.last7days ?? 0} />
+          <SummaryBox title="Last 30 Days" amount={summary?.last30days ?? 0} />
+          <SummaryBox
+            title="Balance"
+            amount={summary?.balance ?? user.balance ?? 0}
+            highlight
+          />
         </div>
 
         {/* Chart Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          <div>
-            <h1 className="text-2xl font-black text-text">
-              Spending Over Time
-            </h1>
+          <ChartCard title="Spending Over Time">
             <ReactECharts
               className="w-full"
               option={lineChartOptions(chartLabels, chartData)}
             />
-          </div>
-          <div>
-            <h1 className="text-2xl font-black text-text">Spending</h1>
+          </ChartCard>
+          <ChartCard title="Spending">
             <ReactECharts
               className="w-full"
               option={pieChartOptions(pieChartData)}
             />
-          </div>
-          <div>
-            <h1 className="text-2xl font-black text-text">
-              Spending Distribution
-            </h1>
+          </ChartCard>
+          <ChartCard title="Spending Distribution">
             <ReactECharts
               className="w-full"
               option={treemapChartOptions(treemapData)}
             />
-          </div>
+          </ChartCard>
         </div>
 
         {/* Transactions List */}
-        <div>
+        <div className="mt-6">
           <h2 className="text-2xl font-bold text-text pb-3">
             Latest Transactions
           </h2>

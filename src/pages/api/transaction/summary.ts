@@ -51,9 +51,18 @@ async function getSpendingData(req: NextApiRequest, res: NextApiResponse) {
       .sort({ date: 1 })
       .toArray();
 
-    // Handle last 7 days: group by weekday
+    const summary = await getSpendingSummary(userId);
+
     if (range === "last7days") {
-      const weekday = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+      const weekday = [
+        "Sunday",
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+      ];
       const spending = Array(7).fill(0);
 
       transactions.forEach((tx) => {
@@ -62,10 +71,9 @@ async function getSpendingData(req: NextApiRequest, res: NextApiResponse) {
         spending[day] += Math.abs(tx.value);
       });
 
-      return res.status(200).json({ labels: weekday, data: spending });
+      return res.status(200).json({ labels: weekday, data: spending, summary });
     }
 
-    // Group by week start date for last30days or last90days
     const weekMap: Record<string, number> = {};
 
     transactions.forEach((tx) => {
@@ -73,9 +81,12 @@ async function getSpendingData(req: NextApiRequest, res: NextApiResponse) {
       const d = new Date(tx.date);
       const weekStart = new Date(d);
       const day = weekStart.getDay();
-      weekStart.setDate(weekStart.getDate() - day); // go to previous Sunday
+      weekStart.setDate(weekStart.getDate() - day);
       weekStart.setHours(0, 0, 0, 0);
-      const label = weekStart.toLocaleDateString("default", { month: "short", day: "numeric" });
+      const label = weekStart.toLocaleDateString("default", {
+        month: "short",
+        day: "numeric",
+      });
       weekMap[label] = (weekMap[label] || 0) + Math.abs(tx.value);
     });
 
@@ -85,10 +96,46 @@ async function getSpendingData(req: NextApiRequest, res: NextApiResponse) {
 
     const data = labels.map((label) => weekMap[label]);
 
-    return res.status(200).json({ labels, data });
-
+    return res.status(200).json({ labels, data, summary });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: "Internal Server Error" });
   }
+}
+
+async function getSpendingSummary(userId: string) {
+  const now = new Date();
+  const startOfToday = new Date(now);
+  startOfToday.setHours(0, 0, 0, 0);
+
+  const last7 = new Date(now);
+  last7.setDate(now.getDate() - 7);
+
+  const last30 = new Date(now);
+  last30.setDate(now.getDate() - 30);
+
+  const allTx = await client
+    .db()
+    .collection("transactions")
+    .find({
+      userId: new ObjectId(userId),
+      date: { $gte: last30 },
+    })
+    .toArray();
+
+  let today = 0;
+  let last7days = 0;
+  let last30days = 0;
+
+  allTx.forEach((tx) => {
+    if (tx.value >= 0) return;
+    const d = new Date(tx.date);
+    const absVal = Math.abs(tx.value);
+
+    if (d >= startOfToday) today += absVal;
+    if (d >= last7) last7days += absVal;
+    if (d >= last30) last30days += absVal;
+  });
+
+  return { today, last7days, last30days };
 }
