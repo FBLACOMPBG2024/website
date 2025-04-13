@@ -7,7 +7,7 @@ import { IconMenu2, IconX } from "@tabler/icons-react";
 
 interface Links {
   label: string;
-  href: string | "";
+  href: string;
   icon: React.JSX.Element | React.ReactNode;
 }
 
@@ -156,7 +156,6 @@ export const MobileSidebar = ({
     </div>
   );
 };
-
 export const SidebarLink = ({
   link,
   className,
@@ -167,6 +166,7 @@ export const SidebarLink = ({
   onClick?: () => void;
 }) => {
   const { open, setOpen, animate } = useSidebar();
+
   return (
     <Link
       href={link.href}
@@ -176,14 +176,17 @@ export const SidebarLink = ({
       )}
       onClick={() => {
         if (onClick) onClick();
-        setOpen(false);
+        setOpen(false); // Close sidebar on click
       }}
     >
       {link.icon}
       <motion.span
         animate={{
-          display: animate ? (open ? "inline-block" : "none") : "inline-block",
           opacity: animate ? (open ? 1 : 0) : 1,
+          display: animate ? (open ? "inline-block" : "none") : "inline-block", // Ensure the text disappears when closed
+        }}
+        transition={{
+          duration: 0.2, // Smoother transition for opacity and display
         }}
         className="text-text text-sm group-hover/sidebar:translate-x-1 transition duration-150 whitespace-pre inline-block !p-0 !m-0"
       >

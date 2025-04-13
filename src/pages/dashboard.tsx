@@ -78,7 +78,6 @@ export default function Dashboard() {
   }
 
   const renderContent = () => {
-
     switch (selectedLink) {
       case "Dashboard":
         console.log(selectedLink);
@@ -96,7 +95,7 @@ export default function Dashboard() {
       case "Logout":
         return <LogoutView />;
       default:
-        return <></>
+        return <></>;
     }
   };
 
@@ -112,7 +111,6 @@ export default function Dashboard() {
               <div className="mt-8 flex flex-col gap-2">
                 {links.map((link, idx) => (
                   <SidebarLink
-                    href={link.href}
                     key={idx}
                     link={link}
                     onClick={async () => {
